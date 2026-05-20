@@ -525,15 +525,20 @@ tbody tr:hover td{background:var(--bg)}
     <div class="card-title">Cadastrar Nova Matéria-Prima</div>
     <div class="form-grid">
       <div class="form-group"><label>Nome *</label><input type="text" id="cfg-nome" placeholder="Ex: Açúcar Cristal"></div>
-      <div class="form-group"><label>Categoria</label>
-        <select id="cfg-cat">
-          <option value="Aroma Líquido">Aroma Líquido</option><option value="Aroma Seco">Aroma Seco</option>
-          <option value="Aditivo">Aditivo</option><option value="Corante">Corante</option>
-          <option value="Grão">Grão</option><option value="Insumo Industrial">Insumo Industrial</option>
-          <option value="Pellet">Pellet</option><option value="Bobina Explosão">Bobina Explosão</option>
-          <option value="Bobina Terceirizados">Bobina Terceirizados</option>
-          <option value="Capa Fardo">Capa Fardo</option>
-        </select>
+      <div class="form-group"><label>Categoria <span class="info-btn" data-tip="Selecione uma categoria existente ou digite o nome de uma nova categoria diretamente no campo.">ⓘ</span></label>
+        <input type="text" id="cfg-cat" list="cat-list" placeholder="Selecione ou digite nova categoria..." autocomplete="off">
+        <datalist id="cat-list">
+          <option value="Aroma Líquido">
+          <option value="Aroma Seco">
+          <option value="Aditivo">
+          <option value="Corante">
+          <option value="Grão">
+          <option value="Insumo Industrial">
+          <option value="Pellet">
+          <option value="Bobina Explosão">
+          <option value="Bobina Terceirizados">
+          <option value="Capa Fardo">
+        </datalist>
       </div>
       <div class="form-group"><label>Unidade</label>
         <input type="text" id="cfg-un" placeholder="Ex: saco, rolo, kg, milheiro, caixa..." list="un-list">
@@ -928,6 +933,14 @@ function toggleLotes(mpId,btn){
 function populateSelects(){
   const opts='<option value="">Selecionar...</option>'+S.materiais.map(m=>`<option value="${m.id}">${m.nome}</option>`).join('');
   ['ent-mp','sim-mp'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=opts;});
+  // Atualiza datalist de categorias com as existentes nos materiais (além das fixas)
+  const catList=document.getElementById('cat-list');
+  if(catList){
+    const CATS_FIXAS=['Aroma Líquido','Aroma Seco','Aditivo','Corante','Grão','Insumo Industrial','Pellet','Bobina Explosão','Bobina Terceirizados','Capa Fardo'];
+    const catsSet=new Set(CATS_FIXAS);
+    S.materiais.forEach(m=>{if(m.cat&&m.cat.trim())catsSet.add(m.cat.trim());});
+    catList.innerHTML=[...catsSet].sort().map(c=>`<option value="${c}">`).join('');
+  }
   atualizarFornecedores();
 }
 function fornValido(f){ return f && f.trim()!=='' && f.trim().toUpperCase()!=='TRUE' && f.trim().toUpperCase()!=='FALSE'; }
