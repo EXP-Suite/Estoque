@@ -1162,10 +1162,44 @@ async function salvarContagem(){
 
   if(!items.length){notify('Nenhum lote para salvar.','warn');return;}
 
+  // Identifica lotes com contagem física = 0 que serão encerrados automaticamente
+  const lotesZerados=items.filter(i=>{
+    const el=document.getElementById('cnt-'+i.loteId);
+    // Só encerra se o campo foi preenchido explicitamente com 0 (não campo vazio)
+    return el && el.value.trim()!=='' && i.fisico===0;
+  });
+
+  if(lotesZerados.length>0){
+    const nomes=lotesZerados.map(i=>{
+      const l=S.lotes.find(l=>l.id===String(i.loteId));
+      const mp=S.materiais.find(m=>m.id===String(i.mpId));
+      return `• ${mp?mp.nome:'—'} — Lote ${l?l.lote:'—'} (era ${i.teorico} ${mp?mp.un:''})`;
+    }).join('\n');
+    const confirmado=confirm(
+      `⚠ Atenção: ${lotesZerados.length} lote(s) com contagem ZERO serão encerrados automaticamente:\n\n${nomes}\n\nDeseja confirmar e encerrar esses lotes?`
+    );
+    if(!confirmado){notify('Contagem cancelada.','warn');return;}
+  }
+
   const btn=document.getElementById('btn-cnt');btn.disabled=true;btn.textContent='Salvando...';
   try {
+    // 1. Salva a contagem normalmente
     const r=await gsCall({action:'saveContagem',data:{data,obs:document.getElementById('cnt-obs').value,items}});
-    if(r&&r.ok){await sincronizar(true);notify(`Contagem salva! ${items.length} lotes atualizados.`);renderContagem();}
+    if(r&&r.ok){
+      // 2. Encerra automaticamente os lotes zerados
+      if(lotesZerados.length>0){
+        notify(`Encerrando ${lotesZerados.length} lote(s) zerado(s)...`,'warn');
+        for(const i of lotesZerados){
+          await gsCall({action:'encerrarLote',data:{id:i.loteId}});
+        }
+        await sincronizar(true);
+        notify(`Contagem salva! ${lotesZerados.length} lote(s) encerrado(s) por saldo zero.`);
+      } else {
+        await sincronizar(true);
+        notify(`Contagem salva! ${items.length} lotes atualizados.`);
+      }
+      renderContagem();
+    }
     else if(r) notify(r.error||'Erro ao salvar','error');
     else notify('Sem resposta do servidor.','error');
   } finally { btn.disabled=false;btn.textContent='Salvar Contagem'; }
