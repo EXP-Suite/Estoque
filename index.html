@@ -349,6 +349,16 @@ tbody tr:hover td{background:var(--bg)}
 
 <!-- ═══ REPOSIÇÃO ════════════════════════════════════════════════ -->
 <div class="page" id="page-reposicao">
+  <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px;padding:12px 0 4px;border-bottom:1px solid var(--border)">
+    <span style="font-size:12px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px">Filtrar:</span>
+    <select id="rep-filtro-cat" onchange="renderReposicao()" style="font-size:13px;padding:5px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);cursor:pointer"><option value="">Todas as Categorias</option></select>
+    <select id="rep-filtro-forn" onchange="renderReposicao()" style="font-size:13px;padding:5px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);cursor:pointer"><option value="">Todos os Fornecedores</option></select>
+    <select id="rep-filtro-mp" onchange="renderReposicao()" style="font-size:13px;padding:5px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);cursor:pointer"><option value="">Todas as Matérias-Primas</option></select>
+    <select id="rep-filtro-status" onchange="renderReposicao()" style="font-size:13px;padding:5px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);cursor:pointer"><option value="">Todos os status</option><option value="danger">Crítico</option><option value="warn">Atenção</option><option value="ok">Normal</option></select>
+    <button onclick="limparFiltrosPedido('rep','renderReposicao')" style="font-size:12px;padding:5px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface2);color:var(--text3);cursor:pointer">× Limpar filtros</button>
+    <button class="btn btn-sm" onclick="imprimirReposicao()" style="background:var(--surface2);border:1px solid var(--border)">Imprimir</button>
+    <span id="rep-filtro-info" style="font-size:12px;color:var(--text3);margin-left:4px"></span>
+  </div>
   <div class="card">
     <div class="card-title">Inteligência de Reposição — Consolidado por Matéria-Prima</div>
     <div class="table-wrap">
@@ -401,6 +411,16 @@ tbody tr:hover td{background:var(--bg)}
 
 <!-- ═══ INTELIGÊNCIA ════════════════════════════════════════════ -->
 <div class="page" id="page-intel">
+  <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px;padding:12px 0 4px;border-bottom:1px solid var(--border)">
+    <span style="font-size:12px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px">Filtrar sugestão de compra:</span>
+    <select id="intel-filtro-cat" onchange="renderIntelReposicao()" style="font-size:13px;padding:5px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);cursor:pointer"><option value="">Todas as Categorias</option></select>
+    <select id="intel-filtro-forn" onchange="renderIntelReposicao()" style="font-size:13px;padding:5px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);cursor:pointer"><option value="">Todos os Fornecedores</option></select>
+    <select id="intel-filtro-mp" onchange="renderIntelReposicao()" style="font-size:13px;padding:5px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);cursor:pointer"><option value="">Todas as Matérias-Primas</option></select>
+    <select id="intel-filtro-status" onchange="renderIntelReposicao()" style="font-size:13px;padding:5px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);cursor:pointer"><option value="">Todas as urgências</option><option value="danger">Urgente</option><option value="warn">Em breve</option></select>
+    <button onclick="limparFiltrosPedido('intel','renderIntelReposicao')" style="font-size:12px;padding:5px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface2);color:var(--text3);cursor:pointer">× Limpar filtros</button>
+    <button class="btn btn-sm" onclick="imprimirIntelReposicao()" style="background:var(--surface2);border:1px solid var(--border)">Imprimir</button>
+    <span id="intel-filtro-info" style="font-size:12px;color:var(--text3);margin-left:4px"></span>
+  </div>
 
   <!-- CARDS DE CUSTO -->
   <div class="summary-grid" id="intel-custo-cards"></div>
@@ -633,6 +653,68 @@ let SCRIPT_URL = localStorage.getItem('ea_estoque_url') || URL_FIXA;
 })();
 
 // ═══ PARÂMETROS GLOBAIS ══════════════════════════════════════════
+const TABLE_TIPS = {
+  'matéria-prima':'Nome do material ou ingrediente controlado no estoque.',
+  'materia-prima':'Nome do material ou ingrediente controlado no estoque.',
+  'nome':'Nome cadastrado da matéria-prima.',
+  'categoria':'Grupo usado para organizar e filtrar os materiais.',
+  'saldo':'Saldo atual consolidado do material.',
+  'saldo total':'Soma do saldo atual de todos os lotes ativos dessa matéria-prima.',
+  'saldo atual':'Quantidade disponível neste momento, conforme o lote ou material mostrado.',
+  'saldo lote':'Quantidade ainda disponível dentro deste lote.',
+  'saldo teórico':'Quantidade que o sistema espera encontrar antes da contagem física.',
+  'un':'Unidade de medida cadastrada, como saco, kg, rolo ou unidade.',
+  'lotes ativos':'Quantidade de lotes ainda abertos e considerados no saldo.',
+  'cobertura':'Quantos dias o saldo atual deve durar no ritmo de consumo calculado.',
+  'status':'Classificação automática do item: normal, atenção ou crítico.',
+  'status lote':'Mostra se o lote ainda está ativo ou se já foi encerrado.',
+  'data entrada':'Data em que o lote entrou no estoque disponível.',
+  'entrada':'Data em que o lote entrou no estoque disponível.',
+  'lote':'Código do lote usado para rastrear origem, validade e movimentações.',
+  'fornecedor':'Empresa ou origem de onde veio o lote/material.',
+  'fornecedor(es)':'Fornecedores cadastrados para essa matéria-prima.',
+  'qtd entrada':'Quantidade recebida quando o lote foi registrado.',
+  'validade':'Data limite de uso do lote, quando informada.',
+  'valor unit.':'Preço unitário informado para este lote.',
+  'valor total':'Valor unitário multiplicado pela quantidade de entrada do lote.',
+  'observação':'Informação livre cadastrada sobre o lote ou material.',
+  'contagem física':'Quantidade real encontrada pelo operador na contagem.',
+  'divergência':'Diferença entre a contagem física e o saldo teórico.',
+  'consumo/sem':'Consumo médio por semana, calculado pelas quedas de saldo entre contagens consolidadas por dia.',
+  'lead time':'Dias entre fazer o pedido e a mercadoria chegar.',
+  'ponto de pedido':'Saldo em que o sistema recomenda pedir: mínimo + consumo diário durante lead time e segurança.',
+  'data ideal do pedido':'Data estimada para fazer o pedido antes de chegar ao ponto de risco.',
+  'prev. ruptura':'Previsão de quando o estoque chega a zero se nada for comprado.',
+  'qty sugerida':'Quantidade sugerida para compra.',
+  'qty sugerida (2 meses)':'Quantidade sugerida para cobrir pelo menos 60 dias de consumo.',
+  'urgência':'Prioridade automática da sugestão de compra.',
+  'contagens':'Quantidade de contagens físicas usadas na análise.',
+  'divergências':'Quantidade de registros em que houve diferença na contagem.',
+  'taxa divergência':'Percentual de contagens que tiveram diferença entre teórico e físico.',
+  'maior div.':'Maior divergência encontrada para esta matéria-prima.',
+  'tendência':'Indica se as divergências estão subindo, caindo ou estáveis.',
+  'mínimo':'Quantidade mínima física que você quer manter em estoque.',
+  'minimo':'Quantidade mínima física que você quer manter em estoque.',
+  'segurança (dias)':'Dias extras de segurança para cobrir atrasos ou imprevistos.',
+  'lead':'Lead time em dias para esta matéria-prima.'
+};
+function normTipKey(txt){
+  return String(txt||'').replace(/ⓘ/g,'').replace(/\s+/g,' ').trim().toLowerCase();
+}
+function aplicarDicasTabelas(){
+  document.querySelectorAll('th').forEach(th=>{
+    if(th.dataset.tipReady==='1')return;
+    const key=normTipKey(th.textContent);
+    if(!key||!TABLE_TIPS[key])return;
+    const span=document.createElement('span');
+    span.className='info-btn th-info';
+    span.setAttribute('data-tip',TABLE_TIPS[key]);
+    span.textContent='ⓘ';
+    th.appendChild(span);
+    th.dataset.tipReady='1';
+  });
+}
+
 const COBERTURA_COMPRA_DIAS = 60;
 const PARAMS_DEFAULT = { lead:7, seg:3, cob:COBERTURA_COMPRA_DIAS, crit:7, warn:14, anom:50 };
 let P = { ...PARAMS_DEFAULT };
@@ -798,23 +880,28 @@ function totalFisicoContagem(c,mpId){
 function consumoSem(mpId){
   const mid=String(mpId);
   // Filtra contagens que têm itens desta MP, ordena por data crescente
-  const cnts=S.contagens
+  const cntsDia=new Map();
+  S.contagens
     .filter(c=>c.data&&c.items.some(i=>String(i.mpId)===mid))
     .map(c=>({...c,totalMP:totalFisicoContagem(c,mid),ord:Number(c.id)||0}))
-    .sort((a,b)=>a.data===b.data?a.ord-b.ord:a.data<b.data?-1:1);
+    .forEach(c=>{
+      const atual=cntsDia.get(c.data);
+      if(!atual||c.ord>atual.ord)cntsDia.set(c.data,c);
+    });
+  const cnts=[...cntsDia.values()].sort((a,b)=>a.data<b.data?-1:a.data>b.data?1:0);
   if(cnts.length<2) return null;
-  // Se um periodo ficar zerado, mantem o ultimo consumo real em vez de apagar a media.
-  let ultimoConsumo = null;
+  // Media semanal pelo periodo completo, usando uma contagem consolidada por dia.
+  let consumoTotal=0;
   for(let i=1;i<cnts.length;i++){
-    const ant=cnts[i-1], atual=cnts[i];
-    const d1=new Date(ant.data+'T12:00');
-    const d2=new Date(atual.data+'T12:00');
-    const diasTotal=(d2-d1)/864e5;
-    if(diasTotal<=0) continue;
-    const cons=ant.totalMP-atual.totalMP;
-    if(cons>0) ultimoConsumo=Math.round(cons/diasTotal*7*10)/10;
+    const cons=cnts[i-1].totalMP-cnts[i].totalMP;
+    if(cons>0)consumoTotal+=cons;
   }
-  return ultimoConsumo;
+  if(consumoTotal<=0)return 0;
+  const d1=new Date(cnts[0].data+'T12:00');
+  const d2=new Date(cnts[cnts.length-1].data+'T12:00');
+  const diasTotal=(d2-d1)/864e5;
+  if(diasTotal<=0)return 0;
+  return Math.round(consumoTotal/diasTotal*7*10)/10;
 }
 function payloadConsumoSemMateriais(){
   return S.materiais.map(m=>{
@@ -873,6 +960,7 @@ function showPage(p,btn){
 function renderPage(p){
   const m={dashboard:renderDashboard,estoque:renderEstoque,entradas:renderEntradas,contagem:renderContagem,consumo:renderConsumo,reposicao:renderReposicao,rastreabilidade:renderRastreabilidade,intel:renderIntel,config:renderConfig};
   if(m[p])m[p]();
+  aplicarDicasTabelas();
 }
 
 // ═══ DASHBOARD ════════════════════════════════════════════════
@@ -965,6 +1053,7 @@ function filtrarEstoque(){
     </td></tr>`;
   });
   tbody.innerHTML=rows;
+  aplicarDicasTabelas();
 }
 function toggleLotes(mpId,btn){
   const row=document.getElementById('lotes-'+mpId);
@@ -1278,13 +1367,52 @@ function selConsumo(mpId,btn){
 }
 
 // ═══ REPOSIÇÃO ════════════════════════════════════════════════
+function fornecedoresMP(m){
+  const vals=String(m.forn||'').split('/').map(x=>x.trim()).filter(Boolean);
+  S.lotes.filter(l=>String(l.mpId)===String(m.id)&&l.forn).forEach(l=>vals.push(String(l.forn).trim()));
+  return [...new Set(vals)];
+}
+function popularFiltrosPedido(prefix){
+  const catEl=document.getElementById(prefix+'-filtro-cat');
+  if(!catEl)return;
+  const vCat=catEl.value, vForn=document.getElementById(prefix+'-filtro-forn').value, vMp=document.getElementById(prefix+'-filtro-mp').value;
+  const cats=[...new Set(S.materiais.map(m=>m.cat).filter(Boolean))].sort();
+  const forns=[...new Set(S.materiais.flatMap(fornecedoresMP).filter(Boolean))].sort();
+  const mps=[...S.materiais].sort((a,b)=>a.nome.localeCompare(b.nome));
+  catEl.innerHTML='<option value="">Todas as Categorias</option>'+cats.map(c=>`<option value="${escHtml(c)}"${c===vCat?' selected':''}>${escHtml(c)}</option>`).join('');
+  const fornEl=document.getElementById(prefix+'-filtro-forn');
+  fornEl.innerHTML='<option value="">Todos os Fornecedores</option>'+forns.map(f=>`<option value="${escHtml(f)}"${f===vForn?' selected':''}>${escHtml(f)}</option>`).join('');
+  const mpEl=document.getElementById(prefix+'-filtro-mp');
+  mpEl.innerHTML='<option value="">Todas as MatÃ©rias-Primas</option>'+mps.map(m=>`<option value="${m.id}"${m.id===vMp?' selected':''}>${m.nome}</option>`).join('');
+}
+function passaFiltrosPedido(analise,prefix){
+  const m=analise.m;
+  const cat=document.getElementById(prefix+'-filtro-cat')?.value||'';
+  const forn=document.getElementById(prefix+'-filtro-forn')?.value||'';
+  const mp=document.getElementById(prefix+'-filtro-mp')?.value||'';
+  const st=document.getElementById(prefix+'-filtro-status')?.value||'';
+  if(cat&&m.cat!==cat)return false;
+  if(forn&&!fornecedoresMP(m).includes(forn))return false;
+  if(mp&&String(m.id)!==String(mp))return false;
+  if(st&&analise.st!==st)return false;
+  return true;
+}
+function limparFiltrosPedido(prefix,renderFn){
+  ['cat','forn','mp','status'].forEach(k=>{const el=document.getElementById(prefix+'-filtro-'+k);if(el)el.value='';});
+  window[renderFn]();
+}
+function listaReposicaoFiltrada(prefix, somenteAlertas){
+  popularFiltrosPedido(prefix);
+  return S.materiais.map(analiseReposicao).filter(a=>(!somenteAlertas||a.st!=='ok')&&passaFiltrosPedido(a,prefix));
+}
 function renderReposicao(){
   populateSelects();
-  const consumoPayload = [];
-  document.getElementById('tbody-reposicao').innerHTML=S.materiais.map(m=>{
-    const a=analiseReposicao(m);
+  const lista=listaReposicaoFiltrada('rep',false);
+  const info=document.getElementById('rep-filtro-info');
+  if(info)info.textContent=lista.length===S.materiais.length?`${lista.length} MPs`:`${lista.length} de ${S.materiais.length} MPs`;
+  document.getElementById('tbody-reposicao').innerHTML=lista.map(a=>{
+    const {m}=a;
     const {cs,s,la,pto,dRup,dPed,st}=a;
-    consumoPayload.push({ id:m.id, consumoSem:cs==null?'':cs });
     const dPedDt=new Date();dPedDt.setDate(dPedDt.getDate()+Math.max(0,dPed));
     const dRupDt=new Date();dRupDt.setDate(dRupDt.getDate()+dRup);
     return`<tr>
@@ -1297,8 +1425,53 @@ function renderReposicao(){
       <td style="color:${dRup<14?'var(--danger)':dRup<21?'#c07000':'inherit'}">${dRup>=999?'—':dRupDt.toLocaleDateString('pt-BR')}</td>
       <td><span class="badge ${st==='ok'?'b-ok':st==='warn'?'b-warn':'b-danger'}">${st==='ok'?'Normal':st==='warn'?'Atenção':'Crítico'}</span></td>
     </tr>`;
-  }).join('');
-  sincronizarConsumoSemMateriais(consumoPayload);
+  }).join('')||'<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--text3)">Nenhuma matéria-prima encontrada com os filtros selecionados.</td></tr>';
+  sincronizarConsumoSemMateriais(payloadConsumoSemMateriais());
+  aplicarDicasTabelas();
+}
+function textoStatusPedido(st){return st==='danger'?'Critico':st==='warn'?'Atencao':'Normal';}
+function fornecedoresPedidoTexto(m){return fornecedoresMP(m).join(', ')||'--';}
+function abrirImpressaoPedido(titulo,subtitulo,headers,rows){
+  if(!rows.length){notify('Nenhum item para imprimir com os filtros atuais.','warn');return;}
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${escHtml(titulo)}</title><style>
+    body{font-family:Arial,sans-serif;margin:24px;color:#111827}h1{font-size:20px;margin:0 0 4px}p{margin:0 0 16px;color:#4b5563;font-size:12px}
+    table{width:100%;border-collapse:collapse;font-size:11px}th,td{border:1px solid #d1d5db;padding:6px;text-align:left;vertical-align:top}th{background:#f3f4f6;font-weight:700}
+    .meta{display:flex;justify-content:space-between;margin-bottom:14px;font-size:12px;color:#4b5563}.status{font-weight:700}
+    @media print{body{margin:12mm}button{display:none}}
+  </style></head><body>
+    <h1>${escHtml(titulo)}</h1>
+    <div class="meta"><span>${escHtml(subtitulo)}</span><span>Impresso em ${new Date().toLocaleDateString('pt-BR')} ${new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</span></div>
+    <table><thead><tr>${headers.map(h=>`<th>${escHtml(h)}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table>
+  </body></html>`;
+  const w=window.open('','_blank','width=1100,height=760');
+  if(!w){notify('O navegador bloqueou a janela de impressao.','warn');return;}
+  w.document.write(html);w.document.close();setTimeout(()=>{w.focus();w.print();},400);
+}
+function imprimirReposicao(){
+  const rows=listaReposicaoFiltrada('rep',false).map(a=>{
+    const {m,cs,s,la,pto,dRup,dPed,st}=a;
+    const dPedDt=new Date();dPedDt.setDate(dPedDt.getDate()+Math.max(0,dPed));
+    const dRupDt=new Date();dRupDt.setDate(dRupDt.getDate()+dRup);
+    return`<tr>
+      <td>${escHtml(m.nome)}</td><td>${escHtml(m.cat||'')}</td><td>${escHtml(fornecedoresPedidoTexto(m))}</td>
+      <td>${s.toFixed(1)} ${escHtml(m.un)}</td><td>${la}</td><td>${cs?cs.toFixed(1)+' '+escHtml(m.un)+'/sem':'--'}</td>
+      <td>${m.lead}d + ${m.seg||0}d seg.</td><td>${pto} ${escHtml(m.un)}</td>
+      <td>${dPed>=999?'--':dPed<=0?'AGORA':dPedDt.toLocaleDateString('pt-BR')}</td>
+      <td>${dRup>=999?'--':dRupDt.toLocaleDateString('pt-BR')}</td><td class="status">${textoStatusPedido(st)}</td>
+    </tr>`;
+  });
+  abrirImpressaoPedido('Relatorio de Reposicao','Itens conforme filtros atuais de Reposicao',['Materia-Prima','Categoria','Fornecedor','Saldo Total','Lotes','Consumo/sem','Lead + Seg.','Ponto Pedido','Data Ideal','Prev. Ruptura','Status'],rows);
+}
+function imprimirIntelReposicao(){
+  const rows=listaReposicaoFiltrada('intel',true)
+    .sort((a,b)=>(a.st===b.st?0:a.st==='danger'?-1:1)||a.dc-b.dc)
+    .map(({m,cs,s,dc,qSug,st})=>`<tr>
+      <td>${escHtml(m.nome)}</td><td>${escHtml(m.cat||'')}</td><td>${escHtml(fornecedoresPedidoTexto(m))}</td>
+      <td>${s.toFixed(1)} ${escHtml(m.un)}</td><td>${cs?cs.toFixed(1)+' '+escHtml(m.un)+'/sem':'--'}</td>
+      <td>${dc>=999?'--':dc+'d'}</td><td>${m.lead}d + ${m.seg||0}d seg.</td>
+      <td>${Math.max(0,qSug).toFixed(0)} ${escHtml(m.un)}</td><td class="status">${textoStatusPedido(st)}</td>
+    </tr>`);
+  abrirImpressaoPedido('Sugestao de Reposicao','Itens conforme filtros atuais de Inteligencia',['Materia-Prima','Categoria','Fornecedor','Saldo Atual','Consumo/sem','Cobertura','Lead + Seg.','Qty Sugerida','Urgencia'],rows);
 }
 function simularReposicao(){
   const mpId=parseInt(document.getElementById('sim-mp').value),qty=parseFloat(document.getElementById('sim-qty').value)||0;
@@ -1545,10 +1718,10 @@ function renderIntelCusto(){
 }
 
 function renderIntelReposicao(){
-  const rows=S.materiais
-    .map(analiseReposicao)
-    .filter(a=>a.st!=='ok')
+  const rows=listaReposicaoFiltrada('intel',true)
     .sort((a,b)=>(a.st===b.st?0:a.st==='danger'?-1:1)||a.dc-b.dc);
+  const info=document.getElementById('intel-filtro-info');
+  if(info)info.textContent=`${rows.length} sugestao(oes)`;
   const el=document.getElementById('tbody-intel-repos');
   if(!el)return;
   el.innerHTML=rows.length?rows.map(({m,cs,s,dc,qSug,st})=>`<tr>
@@ -1560,6 +1733,7 @@ function renderIntelReposicao(){
     <td style="font-weight:700;color:var(--accent)">${Math.max(0,qSug).toFixed(0)} ${m.un}</td>
     <td><span class="badge ${st==='danger'?'b-danger':st==='warn'?'b-warn':'b-ok'}">${st==='danger'?'🔴 Urgente':st==='warn'?'🟡 Em breve':'🟢 OK'}</span></td>
   </tr>`).join(''):'<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--text3)">✅ Nenhuma reposição necessária agora.</td></tr>';
+  aplicarDicasTabelas();
 }
 
 function renderIntelAnomalias(){
