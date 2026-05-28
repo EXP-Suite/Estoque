@@ -191,7 +191,7 @@ tbody tr:hover td{background:var(--bg)}
   <button class="nav-btn" onclick="showPage('entradas',this)">Registrar Entrada<span class="info-btn" data-tip="Use aqui quando chegar mercadoria. Cada entrada vira um lote independente com número, fornecedor e validade rastreáveis.">ⓘ</span></button>
   <button class="nav-btn" onclick="showPage('contagem',this)">Contagem Física<span class="info-btn" data-tip="O operador conta o estoque físico e lança aqui (ou usa a ficha impressa). Ao salvar, os saldos são atualizados automaticamente.">ⓘ</span></button>
   <button class="nav-btn" onclick="showPage('consumo',this)">Análise de Consumo<span class="info-btn" data-tip="Selecione uma MP e veja o gráfico de evolução de saldo, consumo semanal e mensal estimado com base nas contagens realizadas.">ⓘ</span></button>
-  <button class="nav-btn" onclick="showPage('reposicao',this)">Reposição<span class="info-btn" data-tip="Tabela com todas as MPs mostrando quando e quanto pedir, com base no consumo histórico, lead time e estoque de segurança cadastrados.">ⓘ</span></button>
+  <button class="nav-btn" onclick="showPage('reposicao',this)">Reposição<span class="info-btn" data-tip="Tabela com todas as MPs mostrando quando e quanto pedir, com base no consumo histórico, lead time e dias de segurança cadastrados.">ⓘ</span></button>
   <button class="nav-btn" onclick="showPage('rastreabilidade',this)">Rastreabilidade<span class="info-btn" data-tip="Busque qualquer lote por nome, fornecedor ou número. Veja todo o histórico: origem, data, saldo atual, validade e valor.">ⓘ</span></button>
   <button class="nav-btn" onclick="showPage('intel',this)">🧠 Inteligência<span class="info-btn" data-tip="Análises automáticas: valor do estoque em R$, sugestão de compra com quantidade ideal, detecção de consumo anormal e histórico de divergências.">ⓘ</span></button>
   <button class="nav-btn" onclick="showPage('config',this)">Configurações<span class="info-btn" data-tip="Conexão com o Google Sheets, cadastro de novas MPs e parâmetros globais de inteligência e reposição.">ⓘ</span></button>
@@ -384,7 +384,9 @@ tbody tr:hover td{background:var(--bg)}
       <option value="urgente">Urgente (≤7 dias)</option>
       <option value="prox">Vence em breve (7–30 dias)</option>
     </select>
+    <button class="btn btn-sm" onclick="imprimirRastreabilidade()" style="background:var(--surface2);border:1px solid var(--border)">🖨 Imprimir</button>
   </div>
+  <div id="resumo-rastreabilidade" class="summary-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:12px"></div>
   <div class="table-wrap">
     <table>
       <thead><tr>
@@ -406,12 +408,12 @@ tbody tr:hover td{background:var(--bg)}
   <!-- SUGESTÃO DE REPOSIÇÃO -->
   <div class="card">
     <div class="card-title">🛒 Sugestão Automática de Reposição</div>
-    <p style="font-size:12px;color:var(--text2);margin-bottom:12px">MPs que devem ser pedidas agora com base no consumo histórico, lead time e estoque de segurança.</p>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:12px">MPs que devem ser pedidas com base no mesmo ponto de pedido da Reposição. A quantidade sugerida cobre pelo menos 2 meses de consumo.</p>
     <div class="table-wrap">
       <table>
         <thead><tr>
           <th>Matéria-Prima</th><th>Saldo Atual</th><th>Consumo/sem</th>
-          <th>Cobertura</th><th>Lead Time</th><th>Qty Sugerida</th><th>Urgência</th>
+          <th>Cobertura</th><th>Lead Time</th><th>Qty Sugerida (2 meses)</th><th>Urgência</th>
         </tr></thead>
         <tbody id="tbody-intel-repos"></tbody>
       </table>
@@ -471,18 +473,18 @@ tbody tr:hover td{background:var(--bg)}
         <div class="param-desc">dias entre o pedido e a entrega</div>
       </div>
       <div class="param-item">
-        <label>🛡 Estoque de Segurança
+        <label>🛡 Tempo de Segurança
           <span class="info-btn" data-tip="Quantos dias de reserva extra você quer ter para cobrir atrasos ou picos de produção. Ex: 3 dias = o sistema alerta antes de você chegar perto do zero.">ⓘ</span>
         </label>
         <input type="number" id="param-seg" min="0" max="60" value="3">
         <div class="param-desc">dias de buffer para imprevistos</div>
       </div>
       <div class="param-item">
-        <label>📦 Cobertura Alvo
-          <span class="info-btn" data-tip="Quantos dias de estoque você quer ter após receber um pedido. Ex: 30 dias = a sugestão de compra sempre garante 30 dias de produção.">ⓘ</span>
+        <label>📦 Compra Padrão
+          <span class="info-btn" data-tip="A quantidade sugerida sempre cobre pelo menos 2 meses de consumo, considerado como 60 dias.">ⓘ</span>
         </label>
-        <input type="number" id="param-cob" min="7" max="180" value="30">
-        <div class="param-desc">dias de estoque após reposição</div>
+        <input type="number" id="param-cob" min="60" max="60" value="60" disabled>
+        <div class="param-desc">dias cobertos pela compra sugerida</div>
       </div>
       <div class="param-item">
         <label>🔴 Limite Crítico
@@ -510,7 +512,7 @@ tbody tr:hover td{background:var(--bg)}
       <button class="btn btn-primary" onclick="salvarParams()">💾 Salvar Parâmetros</button>
       <button class="btn" onclick="resetParams()">Restaurar Padrões</button>
     </div>
-    <p class="form-note" style="margin-top:10px">Os parâmetros são salvos localmente neste navegador. Para cada MP individualmente, ajuste os campos Mínimo, Segurança e Lead Time no cadastro abaixo.</p>
+    <p class="form-note" style="margin-top:10px">Os parâmetros são salvos localmente neste navegador. Para cada MP individualmente, ajuste os campos Mínimo, Segurança em dias e Lead Time no cadastro abaixo.</p>
   </div>
 
   <div class="card">
@@ -574,7 +576,7 @@ tbody tr:hover td{background:var(--bg)}
     <div class="section-header"><h3>Matérias-Primas Cadastradas</h3><button class="btn btn-sm" onclick="sincronizar()">↻ Sincronizar</button></div>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>Nome</th><th>Categoria</th><th>Un</th><th>Saldo</th><th>Mínimo</th><th>Segurança</th><th>Lead</th><th>Fornecedor(es)</th><th></th></tr></thead>
+        <thead><tr><th>Nome</th><th>Categoria</th><th>Un</th><th>Saldo</th><th>Mínimo</th><th>Segurança (dias)</th><th>Lead</th><th>Fornecedor(es)</th><th></th></tr></thead>
         <tbody id="tbody-config"></tbody>
       </table>
     </div>
@@ -631,14 +633,15 @@ let SCRIPT_URL = localStorage.getItem('ea_estoque_url') || URL_FIXA;
 })();
 
 // ═══ PARÂMETROS GLOBAIS ══════════════════════════════════════════
-const PARAMS_DEFAULT = { lead:7, seg:3, cob:30, crit:7, warn:14, anom:50 };
+const COBERTURA_COMPRA_DIAS = 60;
+const PARAMS_DEFAULT = { lead:7, seg:3, cob:COBERTURA_COMPRA_DIAS, crit:7, warn:14, anom:50 };
 let P = { ...PARAMS_DEFAULT };
 function carregarParams(){
   const saved = localStorage.getItem('wms_params');
   if(saved){ try{ P = {...PARAMS_DEFAULT,...JSON.parse(saved)}; }catch(e){} }
   document.getElementById('param-lead').value = P.lead;
   document.getElementById('param-seg').value  = P.seg;
-  document.getElementById('param-cob').value  = P.cob;
+  document.getElementById('param-cob').value  = COBERTURA_COMPRA_DIAS;
   document.getElementById('param-crit').value = P.crit;
   document.getElementById('param-warn').value = P.warn;
   document.getElementById('param-anom').value = P.anom;
@@ -646,7 +649,7 @@ function carregarParams(){
 function salvarParams(){
   P.lead = parseInt(document.getElementById('param-lead').value)||7;
   P.seg  = parseInt(document.getElementById('param-seg').value)||3;
-  P.cob  = parseInt(document.getElementById('param-cob').value)||30;
+  P.cob  = COBERTURA_COMPRA_DIAS;
   P.crit = parseInt(document.getElementById('param-crit').value)||7;
   P.warn = parseInt(document.getElementById('param-warn').value)||14;
   P.anom = parseInt(document.getElementById('param-anom').value)||50;
@@ -665,6 +668,8 @@ function resetParams(){
 
 // ═══ STATE ════════════════════════════════════════════════════
 let S = { materiais: [], lotes: [], contagens: [] };
+let consumoSemSyncKey = '';
+let consumoSemSyncTimer = null;
 let chartC = null, chartD = null, chartI = null;
 
 // ═══ INIT ═════════════════════════════════════════════════════
@@ -769,7 +774,8 @@ function normM(m){
   const fornRaw = m.forn;
   const forn = (fornRaw === true || fornRaw === false || String(fornRaw).toUpperCase() === 'TRUE' || String(fornRaw).toUpperCase() === 'FALSE') ? '' : String(fornRaw||'');
   const obs = String(m.obs||'');
-  return {id:safeId(m.id),nome:String(m.nome||''),cat:String(m.cat||''),un:String(m.un||'un'),saldo:safeNum(m.saldo),min:safeNum(m.min),seg:safeNum(m.seg),lead:safeNum(m.lead)||7,forn,obs};
+  const consumoSemPlanilha = m.consumoSem !== undefined ? m.consumoSem : m['Consumo/sem'];
+  return {id:safeId(m.id),nome:String(m.nome||''),cat:String(m.cat||''),un:String(m.un||'un'),saldo:safeNum(m.saldo),min:safeNum(m.min),seg:safeNum(m.seg),lead:safeNum(m.lead)||7,forn,obs,consumoSem:consumoSemPlanilha===''||consumoSemPlanilha==null?null:safeNum(consumoSemPlanilha)};
 }
 function normL(l){ return {id:safeId(l.id),mpId:safeId(l.mpId),forn:String(l.forn||''),lote:String(l.lote||''),dataCompra:fmtD(l.dataCompra),prevEntrega:fmtD(l.prevEntrega),dataEntrega:fmtD(l.dataEntrega),qtyEntrada:safeNum(l.qtyEntrada),saldoLote:safeNum(l.saldoLote),valorUnit:l.valorUnit?safeNum(l.valorUnit):null,validade:fmtD(l.validade),obs:String(l.obs||''),ativo:l.ativo!==false&&String(l.ativo)!=='false'&&String(l.ativo)!=='FALSE'}; }
 // IDs sao strings para evitar perda de precisao com numeros grandes no JS
@@ -784,29 +790,67 @@ function fmtBR(s,curto){ if(!s)return'—'; const d=new Date(s+'T12:00'); return
 function lotesAtivos(mpId){ return S.lotes.filter(l=>l.mpId===String(mpId)&&l.ativo); }
 // Saldo consolidado = soma dos lotes ativos
 function saldoMP(mpId){ return lotesAtivos(mpId).reduce((a,l)=>a+l.saldoLote,0); }
+function totalFisicoContagem(c,mpId){
+  const mid=String(mpId);
+  return c.items.filter(x=>String(x.mpId)===mid).reduce((a,x)=>a+x.fisico,0);
+}
 // Consumo semanal calculado a partir das contagens (visão consolidada)
 function consumoSem(mpId){
   const mid=String(mpId);
   // Filtra contagens que têm itens desta MP, ordena por data crescente
   const cnts=S.contagens
     .filter(c=>c.data&&c.items.some(i=>String(i.mpId)===mid))
-    .sort((a,b)=>a.data<b.data?-1:a.data>b.data?1:0);
+    .map(c=>({...c,totalMP:totalFisicoContagem(c,mid),ord:Number(c.id)||0}))
+    .sort((a,b)=>a.data===b.data?a.ord-b.ord:a.data<b.data?-1:1);
   if(cnts.length<2) return null;
-  const diffs=[];
+  // Se um periodo ficar zerado, mantem o ultimo consumo real em vez de apagar a media.
+  let ultimoConsumo = null;
   for(let i=1;i<cnts.length;i++){
-    const d1=new Date(cnts[i-1].data+'T12:00');
-    const d2=new Date(cnts[i  ].data+'T12:00');
+    const ant=cnts[i-1], atual=cnts[i];
+    const d1=new Date(ant.data+'T12:00');
+    const d2=new Date(atual.data+'T12:00');
     const diasTotal=(d2-d1)/864e5;
-    if(diasTotal<=0) continue; // contagens no mesmo dia
-    const totPrev=cnts[i-1].items.filter(x=>String(x.mpId)===mid).reduce((a,x)=>a+x.fisico,0);
-    const totCur =cnts[i  ].items.filter(x=>String(x.mpId)===mid).reduce((a,x)=>a+x.fisico,0);
-    const cons=totPrev-totCur;
-    if(cons>0) diffs.push(cons/diasTotal*7);
+    if(diasTotal<=0) continue;
+    const cons=ant.totalMP-atual.totalMP;
+    if(cons>0) ultimoConsumo=Math.round(cons/diasTotal*7*10)/10;
   }
-  return diffs.length?Math.round(diffs.reduce((a,b)=>a+b,0)/diffs.length*10)/10:null;
+  return ultimoConsumo;
 }
-function diasCob(mp){ const cs=consumoSem(mp.id); const s=saldoMP(mp.id); return(!cs||cs===0)?999:Math.round(s/(cs/7)); }
-function stMP(mp){ const dc=diasCob(mp),s=saldoMP(mp.id); if(mp.min>0&&s<=mp.min)return'danger'; if(dc<=P.crit)return'danger'; if(dc<=P.warn)return'warn'; if(mp.seg>0&&s<=(mp.min+mp.seg))return'warn'; return'ok'; }
+function payloadConsumoSemMateriais(){
+  return S.materiais.map(m=>{
+    const cs = consumoSem(m.id);
+    return { id: m.id, consumoSem: cs==null ? '' : cs };
+  });
+}
+function sincronizarConsumoSemMateriais(payload){
+  if(!SCRIPT_URL || !payload || !payload.length) return;
+  const key = JSON.stringify(payload);
+  if(key === consumoSemSyncKey) return;
+  consumoSemSyncKey = key;
+  if(consumoSemSyncTimer) clearTimeout(consumoSemSyncTimer);
+  consumoSemSyncTimer = setTimeout(async ()=>{
+    const r = await gsCall({ action:'saveConsumoSem', data:{ items:payload } });
+    if(r && r.ok && r.result && r.result.error) notify(r.result.error,'error');
+    if(!r || !r.ok || (r.result && r.result.error)) consumoSemSyncKey = '';
+  }, 250);
+}
+function analiseReposicao(mp){
+  const cs=consumoSem(mp.id),csd=cs?cs/7:null;
+  const s=saldoMP(mp.id),la=lotesAtivos(mp.id).length;
+  const pto=csd&&csd>0?Math.round(mp.min+(mp.lead+mp.seg)*csd):mp.min;
+  const dc=csd&&csd>0?Math.round(s/csd):999;
+  const dPed=csd&&csd>0?Math.round((s-pto)/csd):999;
+  const qSug=csd&&csd>0?Math.ceil(csd*COBERTURA_COMPRA_DIAS):Math.max(0,Math.ceil(mp.min*3));
+  let st='ok';
+  if(mp.min>0&&s<=mp.min)st='danger';
+  else if(dc<=P.crit)st='danger';
+  else if(s<=pto)st='warn';
+  else if(dc<=P.warn)st='warn';
+  return {m:mp,cs,csd,s,la,pto,dc,dRup:dc,dPed,qSug,st};
+}
+function diasCob(mp){ return analiseReposicao(mp).dc; }
+function pontoPedido(mp){ return analiseReposicao(mp).pto; }
+function stMP(mp){ return analiseReposicao(mp).st; }
 function vencido(v){ return v&&new Date(v+'T00:00')<new Date(); }
 function urgente(v){ if(!v)return false; const d=(new Date(v+'T00:00')-new Date())/864e5; return d>=0&&d<7; }
 function proxVencer(v){ if(!v)return false; const d=(new Date(v+'T00:00')-new Date())/864e5; return d>=7&&d<=30; }
@@ -1236,26 +1280,25 @@ function selConsumo(mpId,btn){
 // ═══ REPOSIÇÃO ════════════════════════════════════════════════
 function renderReposicao(){
   populateSelects();
+  const consumoPayload = [];
   document.getElementById('tbody-reposicao').innerHTML=S.materiais.map(m=>{
-    const cs=consumoSem(m.id),csd=cs?cs/7:null;
-    const s=saldoMP(m.id),la=lotesAtivos(m.id).length;
-    const pto=csd?Math.round((m.lead+m.seg/Math.max(csd,.01))*csd+m.min):m.min;
-    const dRup=csd&&csd>0?Math.round(s/csd):999;
-    const dPed=csd?Math.round((s-pto)/csd):999;
+    const a=analiseReposicao(m);
+    const {cs,s,la,pto,dRup,dPed,st}=a;
+    consumoPayload.push({ id:m.id, consumoSem:cs==null?'':cs });
     const dPedDt=new Date();dPedDt.setDate(dPedDt.getDate()+Math.max(0,dPed));
     const dRupDt=new Date();dRupDt.setDate(dRupDt.getDate()+dRup);
-    const st=stMP(m);
     return`<tr>
       <td style="font-weight:600">${m.nome}</td>
       <td>${s.toFixed(1)} ${m.un}</td>
       <td><span class="badge b-info">${la} lote${la!==1?'s':''}</span></td>
       <td>${cs?cs.toFixed(1)+' '+m.un:'—'}</td>
       <td>${m.lead}d</td><td>${pto} ${m.un}</td>
-      <td style="font-weight:600;color:${dPed<=0?'var(--danger)':dPed<=3?'#c07000':'inherit'}">${dPed<=0?'AGORA':dPedDt.toLocaleDateString('pt-BR')}</td>
+      <td style="font-weight:600;color:${dPed<=0?'var(--danger)':dPed<=3?'#c07000':'inherit'}">${dPed>=999?'—':dPed<=0?'AGORA':dPedDt.toLocaleDateString('pt-BR')}</td>
       <td style="color:${dRup<14?'var(--danger)':dRup<21?'#c07000':'inherit'}">${dRup>=999?'—':dRupDt.toLocaleDateString('pt-BR')}</td>
       <td><span class="badge ${st==='ok'?'b-ok':st==='warn'?'b-warn':'b-danger'}">${st==='ok'?'Normal':st==='warn'?'Atenção':'Crítico'}</span></td>
     </tr>`;
   }).join('');
+  sincronizarConsumoSemMateriais(consumoPayload);
 }
 function simularReposicao(){
   const mpId=parseInt(document.getElementById('sim-mp').value),qty=parseFloat(document.getElementById('sim-qty').value)||0;
@@ -1266,11 +1309,13 @@ function simularReposicao(){
 }
 
 // ═══ RASTREABILIDADE ══════════════════════════════════════════
-function renderRastreabilidade(){ filtrarRastreabilidade(); }
-function filtrarRastreabilidade(){
+function fmtMoeda(v){ return 'R$ '+(Number(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function escHtml(v){ return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function valorTotalLote(l){ return l.valorUnit&&l.qtyEntrada?l.valorUnit*l.qtyEntrada:0; }
+function obterLotesRastreabilidadeFiltrados(){
   const b=document.getElementById('busca-lote').value.toLowerCase();
   const f=document.getElementById('filtro-rastr').value;
-  let lista=S.lotes.filter(l=>{
+  return S.lotes.filter(l=>{
     if(b&&!`${l.lote} ${l.forn} ${(S.materiais.find(m=>m.id===String(l.mpId))||{}).nome||''}`.toLowerCase().includes(b))return false;
     if(f==='ativo')return l.ativo;
     if(f==='encerrado')return !l.ativo;
@@ -1279,6 +1324,17 @@ function filtrarRastreabilidade(){
     if(f==='prox')return proxVencer(l.validade);
     return true;
   }).sort((a,b)=>(b.dataEntrega||b.dataCompra)>(a.dataEntrega||a.dataCompra)?1:-1);
+}
+function renderRastreabilidade(){ filtrarRastreabilidade(); }
+function filtrarRastreabilidade(){
+  let lista=obterLotesRastreabilidadeFiltrados();
+  const totalValor=lista.reduce((s,l)=>s+valorTotalLote(l),0);
+  const semValor=lista.filter(l=>!l.valorUnit||!l.qtyEntrada).length;
+  const resumo=document.getElementById('resumo-rastreabilidade');
+  if(resumo)resumo.innerHTML=`
+    <div class="stat-card"><div class="stat-label">Lotes filtrados</div><div class="stat-value" style="font-size:20px">${lista.length}</div><div class="stat-sub">conforme filtros atuais</div></div>
+    <div class="stat-card ok"><div class="stat-label">Valor Total</div><div class="stat-value" style="font-size:20px">${fmtMoeda(totalValor)}</div><div class="stat-sub">soma da coluna Valor Total</div></div>
+    <div class="stat-card warn"><div class="stat-label">Sem valor</div><div class="stat-value" style="font-size:20px">${semValor}</div><div class="stat-sub">lotes sem preço ou quantidade</div></div>`;
 
   document.getElementById('tbody-rastreabilidade').innerHTML=lista.length?lista.map(l=>{
     const mp=S.materiais.find(m=>m.id===String(l.mpId));
@@ -1303,6 +1359,37 @@ function filtrarRastreabilidade(){
 }
 
 // ═══ CONFIG ═══════════════════════════════════════════════════
+function imprimirRastreabilidade(){
+  const lista=obterLotesRastreabilidadeFiltrados();
+  if(!lista.length){notify('Nenhum lote para imprimir com os filtros atuais.','warn');return;}
+  const totalValor=lista.reduce((s,l)=>s+valorTotalLote(l),0);
+  const filtro=document.getElementById('filtro-rastr');
+  const busca=document.getElementById('busca-lote').value.trim();
+  const dataHoje=new Date().toLocaleDateString('pt-BR');
+  const rows=lista.map((l,i)=>{
+    const mp=S.materiais.find(m=>m.id===String(l.mpId));
+    const total=valorTotalLote(l);
+    return `<tr class="${i%2?'alt':''}">
+      <td>${escHtml(mp?mp.nome:'-')}</td><td>${escHtml(l.lote||'-')}</td><td>${escHtml(l.forn||'-')}</td>
+      <td>${escHtml(fmtBR(l.dataEntrega)||'-')}</td><td class="num">${Number(l.qtyEntrada||0).toFixed(1)}</td>
+      <td class="num">${Number(l.saldoLote||0).toFixed(1)}</td><td>${escHtml(mp?mp.un:'')}</td>
+      <td>${escHtml(l.validade?fmtBR(l.validade):'-')}</td><td class="num">${l.valorUnit?fmtMoeda(l.valorUnit):'-'}</td>
+      <td class="num">${total?fmtMoeda(total):'-'}</td><td>${l.ativo?'Ativo':'Encerrado'}</td><td>${escHtml(l.obs||'-')}</td>
+    </tr>`;
+  }).join('');
+  const html=`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>WMS Explosão - Rastreabilidade</title>
+<style>*{box-sizing:border-box}body{font-family:'Segoe UI',Arial,sans-serif;font-size:10px;color:#111;background:#fff;padding:16px}@page{size:A4 landscape;margin:10mm}.header{display:flex;justify-content:space-between;border-bottom:2px solid #1a472a;padding-bottom:10px;margin-bottom:12px}h1{font-size:16px;color:#1a472a;margin:0}p{margin:3px 0;color:#555}.meta{display:flex;gap:18px;flex-wrap:wrap;margin-bottom:12px;color:#444}table{width:100%;border-collapse:collapse}th{background:#1a472a;color:#fff;text-align:left;padding:5px;font-size:9px}td{padding:4px 5px;border-bottom:1px solid #ddd;vertical-align:top}tr.alt td{background:#f7f9f7}.num{text-align:right;white-space:nowrap}.total{margin:10px 0 12px;text-align:right;font-size:13px;font-weight:700;color:#1a472a}.no-print{margin-top:16px;text-align:center}@media print{.no-print{display:none!important}tr{page-break-inside:avoid}}</style>
+</head><body><div class="header"><div><h1>WMS Explosão</h1><p>Relatório de Rastreabilidade por Lote</p></div><div style="text-align:right"><strong>Data: ${dataHoje}</strong><p>Gerado: ${new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</p></div></div>
+<div class="meta"><span><b>Filtro:</b> ${escHtml(filtro.options[filtro.selectedIndex]?.text||'Todos')}</span><span><b>Busca:</b> ${escHtml(busca||'Nenhuma')}</span><span><b>Lotes:</b> ${lista.length}</span></div>
+<div class="total">Valor Total filtrado: ${fmtMoeda(totalValor)}</div>
+<table><thead><tr><th>Matéria-Prima</th><th>Lote</th><th>Fornecedor</th><th>Entrada</th><th>Qtd Entrada</th><th>Saldo Atual</th><th>Un</th><th>Validade</th><th>Valor Unit.</th><th>Valor Total</th><th>Status</th><th>Observação</th></tr></thead><tbody>${rows}</tbody></table>
+<div class="no-print"><button onclick="window.print()" style="padding:10px 28px;background:#1a472a;color:#fff;border:none;border-radius:6px;font-size:14px;cursor:pointer;font-weight:600">Imprimir</button><button onclick="window.close()" style="margin-left:12px;padding:10px 20px;background:#eee;color:#333;border:none;border-radius:6px;font-size:14px;cursor:pointer">Fechar</button></div></body></html>`;
+  const win=window.open('','_blank','width=1100,height=760');
+  win.document.write(html);
+  win.document.close();
+  setTimeout(()=>win.print(),600);
+}
+
 function renderConfig(){
   document.getElementById('url-config').value=SCRIPT_URL;
   document.getElementById('tbody-config').innerHTML=S.materiais.length
@@ -1458,25 +1545,20 @@ function renderIntelCusto(){
 }
 
 function renderIntelReposicao(){
-  const rows=S.materiais.map(m=>{
-    const cs=consumoSem(m.id),csd=cs?cs/7:null;
-    const s=saldoMP(m.id),dc=csd&&csd>0?Math.round(s/csd):999;
-    if(dc>(m.lead+m.seg+P.warn)&&s>m.min)return null;
-    const qSug=csd?Math.round((m.lead+m.seg+P.cob)*csd-s):m.min*3;
-    const urgencia=dc<=0?'danger':dc<=m.lead?'warn':'ok';
-    if(urgencia==='ok'&&s>m.min)return null;
-    return{m,cs,dc,qSug,urgencia};
-  }).filter(Boolean).sort((a,b)=>a.dc-b.dc);
+  const rows=S.materiais
+    .map(analiseReposicao)
+    .filter(a=>a.st!=='ok')
+    .sort((a,b)=>(a.st===b.st?0:a.st==='danger'?-1:1)||a.dc-b.dc);
   const el=document.getElementById('tbody-intel-repos');
   if(!el)return;
-  el.innerHTML=rows.length?rows.map(({m,cs,dc,qSug,urgencia})=>`<tr>
+  el.innerHTML=rows.length?rows.map(({m,cs,s,dc,qSug,st})=>`<tr>
     <td style="font-weight:600">${m.nome}</td>
-    <td>${saldoMP(m.id).toFixed(1)} ${m.un}</td>
+    <td>${s.toFixed(1)} ${m.un}</td>
     <td>${cs?cs.toFixed(1)+' '+m.un+'/sem':'—'}</td>
-    <td style="font-weight:600;color:${urgencia==='danger'?'var(--danger)':urgencia==='warn'?'#c07000':'inherit'}">${dc>=999?'∞':dc+'d'}</td>
+    <td style="font-weight:600;color:${st==='danger'?'var(--danger)':st==='warn'?'#c07000':'inherit'}">${dc>=999?'∞':dc+'d'}</td>
     <td>${m.lead}d</td>
     <td style="font-weight:700;color:var(--accent)">${Math.max(0,qSug).toFixed(0)} ${m.un}</td>
-    <td><span class="badge ${urgencia==='danger'?'b-danger':urgencia==='warn'?'b-warn':'b-ok'}">${urgencia==='danger'?'🔴 Urgente':urgencia==='warn'?'🟡 Em breve':'🟢 OK'}</span></td>
+    <td><span class="badge ${st==='danger'?'b-danger':st==='warn'?'b-warn':'b-ok'}">${st==='danger'?'🔴 Urgente':st==='warn'?'🟡 Em breve':'🟢 OK'}</span></td>
   </tr>`).join(''):'<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--text3)">✅ Nenhuma reposição necessária agora.</td></tr>';
 }
 
