@@ -1383,7 +1383,7 @@ function popularFiltrosPedido(prefix){
   const fornEl=document.getElementById(prefix+'-filtro-forn');
   fornEl.innerHTML='<option value="">Todos os Fornecedores</option>'+forns.map(f=>`<option value="${escHtml(f)}"${f===vForn?' selected':''}>${escHtml(f)}</option>`).join('');
   const mpEl=document.getElementById(prefix+'-filtro-mp');
-  mpEl.innerHTML='<option value="">Todas as MatÃ©rias-Primas</option>'+mps.map(m=>`<option value="${m.id}"${m.id===vMp?' selected':''}>${m.nome}</option>`).join('');
+  mpEl.innerHTML='<option value="">Todas as Matérias-Primas</option>'+mps.map(m=>`<option value="${m.id}"${m.id===vMp?' selected':''}>${m.nome}</option>`).join('');
 }
 function passaFiltrosPedido(analise,prefix){
   const m=analise.m;
