@@ -40,7 +40,8 @@ html,body{height:100%}body{font-family:-apple-system,BlinkMacSystemFont,'Segoe U
 .banner-input-row input{flex:1;min-width:200px;padding:7px 10px;border:1px solid var(--border2);border-radius:var(--radius-sm);font-size:13px;font-family:monospace;background:var(--surface);color:var(--text)}
 .banner-input-row button{padding:7px 16px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius-sm);font-size:13px;cursor:pointer;font-weight:500}
 .banner-input-row button:hover{background:#155030}
-.main{max-width:1400px;margin:0 auto;padding:1.5rem 2rem}
+.main{max-width:1680px;margin:0 auto;padding:1.25rem 1rem}
+@media(min-width:1600px){.main{max-width:1760px}}
 .page{display:none;flex-direction:column;gap:16px}
 .page.active{display:flex}
 /* Stat cards */
@@ -78,10 +79,28 @@ th{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;le
 td{padding:9px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
 tr:last-child td{border-bottom:none}
 tbody tr:hover td{background:var(--bg)}
-.tabela-pedidos{min-width:1180px;table-layout:fixed}
-.tabela-pedidos .col-pedido{width:178px;max-width:178px;white-space:normal;overflow:visible}
-.tabela-pedidos .col-status{width:96px;min-width:96px;white-space:nowrap}
-.pedido-cell{width:160px;max-width:160px;white-space:normal;line-height:1.25}
+.tabela-pedidos{width:max-content;min-width:100%;table-layout:auto}
+.tabela-pedidos th{padding:8px 10px;letter-spacing:.3px}
+.tabela-pedidos td{padding:8px 10px}
+.tabela-reposicao{min-width:1390px}
+.tabela-intel{width:100%;min-width:0}
+.tabela-reposicao th:nth-child(1),.tabela-reposicao td:nth-child(1){min-width:230px}
+.tabela-reposicao th:nth-child(2),.tabela-reposicao td:nth-child(2){min-width:85px}
+.tabela-reposicao th:nth-child(3),.tabela-reposicao td:nth-child(3){min-width:105px}
+.tabela-reposicao th:nth-child(4),.tabela-reposicao td:nth-child(4){min-width:120px}
+.tabela-reposicao th:nth-child(5),.tabela-reposicao td:nth-child(5){min-width:95px}
+.tabela-reposicao th:nth-child(6),.tabela-reposicao td:nth-child(6){min-width:130px}
+.tabela-reposicao th:nth-child(7),.tabela-reposicao td:nth-child(7){min-width:125px}
+.tabela-reposicao th:nth-child(8),.tabela-reposicao td:nth-child(8){min-width:125px}
+.tabela-intel th:nth-child(1),.tabela-intel td:nth-child(1){min-width:250px}
+.tabela-intel th:nth-child(2),.tabela-intel td:nth-child(2){min-width:115px}
+.tabela-intel th:nth-child(3),.tabela-intel td:nth-child(3){min-width:125px}
+.tabela-intel th:nth-child(4),.tabela-intel td:nth-child(4){min-width:110px}
+.tabela-intel th:nth-child(5),.tabela-intel td:nth-child(5){min-width:95px}
+.tabela-intel th:nth-child(6),.tabela-intel td:nth-child(6){min-width:170px}
+.tabela-pedidos .col-pedido{min-width:168px;width:168px;max-width:168px;white-space:normal;overflow:visible}
+.tabela-pedidos .col-status{min-width:135px;width:135px;white-space:nowrap}
+.pedido-cell{width:150px;max-width:150px;white-space:normal;line-height:1.25}
 .pedido-cell .badge{font-size:10px;padding:2px 7px}
 .pedido-dados{font-size:10.5px;color:var(--text2);margin-top:4px;line-height:1.3}
 .pedido-actions{display:flex;gap:3px;flex-wrap:wrap;margin-top:5px}
@@ -299,7 +318,7 @@ tbody tr:hover td{background:var(--bg)}
         <thead><tr>
           <th>Data Entrada</th><th>Matéria-Prima</th><th>Lote</th><th>Fornecedor</th>
           <th>Qtd Entrada</th><th>Saldo Lote</th><th>Un</th><th>Validade</th>
-          <th>Valor Unit.</th><th>Valor Total</th><th>Status</th><th></th>
+          <th>Valor Unit.</th><th>Valor Total</th><th>Status</th><th>Observação</th><th>Ações</th>
         </tr></thead>
         <tbody id="tbody-entradas"></tbody>
       </table>
@@ -372,9 +391,9 @@ tbody tr:hover td{background:var(--bg)}
     <div class="table-wrap">
       <table class="tabela-pedidos tabela-reposicao">
         <thead><tr>
-          <th>Matéria-Prima</th><th>Saldo Total</th><th>Lotes Ativos</th>
+          <th>Matéria-Prima</th><th>Saldo</th><th>Lotes Ativos</th>
           <th>Consumo/sem</th><th>Lead Time</th><th>Ponto de Pedido</th>
-          <th>Data Ideal do Pedido</th><th>Prev. Ruptura</th><th class="col-pedido">Pedido</th><th class="col-status">Status</th>
+          <th>Data Ideal</th><th>Prev. Ruptura</th><th class="col-pedido">Pedido</th><th class="col-status">Status</th>
         </tr></thead>
         <tbody id="tbody-reposicao"></tbody>
       </table>
@@ -1139,7 +1158,7 @@ function renderEntradas(){
       <td style="font-size:11px;color:var(--text2);max-width:200px">${l.obs||'—'}</td>
       <td>${l.ativo?`<button class="btn btn-sm btn-danger" onclick="encerrarLote(${l.id})">Encerrar</button>`:'—'}</td>
     </tr>`;
-  }).join(''):'<tr><td colspan="12" style="text-align:center;padding:20px;color:var(--text3)">Nenhum lote registrado.</td></tr>';
+  }).join(''):'<tr><td colspan="13" style="text-align:center;padding:20px;color:var(--text3)">Nenhum lote registrado.</td></tr>';
 }
 async function registrarLote(){
   const mpId=parseInt(document.getElementById('ent-mp').value);
@@ -1448,7 +1467,6 @@ function htmlPedidoResumo(a){
     <div class="pedido-dados">Ped.: ${fmtBR(p.dataPedido)}<br>Prev.: ${prev}${qty}</div>
     <div class="pedido-actions">
       <button class="btn btn-sm" onclick="abrirModalPedido('${a.m.id}')" style="background:var(--surface2);border:1px solid var(--border)">Editar</button>
-      <button class="btn btn-sm" onclick="alterarStatusPedido('${p.id}','recebido')" style="background:var(--surface2);border:1px solid var(--border)">Recebido</button>
       <button class="btn btn-sm btn-danger" onclick="alterarStatusPedido('${p.id}','cancelado')">Cancelar</button>
     </div>
   </div>`;
