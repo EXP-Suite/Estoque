@@ -221,6 +221,7 @@ tbody tr:hover td{background:var(--bg)}
   <button class="nav-btn" onclick="showPage('reposicao',this)">Reposição<span class="info-btn" data-tip="Tabela com todas as MPs mostrando quando e quanto pedir, com base no consumo histórico, lead time e dias de segurança cadastrados.">ⓘ</span></button>
   <button class="nav-btn" onclick="showPage('rastreabilidade',this)">Rastreabilidade<span class="info-btn" data-tip="Busque qualquer lote por nome, fornecedor ou número. Veja todo o histórico: origem, data, saldo atual, validade e valor.">ⓘ</span></button>
   <button class="nav-btn" onclick="showPage('intel',this)">🧠 Inteligência<span class="info-btn" data-tip="Análises automáticas: valor do estoque em R$, sugestão de compra com quantidade ideal, detecção de consumo anormal e histórico de divergências.">ⓘ</span></button>
+  <button class="nav-btn" onclick="showPage('precos',this)">Histórico de Preços<span class="info-btn" data-tip="Acompanhe a evolução do valor unitário pago em cada entrada, por matéria-prima, fornecedor e período.">ⓘ</span></button>
   <button class="nav-btn" onclick="showPage('config',this)">Configurações<span class="info-btn" data-tip="Conexão com o Google Sheets, cadastro de novas MPs e parâmetros globais de inteligência e reposição.">ⓘ</span></button>
 </div>
 
@@ -302,7 +303,7 @@ tbody tr:hover td{background:var(--bg)}
       <div class="form-group"><label>Número do Lote *</label><input type="text" id="ent-lote" placeholder="Ex: 16SD6F1A5D1" style="text-transform:uppercase"></div>
       <div class="form-group"><label>Validade</label><input type="date" id="ent-validade"></div>
       <div class="form-group"><label>Data Efetiva de Entrega</label><input type="date" id="ent-data-entrega" title="Ao preencher, o lote entra no saldo disponível"></div>
-      <div class="form-group"><label>Valor Unitário (R$)</label><input type="number" id="ent-valor" step="0.01" min="0" placeholder="0,00"></div>
+      <div class="form-group"><label>Valor Unitário (R$) *</label><input type="number" id="ent-valor" step="0.01" min="0.01" placeholder="0,00" required></div>
       <div class="form-group"><label>Observações</label><input type="text" id="ent-obs" placeholder="Opcional"></div>
     </div>
     <div class="btn-row">
@@ -501,6 +502,48 @@ tbody tr:hover td{background:var(--bg)}
     </div>
   </div>
 
+</div>
+
+<!-- ═══ HISTÓRICO DE PREÇOS ════════════════════════════════════ -->
+<div class="page" id="page-precos">
+  <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px;padding:12px 0 4px;border-bottom:1px solid var(--border)">
+    <span style="font-size:12px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px">Filtrar histórico:</span>
+    <select id="preco-filtro-cat" onchange="renderHistoricoPrecos()" style="font-size:13px;padding:5px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);cursor:pointer"><option value="">Todas as Categorias</option></select>
+    <select id="preco-filtro-forn" onchange="renderHistoricoPrecos()" style="font-size:13px;padding:5px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);cursor:pointer"><option value="">Todos os Fornecedores</option></select>
+    <select id="preco-filtro-mp" onchange="renderHistoricoPrecos()" style="font-size:13px;padding:5px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);cursor:pointer"><option value="">Todas as Matérias-Primas</option></select>
+    <select id="preco-filtro-periodo" onchange="renderHistoricoPrecos()" style="font-size:13px;padding:5px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);cursor:pointer">
+      <option value="">Todo o histórico</option><option value="30">Últimos 30 dias</option><option value="90">Últimos 90 dias</option><option value="180">Últimos 180 dias</option><option value="365">Últimos 12 meses</option>
+    </select>
+    <button onclick="limparFiltrosPrecos()" style="font-size:12px;padding:5px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface2);color:var(--text3);cursor:pointer">✕ Limpar filtros</button>
+    <button class="btn btn-sm" onclick="imprimirHistoricoPrecos()" style="background:var(--surface2);border:1px solid var(--border)">Imprimir</button>
+    <span id="preco-filtro-info" style="font-size:12px;color:var(--text3);margin-left:4px"></span>
+  </div>
+
+  <div class="summary-grid" id="preco-cards"></div>
+
+  <div class="grid2">
+    <div class="card">
+      <div class="card-title">Evolução do Valor Unitário</div>
+      <div class="chart-box" style="height:260px"><canvas id="chart-preco-evolucao" role="img" aria-label="Evolução de preço unitário">Gráfico.</canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Último Valor por Matéria-Prima</div>
+      <div class="chart-box" style="height:260px"><canvas id="chart-preco-ultimos" role="img" aria-label="Último preço por matéria-prima">Gráfico.</canvas></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Histórico de Preços por Entrada</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>Matéria-Prima</th><th>Categoria</th><th>Fornecedor</th><th>Lote</th>
+          <th>Entrada</th><th>Qtd Entrada</th><th>Valor Unit.</th><th>Valor Total</th><th>Status Lote</th>
+        </tr></thead>
+        <tbody id="tbody-precos"></tbody>
+      </table>
+    </div>
+  </div>
 </div>
 
 <!-- ═══ CONFIGURAÇÕES ════════════════════════════════════════════ -->
@@ -704,6 +747,10 @@ const TABLE_TIPS = {
   'validade':'Data limite de uso do lote, quando informada.',
   'valor unit.':'Preço unitário informado para este lote.',
   'valor total':'Valor unitário multiplicado pela quantidade de entrada do lote.',
+  'último valor':'Valor unitário mais recente encontrado nas entradas filtradas.',
+  'valor médio':'Média ponderada pelo volume recebido nas entradas filtradas.',
+  'menor valor':'Menor valor unitário encontrado nas entradas filtradas.',
+  'maior valor':'Maior valor unitário encontrado nas entradas filtradas.',
   'observação':'Informação livre cadastrada sobre o lote ou material.',
   'contagem física':'Quantidade real encontrada pelo operador na contagem.',
   'divergência':'Diferença entre a contagem física e o saldo teórico.',
@@ -780,7 +827,7 @@ function resetParams(){
 let S = { materiais: [], lotes: [], contagens: [], pedidos: [] };
 let consumoSemSyncKey = '';
 let consumoSemSyncTimer = null;
-let chartC = null, chartD = null, chartI = null;
+let chartC = null, chartD = null, chartI = null, chartP = null, chartPU = null;
 
 // ═══ INIT ═════════════════════════════════════════════════════
 window.onload = () => {
@@ -1005,7 +1052,7 @@ function showPage(p,btn){
   renderPage(p);
 }
 function renderPage(p){
-  const m={dashboard:renderDashboard,estoque:renderEstoque,entradas:renderEntradas,contagem:renderContagem,consumo:renderConsumo,reposicao:renderReposicao,rastreabilidade:renderRastreabilidade,intel:renderIntel,config:renderConfig};
+  const m={dashboard:renderDashboard,estoque:renderEstoque,entradas:renderEntradas,contagem:renderContagem,consumo:renderConsumo,reposicao:renderReposicao,rastreabilidade:renderRastreabilidade,intel:renderIntel,precos:renderHistoricoPrecos,config:renderConfig};
   if(m[p])m[p]();
   aplicarDicasTabelas();
 }
@@ -1165,10 +1212,11 @@ async function registrarLote(){
   const qty=parseFloat(document.getElementById('ent-qty').value);
   const forn=document.getElementById('ent-forn').value.trim();
   const lote=document.getElementById('ent-lote').value.trim().toUpperCase();
-  if(!mpId||!qty||!forn||!lote){notify('Preencha os campos obrigatórios: MP, Quantidade, Fornecedor e Lote.','warn');return;}
+  const valorUnit=parseFloat(document.getElementById('ent-valor').value);
+  if(!mpId||!qty||!forn||!lote||!valorUnit||valorUnit<=0){notify('Preencha os campos obrigatórios: MP, Quantidade, Fornecedor, Lote e Valor Unitário.','warn');return;}
   const btn=document.getElementById('btn-ent');btn.disabled=true;btn.textContent='Salvando...';
   try {
-    const r=await gsCall({action:'saveLote',data:{mpId,qtyEntrada:qty,forn,lote,dataCompra:'',dataEntrega:document.getElementById('ent-data-entrega').value,valorUnit:parseFloat(document.getElementById('ent-valor').value)||null,validade:document.getElementById('ent-validade').value,obs:document.getElementById('ent-obs').value}});
+    const r=await gsCall({action:'saveLote',data:{mpId,qtyEntrada:qty,forn,lote,dataCompra:'',dataEntrega:document.getElementById('ent-data-entrega').value,valorUnit,validade:document.getElementById('ent-validade').value,obs:document.getElementById('ent-obs').value}});
     if(r&&r.ok){await sincronizar(true);notify('Lote registrado com sucesso!');limparEnt();renderEntradas();}
     else if(r) notify(r.error||'Erro ao salvar lote.','error');
     else notify('Sem resposta do servidor.','error');
@@ -1675,6 +1723,138 @@ function imprimirRastreabilidade(){
   win.document.write(html);
   win.document.close();
   setTimeout(()=>win.print(),600);
+}
+
+// ═══ HISTÓRICO DE PREÇOS ══════════════════════════════════════
+function dataPrecoLote(l){ return l.dataEntrega||l.dataCompra||''; }
+function lotesComPreco(){
+  return S.lotes.filter(l=>l.valorUnit&&l.valorUnit>0&&dataPrecoLote(l));
+}
+function popularFiltrosPrecos(){
+  const catEl=document.getElementById('preco-filtro-cat');
+  if(!catEl)return;
+  const vCat=catEl.value, vForn=document.getElementById('preco-filtro-forn').value, vMp=document.getElementById('preco-filtro-mp').value;
+  const lotes=lotesComPreco();
+  const matsComPreco=new Map(lotes.map(l=>[String(l.mpId),S.materiais.find(m=>String(m.id)===String(l.mpId))]).filter(x=>x[1]));
+  const cats=[...new Set([...matsComPreco.values()].map(m=>m.cat).filter(Boolean))].sort();
+  const forns=[...new Set(lotes.map(l=>l.forn).filter(Boolean))].sort();
+  const mps=[...matsComPreco.values()].sort((a,b)=>a.nome.localeCompare(b.nome));
+  catEl.innerHTML='<option value="">Todas as Categorias</option>'+cats.map(c=>`<option value="${escHtml(c)}"${c===vCat?' selected':''}>${escHtml(c)}</option>`).join('');
+  document.getElementById('preco-filtro-forn').innerHTML='<option value="">Todos os Fornecedores</option>'+forns.map(f=>`<option value="${escHtml(f)}"${f===vForn?' selected':''}>${escHtml(f)}</option>`).join('');
+  document.getElementById('preco-filtro-mp').innerHTML='<option value="">Todas as Matérias-Primas</option>'+mps.map(m=>`<option value="${m.id}"${String(m.id)===String(vMp)?' selected':''}>${escHtml(m.nome)}</option>`).join('');
+}
+function obterHistoricoPrecosFiltrado(){
+  const cat=document.getElementById('preco-filtro-cat')?.value||'';
+  const forn=document.getElementById('preco-filtro-forn')?.value||'';
+  const mpId=document.getElementById('preco-filtro-mp')?.value||'';
+  const periodo=parseInt(document.getElementById('preco-filtro-periodo')?.value)||0;
+  const limite=new Date(); if(periodo)limite.setDate(limite.getDate()-periodo);
+  return lotesComPreco().filter(l=>{
+    const mp=S.materiais.find(m=>String(m.id)===String(l.mpId));
+    if(!mp)return false;
+    if(cat&&mp.cat!==cat)return false;
+    if(forn&&l.forn!==forn)return false;
+    if(mpId&&String(l.mpId)!==String(mpId))return false;
+    if(periodo&&new Date(dataPrecoLote(l)+'T12:00')<limite)return false;
+    return true;
+  }).sort((a,b)=>{
+    const da=dataPrecoLote(a), db=dataPrecoLote(b);
+    if(da!==db)return db>da?1:-1;
+    return String(b.id).localeCompare(String(a.id));
+  });
+}
+function resumoPrecos(lista){
+  const totalQtd=lista.reduce((s,l)=>s+(Number(l.qtyEntrada)||0),0);
+  const media=totalQtd?lista.reduce((s,l)=>s+(Number(l.valorUnit)||0)*(Number(l.qtyEntrada)||0),0)/totalQtd:0;
+  const valores=lista.map(l=>Number(l.valorUnit)||0).filter(v=>v>0);
+  const ultimo=lista[0]?.valorUnit||0;
+  const alvoMpId=document.getElementById('preco-filtro-mp')?.value||(lista[0]?String(lista[0].mpId):'');
+  const serie=lista.filter(l=>String(l.mpId)===String(alvoMpId)).sort((a,b)=>{
+    const da=dataPrecoLote(a), db=dataPrecoLote(b);
+    if(da!==db)return da>db?1:-1;
+    return String(a.id).localeCompare(String(b.id));
+  });
+  const primeiro=serie[0], anterior=serie.length>1?serie[serie.length-2]:null, atual=serie[serie.length-1];
+  const varAnterior=atual&&anterior&&anterior.valorUnit?((atual.valorUnit-anterior.valorUnit)/anterior.valorUnit)*100:null;
+  const varPeriodo=atual&&primeiro&&primeiro!==atual&&primeiro.valorUnit?((atual.valorUnit-primeiro.valorUnit)/primeiro.valorUnit)*100:null;
+  const mp=S.materiais.find(m=>String(m.id)===String(alvoMpId));
+  return {ultimo,media,min:valores.length?Math.min(...valores):0,max:valores.length?Math.max(...valores):0,varAnterior,varPeriodo,atual,anterior,primeiro,mpNome:mp?mp.nome:''};
+}
+function fmtPctPreco(v){ return v==null?'—':(v>0?'+':'')+v.toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1})+'%'; }
+function classeVarPreco(v){ return v==null?'':v>0?'danger':v<0?'ok':''; }
+function renderHistoricoPrecos(){
+  popularFiltrosPrecos();
+  const lista=obterHistoricoPrecosFiltrado();
+  const info=document.getElementById('preco-filtro-info');
+  if(info)info.textContent=`${lista.length} entrada(s) com preço`;
+  const r=resumoPrecos(lista);
+  const cards=document.getElementById('preco-cards');
+  if(cards)cards.innerHTML=`
+    <div class="stat-card"><div class="stat-label">Entradas</div><div class="stat-value" style="font-size:22px">${lista.length}</div><div class="stat-sub">com valor unitário</div></div>
+    <div class="stat-card ok"><div class="stat-label">Último Valor</div><div class="stat-value" style="font-size:20px">${r.ultimo?fmtMoeda(r.ultimo):'—'}</div><div class="stat-sub">entrada mais recente</div></div>
+    <div class="stat-card"><div class="stat-label">Valor Médio</div><div class="stat-value" style="font-size:20px">${r.media?fmtMoeda(r.media):'—'}</div><div class="stat-sub">ponderado por quantidade</div></div>
+    <div class="stat-card warn"><div class="stat-label">Menor Valor</div><div class="stat-value" style="font-size:20px">${r.min?fmtMoeda(r.min):'—'}</div><div class="stat-sub">no filtro atual</div></div>
+    <div class="stat-card danger"><div class="stat-label">Maior Valor</div><div class="stat-value" style="font-size:20px">${r.max?fmtMoeda(r.max):'—'}</div><div class="stat-sub">no filtro atual</div></div>
+    <div class="stat-card ${classeVarPreco(r.varAnterior)}"><div class="stat-label">Var. Anterior</div><div class="stat-value" style="font-size:20px">${fmtPctPreco(r.varAnterior)}</div><div class="stat-sub">${r.anterior?`${fmtMoeda(r.anterior.valorUnit)} → ${fmtMoeda(r.atual.valorUnit)}`:'precisa de 2 entradas'}</div></div>
+    <div class="stat-card ${classeVarPreco(r.varPeriodo)}"><div class="stat-label">Var. Período</div><div class="stat-value" style="font-size:20px">${fmtPctPreco(r.varPeriodo)}</div><div class="stat-sub">${r.primeiro&&r.atual&&r.primeiro!==r.atual?`${fmtBR(dataPrecoLote(r.primeiro),true)} → ${fmtBR(dataPrecoLote(r.atual),true)}`:'precisa de histórico'}</div></div>`;
+  renderGraficosPrecos(lista);
+  const tbody=document.getElementById('tbody-precos');
+  if(tbody)tbody.innerHTML=lista.length?lista.map(l=>{
+    const mp=S.materiais.find(m=>String(m.id)===String(l.mpId));
+    const total=valorTotalLote(l);
+    return `<tr>
+      <td style="font-weight:600">${mp?mp.nome:'—'}</td>
+      <td>${mp?mp.cat||'—':'—'}</td>
+      <td>${l.forn||'—'}</td>
+      <td><span class="badge b-lote">${l.lote||'—'}</span></td>
+      <td>${fmtBR(dataPrecoLote(l))}</td>
+      <td>${Number(l.qtyEntrada||0).toFixed(1)} ${mp?mp.un:''}</td>
+      <td>${fmtMoeda(l.valorUnit)}</td>
+      <td>${total?fmtMoeda(total):'—'}</td>
+      <td>${l.ativo?'<span class="badge b-ok">Ativo</span>':'<span class="badge b-cat">Encerrado</span>'}</td>
+    </tr>`;
+  }).join(''):'<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--text3)">Nenhuma entrada com preço encontrada.</td></tr>';
+  aplicarDicasTabelas();
+}
+function renderGraficosPrecos(lista){
+  const mpSelecionada=document.getElementById('preco-filtro-mp')?.value||'';
+  const alvoMpId=mpSelecionada||(lista[0]?String(lista[0].mpId):'');
+  const pontos=lista.filter(l=>String(l.mpId)===String(alvoMpId)).sort((a,b)=>{
+    const da=dataPrecoLote(a), db=dataPrecoLote(b);
+    if(da!==db)return da>db?1:-1;
+    return String(a.id).localeCompare(String(b.id));
+  });
+  const ctxLinha=document.getElementById('chart-preco-evolucao');
+  if(ctxLinha){
+    if(chartP)chartP.destroy();
+    const mp=S.materiais.find(m=>String(m.id)===String(alvoMpId));
+    chartP=new Chart(ctxLinha,{type:'line',data:{labels:pontos.map(l=>`${fmtBR(dataPrecoLote(l),true)} · ${l.lote||''}`),datasets:[{label:mp?'Valor unitário - '+mp.nome:'Valor unitário',data:pontos.map(l=>Number(l.valorUnit)||0),borderColor:'#1a5c38',backgroundColor:'rgba(26,92,56,.08)',tension:.25,fill:true,pointRadius:4,pointBackgroundColor:'#1a5c38'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,labels:{font:{size:11}}}},scales:{y:{beginAtZero:false,ticks:{font:{size:11},callback:v=>'R$ '+Number(v).toLocaleString('pt-BR')}},x:{ticks:{font:{size:10},maxRotation:35,minRotation:0}}}}});
+  }
+  const ultimos=new Map();
+  lista.forEach(l=>{if(!ultimos.has(String(l.mpId)))ultimos.set(String(l.mpId),l);});
+  const barras=[...ultimos.values()].slice(0,10).map(l=>({l,mp:S.materiais.find(m=>String(m.id)===String(l.mpId))})).filter(x=>x.mp);
+  const ctxBar=document.getElementById('chart-preco-ultimos');
+  if(ctxBar){
+    if(chartPU)chartPU.destroy();
+    chartPU=new Chart(ctxBar,{type:'bar',data:{labels:barras.map(x=>x.mp.nome.length>18?x.mp.nome.slice(0,18)+'…':x.mp.nome),datasets:[{label:'Último valor unitário',data:barras.map(x=>Number(x.l.valorUnit)||0),backgroundColor:'#2f6f4e',borderRadius:4}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:11},callback:v=>'R$ '+Number(v).toLocaleString('pt-BR')}},y:{ticks:{font:{size:10}}}}}});
+  }
+}
+function limparFiltrosPrecos(){
+  ['cat','forn','mp','periodo'].forEach(k=>{const el=document.getElementById('preco-filtro-'+k);if(el)el.value='';});
+  renderHistoricoPrecos();
+}
+function imprimirHistoricoPrecos(){
+  const lista=obterHistoricoPrecosFiltrado();
+  const rows=lista.map(l=>{
+    const mp=S.materiais.find(m=>String(m.id)===String(l.mpId));
+    const total=valorTotalLote(l);
+    return `<tr>
+      <td>${escHtml(mp?mp.nome:'-')}</td><td>${escHtml(mp?mp.cat||'-':'-')}</td><td>${escHtml(l.forn||'-')}</td>
+      <td>${escHtml(l.lote||'-')}</td><td>${escHtml(fmtBR(dataPrecoLote(l)))}</td><td>${Number(l.qtyEntrada||0).toFixed(1)} ${escHtml(mp?mp.un:'')}</td>
+      <td>${fmtMoeda(l.valorUnit)}</td><td>${total?fmtMoeda(total):'-'}</td><td>${l.ativo?'Ativo':'Encerrado'}</td>
+    </tr>`;
+  });
+  abrirImpressaoPedido('Historico de Precos','Entradas conforme filtros atuais de Historico de Precos',['Materia-Prima','Categoria','Fornecedor','Lote','Entrada','Qtd Entrada','Valor Unit.','Valor Total','Status Lote'],rows);
 }
 
 function renderConfig(){
