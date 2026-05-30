@@ -145,6 +145,14 @@ tbody tr:hover td{background:var(--bg)}
 .alert-desc{font-size:11px;color:var(--text2);margin-top:1px}
 .alert-cta{font-size:12px;font-weight:600;color:var(--accent);cursor:pointer}
 .alert-cta:hover{text-decoration:underline}
+.dashboard-alert-card{padding-bottom:12px}
+.dashboard-alert-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.dashboard-alert-count{font-size:11px;color:var(--text3);font-weight:600;text-transform:none;letter-spacing:0}
+.dashboard-alert-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:8px;max-height:300px;overflow:auto;padding-right:4px}
+.dashboard-alert-list .alert-item{margin-bottom:0;padding:8px 10px;align-items:flex-start}
+.dashboard-alert-list .alert-icon{width:24px;height:24px;font-size:12px}
+.dashboard-alert-list .alert-name{font-size:12px}
+.dashboard-alert-list .alert-desc{font-size:10.5px}
 /* Coverage */
 .cov-row{display:flex;align-items:center;gap:8px;margin-bottom:7px}
 .cov-name{width:135px;font-size:12px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -248,9 +256,9 @@ tbody tr:hover td{background:var(--bg)}
 <!-- ═══ DASHBOARD ═══════════════════════════════════════════════ -->
 <div class="page active" id="page-dashboard">
   <div class="summary-grid" id="dash-metrics"></div>
-  <div class="grid2">
-    <div class="card"><div class="card-title">Cobertura Consolidada por Matéria-Prima (dias)</div><div id="cov-chart"></div></div>
-    <div class="card"><div class="card-title">Alertas de Estoque</div><div id="alertas-list"></div></div>
+  <div class="card dashboard-alert-card">
+    <div class="card-title dashboard-alert-head"><span>Alertas de Estoque</span><span class="dashboard-alert-count" id="alertas-count"></span></div>
+    <div id="alertas-list" class="dashboard-alert-list"></div>
   </div>
   <div class="grid2">
     <div class="card"><div class="card-title">Consumo Mensal Estimado</div><div class="chart-box"><canvas id="chart-consumo" role="img" aria-label="Consumo mensal por MP">Consumo mensal.</canvas></div></div>
@@ -1040,6 +1048,7 @@ function analiseReposicao(mp){
   return {m:mp,cs,csd,s,la,pto,dc,dRup:dc,dPed,qSug,st,pedido};
 }
 function diasCob(mp){ return analiseReposicao(mp).dc; }
+function getCoberturaTexto(dc){ return 'Cob.: '+(dc>=999?'∞':dc+'d'); }
 function pontoPedido(mp){ return analiseReposicao(mp).pto; }
 function stMP(mp){ return analiseReposicao(mp).st; }
 function vencido(v){ return v&&new Date(v+'T00:00')<new Date(); }
@@ -1082,20 +1091,13 @@ function renderDashboard(){
     <div class="stat-card danger"><div class="stat-label">Críticos</div><div class="stat-value">${d}</div><div class="stat-sub">abaixo do mínimo</div></div>
     <div class="stat-card ${vencidos>0?'danger':'ok'}"><div class="stat-label">Lotes Vencidos</div><div class="stat-value">${vencidos}</div><div class="stat-sub">em estoque</div></div>`;
 
-  // Cobertura
-  const sorted=[...mats].map(m=>({...m,s:saldoMP(m.id),dias:diasCob(m),st:stMP(m)})).sort((a,b)=>a.dias-b.dias).slice(0,9);
-  const mx=Math.max(...sorted.map(m=>Math.min(m.dias,60)),30);
-  document.getElementById('cov-chart').innerHTML=sorted.map(m=>{
-    const p=Math.min(100,Math.round(Math.min(m.dias,60)/mx*100));
-    const cor=m.st==='danger'?'var(--danger)':m.st==='warn'?'#e0a000':'var(--accent)';
-    return`<div class="cov-row"><span class="cov-name" title="${m.nome}">${m.nome}</span><div class="cov-fill-wrap"><div class="cov-fill" style="width:${p}%;background:${cor}"></div></div><span class="cov-days" style="color:${cor}">${m.dias>=999?'∞':m.dias+'d'}</span></div>`;
-  }).join('');
-
   // Alertas
   const alertas=mats.filter(m=>stMP(m)!=='ok').sort((a,b)=>stMP(a)==='danger'?-1:1);
+  const alertasCount=document.getElementById('alertas-count');
+  if(alertasCount)alertasCount.textContent=alertas.length?`${alertas.length} item(ns)`:'';
   document.getElementById('alertas-list').innerHTML=alertas.length?alertas.map(m=>{
     const st=stMP(m),dc=diasCob(m),s=saldoMP(m.id),la=lotesAtivos(m.id).length;
-    return`<div class="alert-item ${st}"><div class="alert-icon ${st}">${st==='danger'?'!':'↓'}</div><div class="alert-body"><div class="alert-name">${m.nome}</div><div class="alert-desc">${st==='danger'?`Saldo ${s.toFixed(1)} ${m.un} (${la} lotes) — mínimo: ${m.min}`:`Cobertura ${dc>=999?'∞':dc+'d'} — lead time: ${m.lead}d`}</div></div><span class="alert-cta" onclick="showPage('reposicao')">Ver →</span></div>`;
+    return`<div class="alert-item ${st}"><div class="alert-icon ${st}">${st==='danger'?'!':'↓'}</div><div class="alert-body"><div class="alert-name">${m.nome}</div><div class="alert-desc">${st==='danger'?`Saldo ${s.toFixed(1)} ${m.un} · Mín.: ${m.min} · ${la} lote(s)`:getCoberturaTexto(dc)+' · Lead: '+m.lead+'d'}</div></div><span class="alert-cta" onclick="showPage('reposicao')">Ver →</span></div>`;
   }).join(''):'<div class="empty">Nenhum alerta. Estoque em ordem.</div>';
 
   // Lotes recentes
