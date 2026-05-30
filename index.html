@@ -19,9 +19,12 @@
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%}body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:14px;min-height:100vh}
 .topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 2rem;display:flex;align-items:center;justify-content:space-between;height:64px;position:sticky;top:0;z-index:50}
-.topbar-brand{font-size:16px;font-weight:600;color:var(--accent);display:flex;align-items:center;gap:10px}
-.topbar-logo{width:34px;height:34px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px;flex-shrink:0}
-.topbar-sub{color:var(--text2);font-weight:400;font-size:13px}
+.topbar-brand{color:var(--accent);display:flex;align-items:center;gap:12px}
+.topbar-logo{width:44px;height:44px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:15px;flex-shrink:0}
+.topbar-title{display:flex;flex-direction:column;line-height:1.15}
+.topbar-title-main{font-size:18px;font-weight:700;color:var(--accent)}
+.topbar-sub{color:var(--text2);font-weight:400;font-size:15px}
+.topbar-title-en{font-size:12px;font-weight:700;font-style:italic;color:var(--text2);margin-top:3px}
 .topbar-right{display:flex;gap:10px;align-items:center}
 .sync-info{font-size:12px;color:var(--text3);display:flex;align-items:center;gap:5px}
 .sync-dot{width:7px;height:7px;border-radius:50%;background:#27ae60;flex-shrink:0}
@@ -202,8 +205,11 @@ tbody tr:hover td{background:var(--bg)}
 
 <div class="topbar">
   <div class="topbar-brand">
-    <div class="topbar-logo">EA</div>
-    <div style="display:flex;align-items:center;gap:10px"><span>WMS Explosão<span class="topbar-sub"> · Controle de Estoque por Lotes</span></span></div>
+    <div class="topbar-logo">WMS</div>
+    <div class="topbar-title">
+      <div class="topbar-title-main">WMS Explosão <span class="topbar-sub">· Controle de Estoque</span></div>
+      <div class="topbar-title-en">Warehouse Management System</div>
+    </div>
   </div>
   <div class="topbar-right">
     <div class="sync-info"><div class="sync-dot offline" id="sync-dot"></div><span id="sync-label">Sem conexão</span></div>
@@ -514,6 +520,9 @@ tbody tr:hover td{background:var(--bg)}
     <select id="preco-filtro-periodo" onchange="renderHistoricoPrecos()" style="font-size:13px;padding:5px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);cursor:pointer">
       <option value="">Todo o histórico</option><option value="30">Últimos 30 dias</option><option value="90">Últimos 90 dias</option><option value="180">Últimos 180 dias</option><option value="365">Últimos 12 meses</option>
     </select>
+    <select id="preco-filtro-status" onchange="renderHistoricoPrecos()" style="font-size:13px;padding:5px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);cursor:pointer">
+      <option value="ativo" selected>Lotes ativos</option><option value="">Todos os lotes</option><option value="encerrado">Lotes encerrados</option>
+    </select>
     <button onclick="limparFiltrosPrecos()" style="font-size:12px;padding:5px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface2);color:var(--text3);cursor:pointer">✕ Limpar filtros</button>
     <button class="btn btn-sm" onclick="imprimirHistoricoPrecos()" style="background:var(--surface2);border:1px solid var(--border)">Imprimir</button>
     <span id="preco-filtro-info" style="font-size:12px;color:var(--text3);margin-left:4px"></span>
@@ -791,6 +800,7 @@ function aplicarDicasTabelas(){
 }
 
 const COBERTURA_COMPRA_DIAS = 60;
+const LIMITE_TABELA_PRECOS = 100;
 const PARAMS_DEFAULT = { lead:7, seg:3, cob:COBERTURA_COMPRA_DIAS, crit:7, warn:14, anom:50 };
 let P = { ...PARAMS_DEFAULT };
 function carregarParams(){
@@ -1748,6 +1758,7 @@ function obterHistoricoPrecosFiltrado(){
   const forn=document.getElementById('preco-filtro-forn')?.value||'';
   const mpId=document.getElementById('preco-filtro-mp')?.value||'';
   const periodo=parseInt(document.getElementById('preco-filtro-periodo')?.value)||0;
+  const status=document.getElementById('preco-filtro-status')?.value||'';
   const limite=new Date(); if(periodo)limite.setDate(limite.getDate()-periodo);
   return lotesComPreco().filter(l=>{
     const mp=S.materiais.find(m=>String(m.id)===String(l.mpId));
@@ -1756,6 +1767,8 @@ function obterHistoricoPrecosFiltrado(){
     if(forn&&l.forn!==forn)return false;
     if(mpId&&String(l.mpId)!==String(mpId))return false;
     if(periodo&&new Date(dataPrecoLote(l)+'T12:00')<limite)return false;
+    if(status==='ativo'&&!l.ativo)return false;
+    if(status==='encerrado'&&l.ativo)return false;
     return true;
   }).sort((a,b)=>{
     const da=dataPrecoLote(a), db=dataPrecoLote(b);
@@ -1799,7 +1812,9 @@ function renderHistoricoPrecos(){
     <div class="stat-card ${classeVarPreco(r.varPeriodo)}"><div class="stat-label">Var. Período</div><div class="stat-value" style="font-size:20px">${fmtPctPreco(r.varPeriodo)}</div><div class="stat-sub">${r.primeiro&&r.atual&&r.primeiro!==r.atual?`${fmtBR(dataPrecoLote(r.primeiro),true)} → ${fmtBR(dataPrecoLote(r.atual),true)}`:'precisa de histórico'}</div></div>`;
   renderGraficosPrecos(lista);
   const tbody=document.getElementById('tbody-precos');
-  if(tbody)tbody.innerHTML=lista.length?lista.map(l=>{
+  const listaTabela=lista.slice(0,LIMITE_TABELA_PRECOS);
+  const avisoLimite=lista.length>LIMITE_TABELA_PRECOS?`<tr><td colspan="9" style="text-align:center;padding:10px;color:var(--text3);background:var(--surface2)">Mostrando as ${LIMITE_TABELA_PRECOS} entradas mais recentes de ${lista.length}. Use os filtros para refinar.</td></tr>`:'';
+  if(tbody)tbody.innerHTML=lista.length?avisoLimite+listaTabela.map(l=>{
     const mp=S.materiais.find(m=>String(m.id)===String(l.mpId));
     const total=valorTotalLote(l);
     return `<tr>
@@ -1841,6 +1856,7 @@ function renderGraficosPrecos(lista){
 }
 function limparFiltrosPrecos(){
   ['cat','forn','mp','periodo'].forEach(k=>{const el=document.getElementById('preco-filtro-'+k);if(el)el.value='';});
+  const st=document.getElementById('preco-filtro-status');if(st)st.value='ativo';
   renderHistoricoPrecos();
 }
 function imprimirHistoricoPrecos(){
