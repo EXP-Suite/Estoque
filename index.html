@@ -322,7 +322,7 @@ tbody tr:hover td{background:var(--bg)}
       <div class="form-group"><label>Número do Lote *</label><input type="text" id="ent-lote" placeholder="Ex: 16SD6F1A5D1" style="text-transform:uppercase"></div>
       <div class="form-group"><label>Validade</label><input type="date" id="ent-validade"></div>
       <div class="form-group"><label>Data Efetiva de Entrega</label><input type="date" id="ent-data-entrega" title="Ao preencher, o lote entra no saldo disponível"></div>
-      <div class="form-group"><label>Valor ref. (kg/milheiro) R$ *</label><input type="number" id="ent-valor" step="0.01" min="0.01" placeholder="0,00" required></div>
+      <div class="form-group"><label>Valor ref. (kg/milheiro) R$ * <span class="info-btn" onclick="abrirModalAjudaEntrada()" style="cursor:pointer" data-tip="Clique para ver como lançar quantidade e valor corretamente.">ⓘ</span></label><input type="number" id="ent-valor" step="0.01" min="0.01" placeholder="0,00" required></div>
       <div class="form-group"><label>Observações</label><input type="text" id="ent-obs" placeholder="Opcional"></div>
     </div>
     <div class="btn-row">
@@ -1100,6 +1100,7 @@ function showPage(p,btn){
   document.getElementById('page-'+p).classList.add('active');
   if(btn)btn.classList.add('active');
   renderPage(p);
+  if(p==='entradas'&&btn)setTimeout(abrirModalAjudaEntrada,80);
 }
 function renderPage(p){
   const m={dashboard:renderDashboard,estoque:renderEstoque,entradas:renderEntradas,contagem:renderContagem,consumo:renderConsumo,reposicao:renderReposicao,rastreabilidade:renderRastreabilidade,intel:renderIntel,precos:renderHistoricoPrecos,config:renderConfig};
@@ -1617,6 +1618,14 @@ function abrirModalPedido(mpId){
   document.getElementById('modal-pedido').style.display='flex';
 }
 function fecharModalPedido(){document.getElementById('modal-pedido').style.display='none';}
+function abrirModalAjudaEntrada(){
+  const modal=document.getElementById('modal-ajuda-entrada');
+  if(modal)modal.style.display='flex';
+}
+function fecharModalAjudaEntrada(){
+  const modal=document.getElementById('modal-ajuda-entrada');
+  if(modal)modal.style.display='none';
+}
 async function salvarPedidoReposicao(){
   const mpId=document.getElementById('pedido-mp-id').value;
   const dataPedido=document.getElementById('pedido-data').value;
@@ -2345,6 +2354,40 @@ tr.cat-row td{background:#d4edda;color:#1a472a;font-weight:700;font-size:10.5px;
 </script>
 
 <div id="wms-tooltip"></div>
+
+<!-- AJUDA REGISTRAR ENTRADA -->
+<div id="modal-ajuda-entrada" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.48);z-index:10000;align-items:center;justify-content:center;padding:18px">
+  <div style="background:var(--surface);border-radius:12px;padding:24px;max-width:680px;width:94%;box-shadow:0 10px 34px rgba(0,0,0,.24);border:1px solid var(--border)">
+    <h3 style="margin:0 0 10px;font-size:18px;color:var(--accent)">Atenção antes de registrar a entrada</h3>
+    <p style="font-size:14px;color:var(--text2);line-height:1.45;margin:0 0 14px">
+      Preencha a quantidade conforme a unidade que você controla no estoque, e preencha o valor conforme a referência correta.
+    </p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin:14px 0">
+      <div style="border:1px solid var(--border);border-left:4px solid var(--accent);border-radius:8px;padding:12px;background:var(--surface2)">
+        <strong style="display:block;margin-bottom:6px">Capa Fardo e itens em milheiro</strong>
+        <div style="font-size:13px;color:var(--text2);line-height:1.45">
+          Quantidade Recebida = quantidade em milheiros.<br>
+          Valor ref. = preço do milheiro.<br>
+          Exemplo: 27 milheiros a R$ 1.050,00: lance quantidade 27 e valor 1050.
+        </div>
+      </div>
+      <div style="border:1px solid var(--border);border-left:4px solid #2f80ed;border-radius:8px;padding:12px;background:var(--surface2)">
+        <strong style="display:block;margin-bottom:6px">Bobinas, sacos, aromas e demais insumos</strong>
+        <div style="font-size:13px;color:var(--text2);line-height:1.45">
+          Quantidade Recebida = quantidade física do estoque, como sacos, rolos ou unidades.<br>
+          Valor ref. = preço por kg.<br>
+          Exemplo: 20 sacos de 25 kg a R$ 1,90/kg: lance quantidade 20 e valor 1,90.
+        </div>
+      </div>
+    </div>
+    <p style="font-size:13px;color:var(--text2);line-height:1.45;margin:0">
+      O sistema usa o <strong>unSi</strong> cadastrado na matéria-prima para calcular o valor total corretamente.
+    </p>
+    <div style="display:flex;justify-content:flex-end;margin-top:18px">
+      <button class="btn btn-primary" onclick="fecharModalAjudaEntrada()">Entendi</button>
+    </div>
+  </div>
+</div>
 
 <!-- PEDIDO DE REPOSICAO -->
 <div id="modal-pedido" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;align-items:center;justify-content:center">
