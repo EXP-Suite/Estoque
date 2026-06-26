@@ -320,8 +320,8 @@ tbody tr:hover td{background:var(--bg)}
         <span class="forn-hint">Selecione ou digite. Para múltiplos fornecedores, cadastre na aba Config.</span>
       </div>
       <div class="form-group"><label>Número do Lote *</label><input type="text" id="ent-lote" placeholder="Ex: 16SD6F1A5D1" style="text-transform:uppercase"></div>
-      <div class="form-group"><label>Validade</label><input type="date" id="ent-validade"></div>
-      <div class="form-group"><label>Data Efetiva de Entrega</label><input type="date" id="ent-data-entrega" title="Ao preencher, o lote entra no saldo disponível"></div>
+      <div class="form-group"><label>Validade *</label><input type="date" id="ent-validade" required></div>
+      <div class="form-group"><label>Data Efetiva de Entrega *</label><input type="date" id="ent-data-entrega" title="Ao preencher, o lote entra no saldo disponível" required></div>
       <div class="form-group"><label>Valor ref. (kg/milheiro) R$ * <span class="info-btn" onclick="abrirModalAjudaEntrada()" style="cursor:pointer" data-tip="Clique para ver como lançar quantidade e valor corretamente.">ⓘ</span></label><input type="number" id="ent-valor" step="0.01" min="0.01" placeholder="0,00" required></div>
       <div class="form-group"><label>Observações</label><input type="text" id="ent-obs" placeholder="Opcional"></div>
     </div>
@@ -1293,11 +1293,13 @@ async function registrarLote(){
   const forn=document.getElementById('ent-forn').value.trim();
   const lote=document.getElementById('ent-lote').value.trim().toUpperCase();
   const valorUnit=parseFloat(document.getElementById('ent-valor').value);
+  const validade=document.getElementById('ent-validade').value;
+  const dataEntrega=document.getElementById('ent-data-entrega').value;
   if(!mpId){notify('Selecione uma matéria-prima válida na lista.','warn');return;}
-  if(!qty||!forn||!lote||!valorUnit||valorUnit<=0){notify('Preencha os campos obrigatórios: Quantidade, Fornecedor, Lote e Valor de referência.','warn');return;}
+  if(!qty||!forn||!lote||!validade||!dataEntrega||!valorUnit||valorUnit<=0){notify('Preencha os campos obrigatórios: Quantidade, Fornecedor, Lote, Validade, Data Efetiva de Entrega e Valor de referência.','warn');return;}
   const btn=document.getElementById('btn-ent');btn.disabled=true;btn.textContent='Salvando...';
   try {
-    const r=await gsCall({action:'saveLote',data:{mpId,qtyEntrada:qty,forn,lote,dataCompra:'',dataEntrega:document.getElementById('ent-data-entrega').value,valorUnit,validade:document.getElementById('ent-validade').value,obs:document.getElementById('ent-obs').value}});
+    const r=await gsCall({action:'saveLote',data:{mpId,qtyEntrada:qty,forn,lote,dataCompra:'',dataEntrega,valorUnit,validade,obs:document.getElementById('ent-obs').value}});
     if(r&&r.ok){await sincronizar(true);notify('Lote registrado com sucesso!');limparEnt();renderEntradas();}
     else if(r) notify(r.error||'Erro ao salvar lote.','error');
     else notify('Sem resposta do servidor.','error');
