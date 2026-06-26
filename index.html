@@ -235,7 +235,7 @@ tbody tr:hover td{background:var(--bg)}
   <button class="nav-btn" onclick="showPage('reposicao',this)">Reposição<span class="info-btn" data-tip="Tabela com todas as MPs mostrando quando e quanto pedir, com base no consumo histórico, lead time e dias de segurança cadastrados.">ⓘ</span></button>
   <button class="nav-btn" onclick="showPage('rastreabilidade',this)">Rastreabilidade<span class="info-btn" data-tip="Busque qualquer lote por nome, fornecedor ou número. Veja todo o histórico: origem, data, saldo atual, validade e valor.">ⓘ</span></button>
   <button class="nav-btn" onclick="showPage('intel',this)">🧠 Inteligência<span class="info-btn" data-tip="Análises automáticas: valor do estoque em R$, sugestão de compra com quantidade ideal, detecção de consumo anormal e histórico de divergências.">ⓘ</span></button>
-  <button class="nav-btn" onclick="showPage('precos',this)">Histórico de Preços<span class="info-btn" data-tip="Acompanhe a evolução do valor por kg pago em cada entrada, por matéria-prima, fornecedor e período.">ⓘ</span></button>
+  <button class="nav-btn" onclick="showPage('precos',this)">Histórico de Preços<span class="info-btn" data-tip="Acompanhe a evolução do preço pago na referência de cada matéria-prima: kg, milheiro ou unidade cadastrada.">ⓘ</span></button>
   <button class="nav-btn" onclick="showPage('config',this)">Configurações<span class="info-btn" data-tip="Conexão com o Google Sheets, cadastro de novas MPs e parâmetros globais de inteligência e reposição.">ⓘ</span></button>
 </div>
 
@@ -317,7 +317,7 @@ tbody tr:hover td{background:var(--bg)}
       <div class="form-group"><label>Número do Lote *</label><input type="text" id="ent-lote" placeholder="Ex: 16SD6F1A5D1" style="text-transform:uppercase"></div>
       <div class="form-group"><label>Validade</label><input type="date" id="ent-validade"></div>
       <div class="form-group"><label>Data Efetiva de Entrega</label><input type="date" id="ent-data-entrega" title="Ao preencher, o lote entra no saldo disponível"></div>
-      <div class="form-group"><label>Valor por kg (R$) *</label><input type="number" id="ent-valor" step="0.01" min="0.01" placeholder="0,00" required></div>
+      <div class="form-group"><label>Valor ref. (kg/milheiro) R$ *</label><input type="number" id="ent-valor" step="0.01" min="0.01" placeholder="0,00" required></div>
       <div class="form-group"><label>Observações</label><input type="text" id="ent-obs" placeholder="Opcional"></div>
     </div>
     <div class="btn-row">
@@ -333,7 +333,7 @@ tbody tr:hover td{background:var(--bg)}
         <thead><tr>
           <th>Data Entrada</th><th>Matéria-Prima</th><th>Lote</th><th>Fornecedor</th>
           <th>Qtd Entrada</th><th>Saldo Lote</th><th>Un</th><th>Validade</th>
-          <th>Valor/kg</th><th>Valor Total</th><th>Status</th><th>Observação</th><th>Ações</th>
+          <th>Valor ref.</th><th>Valor Total</th><th>Status</th><th>Observação</th><th>Ações</th>
         </tr></thead>
         <tbody id="tbody-entradas"></tbody>
       </table>
@@ -444,7 +444,7 @@ tbody tr:hover td{background:var(--bg)}
       <thead><tr>
         <th>Matéria-Prima</th><th>Lote</th><th>Fornecedor</th>
         <th>Entrada</th><th>Qtd Entrada</th><th>Saldo Atual</th><th>Un</th>
-        <th>Validade</th><th>Valor/kg</th><th>Valor Total</th><th>Status Lote</th><th>Observação</th><th></th>
+        <th>Validade</th><th>Valor ref.</th><th>Valor Total</th><th>Status Lote</th><th>Observação</th><th></th>
       </tr></thead>
       <tbody id="tbody-rastreabilidade"></tbody>
     </table>
@@ -540,7 +540,7 @@ tbody tr:hover td{background:var(--bg)}
 
   <div class="grid2">
     <div class="card">
-      <div class="card-title">Evolução do Valor por kg</div>
+      <div class="card-title">Evolução do Valor de Referência</div>
       <div class="chart-box" style="height:260px"><canvas id="chart-preco-evolucao" role="img" aria-label="Evolução de preço por kg">Gráfico.</canvas></div>
     </div>
     <div class="card">
@@ -555,7 +555,7 @@ tbody tr:hover td{background:var(--bg)}
       <table>
         <thead><tr>
           <th>Matéria-Prima</th><th>Categoria</th><th>Fornecedor</th><th>Lote</th>
-          <th>Entrada</th><th>Qtd Entrada</th><th>Valor/kg</th><th>Valor Total</th><th>Status Lote</th>
+          <th>Entrada</th><th>Qtd Entrada</th><th>Valor ref.</th><th>Valor Total</th><th>Status Lote</th>
         </tr></thead>
         <tbody id="tbody-precos"></tbody>
       </table>
@@ -764,12 +764,13 @@ const TABLE_TIPS = {
   'qtd entrada':'Quantidade recebida quando o lote foi registrado.',
   'validade':'Data limite de uso do lote, quando informada.',
   'valor unit.':'Preço por kg informado para este lote.',
-  'valor/kg':'Preço por kg informado para este lote.',
-  'valor total':'Valor por kg multiplicado pela quantidade recebida e pelo peso unSi cadastrado na matéria-prima.',
-  'último valor':'Valor por kg mais recente encontrado nas entradas filtradas.',
+  'valor/kg':'Preço informado na referência da matéria-prima, como kg ou milheiro.',
+  'valor ref.':'Preço informado na referência da matéria-prima, como kg ou milheiro.',
+  'valor total':'Valor da referência multiplicado pelo saldo atual ou quantidade de entrada, conforme a tabela.',
+  'último valor':'Valor de referência mais recente encontrado nas entradas filtradas.',
   'valor médio':'Média ponderada pelo volume recebido nas entradas filtradas.',
-  'menor valor':'Menor valor por kg encontrado nas entradas filtradas.',
-  'maior valor':'Maior valor por kg encontrado nas entradas filtradas.',
+  'menor valor':'Menor valor de referência encontrado nas entradas filtradas.',
+  'maior valor':'Maior valor de referência encontrado nas entradas filtradas.',
   'observação':'Informação livre cadastrada sobre o lote ou material.',
   'contagem física':'Quantidade real encontrada pelo operador na contagem.',
   'divergência':'Diferença entre a contagem física e o saldo teórico.',
@@ -1175,10 +1176,10 @@ function filtrarEstoque(){
     </tr>
     <tr id="lotes-${m.id}" style="display:none"><td colspan="8" style="padding:0">
       <table style="width:100%;background:#f8fbff;border-top:1px solid #d0d8f0">
-        <thead><tr style="background:#eef2fc"><th>Lote</th><th>Fornecedor</th><th>Entrada</th><th>Qtd Entrada</th><th>Saldo Lote</th><th>Validade</th><th>Valor/kg</th><th>Status</th></tr></thead>
+        <thead><tr style="background:#eef2fc"><th>Lote</th><th>Fornecedor</th><th>Entrada</th><th>Qtd Entrada</th><th>Saldo Lote</th><th>Validade</th><th>Valor ref.</th><th>Status</th></tr></thead>
         <tbody>${la.length?la.map(l=>{
           const badgeV=badgeValidade(l.validade);
-          return`<tr class="lote-row"><td><span class="badge b-lote">${l.lote||'—'}</span></td><td>${l.forn||'—'}</td><td>${fmtBR(l.dataEntrega)}</td><td>${l.qtyEntrada}</td><td><strong>${l.saldoLote.toFixed(1)}</strong></td><td>${l.validade?fmtBR(l.validade)+'&nbsp;'+badgeV:'—'}</td><td>${l.valorUnit?fmtMoeda(precoKgLote(l)):'—'}</td><td>${l.ativo?'Ativo':'Encerrado'}</td></tr>`;
+          return`<tr class="lote-row"><td><span class="badge b-lote">${l.lote||'—'}</span></td><td>${l.forn||'—'}</td><td>${fmtBR(l.dataEntrega)}</td><td>${l.qtyEntrada}</td><td><strong>${l.saldoLote.toFixed(1)}</strong></td><td>${l.validade?fmtBR(l.validade)+'&nbsp;'+badgeV:'—'}</td><td>${l.valorUnit?fmtMoeda(precoExibidoLote(l)):'—'}</td><td>${l.ativo?'Ativo':'Encerrado'}</td></tr>`;
         }).join(''):'<tr><td colspan="8" style="text-align:center;padding:10px;color:var(--text3)">Nenhum lote ativo.</td></tr>'}</tbody>
       </table>
     </td></tr>`;
@@ -1236,7 +1237,7 @@ function renderEntradas(){
       <td><strong>${l.saldoLote.toFixed(1)}</strong></td>
       <td>${mp?mp.un:''}</td>
       <td>${l.validade?fmtBR(l.validade)+' '+badgeV:'—'}</td>
-      <td>${l.valorUnit?fmtMoeda(precoKgLote(l)):'—'}</td>
+      <td>${l.valorUnit?fmtMoeda(precoExibidoLote(l)):'—'}</td>
       <td>${valorTotalLote(l)?fmtMoeda(valorTotalLote(l)):'—'}</td>
       <td>${stL}</td>
       <td style="font-size:11px;color:var(--text2);max-width:200px">${l.obs||'—'}</td>
@@ -1250,7 +1251,7 @@ async function registrarLote(){
   const forn=document.getElementById('ent-forn').value.trim();
   const lote=document.getElementById('ent-lote').value.trim().toUpperCase();
   const valorUnit=parseFloat(document.getElementById('ent-valor').value);
-  if(!mpId||!qty||!forn||!lote||!valorUnit||valorUnit<=0){notify('Preencha os campos obrigatórios: MP, Quantidade, Fornecedor, Lote e Valor por kg.','warn');return;}
+  if(!mpId||!qty||!forn||!lote||!valorUnit||valorUnit<=0){notify('Preencha os campos obrigatórios: MP, Quantidade, Fornecedor, Lote e Valor de referência.','warn');return;}
   const btn=document.getElementById('btn-ent');btn.disabled=true;btn.textContent='Salvando...';
   try {
     const r=await gsCall({action:'saveLote',data:{mpId,qtyEntrada:qty,forn,lote,dataCompra:'',dataEntrega:document.getElementById('ent-data-entrega').value,valorUnit,validade:document.getElementById('ent-validade').value,obs:document.getElementById('ent-obs').value}});
@@ -1487,7 +1488,7 @@ function selConsumo(mpId,btn){
       <div class="stat-card warn"><div class="stat-label">Consumo/sem</div><div class="stat-value" style="font-size:20px">${cs?cs.toFixed(1):'—'}</div><div class="stat-sub">${mp.un}/semana</div></div>
       <div class="stat-card warn"><div class="stat-label">Consumo/mês</div><div class="stat-value" style="font-size:20px">${csMes||'—'}</div><div class="stat-sub">${mp.un}/mês</div></div>
       <div class="stat-card ${st}"><div class="stat-label">Cobertura</div><div class="stat-value" style="font-size:20px">${dc>=999?'∞':dc}</div><div class="stat-sub">dias</div></div>
-      <div class="stat-card"><div class="stat-label">Custo Médio/kg</div><div class="stat-value" style="font-size:20px">${(()=>{const lv=la.filter(l=>l.valorUnit);const kg=lv.reduce((a,l)=>a+saldoSiLote(l),0);return kg?'R$'+(lv.reduce((a,l)=>a+precoKgLote(l)*saldoSiLote(l),0)/kg).toFixed(2):'—';})()}</div><div class="stat-sub">valor por kg</div></div>
+      <div class="stat-card"><div class="stat-label">Custo Médio Ref.</div><div class="stat-value" style="font-size:20px">${(()=>{const lv=la.filter(l=>l.valorUnit);const qtd=lv.reduce((a,l)=>a+(Number(l.saldoLote)||0),0);return qtd?'R$'+(lv.reduce((a,l)=>a+precoExibidoLote(l)*(Number(l.saldoLote)||0),0)/qtd).toFixed(2):'—';})()}</div><div class="stat-sub">kg ou milheiro</div></div>
     </div>
     ${mp.obs?`<p style="font-size:11px;color:var(--warn-text);background:var(--warn-bg);padding:6px 10px;border-radius:6px;margin-bottom:8px">⚠ ${mp.obs}</p>`:''}<p style="font-size:12px;color:var(--text2);margin-bottom:8px">Lotes ativos: ${la.map(l=>`<span class="badge b-lote" style="margin-right:4px">${l.lote||'—'} · ${l.saldoLote.toFixed(1)} ${mp.un} (${l.forn})</span>`).join('')||'Nenhum'}</p>`;
   // Gráfico: saldo consolidado por contagem
@@ -1693,8 +1694,14 @@ function precoKgLote(l){
   const fator=fatorUnSiLote(l);
   return fator>=1000&&preco>=100?preco/1000:preco;
 }
-function valorTotalSaldoLote(l){ return l.valorUnit&&l.saldoLote?precoKgLote(l)*saldoSiLote(l):0; }
-function valorTotalEntradaLote(l){ return l.valorUnit&&l.qtyEntrada?precoKgLote(l)*qtdSiLote(l):0; }
+function precoExibidoLote(l){ return Number(l.valorUnit)||0; }
+function precoPorUnidadeOperacional(l){
+  const preco=Number(l.valorUnit)||0;
+  const fator=fatorUnSiLote(l);
+  return fator>=1000&&preco>=100?preco:preco*fator;
+}
+function valorTotalSaldoLote(l){ return l.valorUnit&&l.saldoLote?precoPorUnidadeOperacional(l)*(Number(l.saldoLote)||0):0; }
+function valorTotalEntradaLote(l){ return l.valorUnit&&l.qtyEntrada?precoPorUnidadeOperacional(l)*(Number(l.qtyEntrada)||0):0; }
 function valorTotalLote(l){ return valorTotalSaldoLote(l); }
 function obterLotesRastreabilidadeFiltrados(){
   const b=document.getElementById('busca-lote').value.toLowerCase();
@@ -1733,7 +1740,7 @@ function filtrarRastreabilidade(){
       <td><strong>${l.saldoLote.toFixed(1)}</strong></td>
       <td>${mp?mp.un:''}</td>
       <td>${l.validade?fmtBR(l.validade)+' '+badgeV:'—'}</td>
-      <td>${l.valorUnit?fmtMoeda(precoKgLote(l)):'—'}</td>
+      <td>${l.valorUnit?fmtMoeda(precoExibidoLote(l)):'—'}</td>
       <td>${valorTotalLote(l)?fmtMoeda(valorTotalLote(l)):'—'}</td>
       <td>${stL}</td>
       <td style="font-size:11px;color:var(--text2);max-width:200px">${l.obs||'—'}</td>
@@ -1757,7 +1764,7 @@ function imprimirRastreabilidade(){
       <td>${escHtml(mp?mp.nome:'-')}</td><td>${escHtml(l.lote||'-')}</td><td>${escHtml(l.forn||'-')}</td>
       <td>${escHtml(fmtBR(l.dataEntrega)||'-')}</td><td class="num">${Number(l.qtyEntrada||0).toFixed(1)}</td>
       <td class="num">${Number(l.saldoLote||0).toFixed(1)}</td><td>${escHtml(mp?mp.un:'')}</td>
-      <td>${escHtml(l.validade?fmtBR(l.validade):'-')}</td><td class="num">${l.valorUnit?fmtMoeda(precoKgLote(l)):'-'}</td>
+      <td>${escHtml(l.validade?fmtBR(l.validade):'-')}</td><td class="num">${l.valorUnit?fmtMoeda(precoExibidoLote(l)):'-'}</td>
       <td class="num">${total?fmtMoeda(total):'-'}</td><td>${l.ativo?'Ativo':'Encerrado'}</td><td>${escHtml(l.obs||'-')}</td>
     </tr>`;
   }).join('');
@@ -1766,7 +1773,7 @@ function imprimirRastreabilidade(){
 </head><body><div class="header"><div class="brand"><img class="print-logo" src="${LOGO_URL}" alt="Explosão Alimentos"><div><h1>WMS Explosão</h1><p>Relatório de Rastreabilidade por Lote</p></div></div><div style="text-align:right"><strong>Data: ${dataHoje}</strong><p>Gerado: ${new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</p></div></div>
 <div class="meta"><span><b>Filtro:</b> ${escHtml(filtro.options[filtro.selectedIndex]?.text||'Todos')}</span><span><b>Busca:</b> ${escHtml(busca||'Nenhuma')}</span><span><b>Lotes:</b> ${lista.length}</span></div>
 <div class="total">Valor Total filtrado: ${fmtMoeda(totalValor)}</div>
-<table><thead><tr><th>Matéria-Prima</th><th>Lote</th><th>Fornecedor</th><th>Entrada</th><th>Qtd Entrada</th><th>Saldo Atual</th><th>Un</th><th>Validade</th><th>Valor/kg</th><th>Valor Total</th><th>Status</th><th>Observação</th></tr></thead><tbody>${rows}</tbody></table>
+<table><thead><tr><th>Matéria-Prima</th><th>Lote</th><th>Fornecedor</th><th>Entrada</th><th>Qtd Entrada</th><th>Saldo Atual</th><th>Un</th><th>Validade</th><th>Valor ref.</th><th>Valor Total</th><th>Status</th><th>Observação</th></tr></thead><tbody>${rows}</tbody></table>
 <div class="no-print"><button onclick="window.print()" style="padding:10px 28px;background:#1a472a;color:#fff;border:none;border-radius:6px;font-size:14px;cursor:pointer;font-weight:600">Imprimir</button><button onclick="window.close()" style="margin-left:12px;padding:10px 20px;background:#eee;color:#333;border:none;border-radius:6px;font-size:14px;cursor:pointer">Fechar</button></div></body></html>`;
   const win=window.open('','_blank','width=1100,height=760');
   win.document.write(html);
@@ -1819,10 +1826,10 @@ function obterHistoricoPrecosFiltrado(){
   });
 }
 function resumoPrecos(lista){
-  const totalKg=lista.reduce((s,l)=>s+qtdSiLote(l),0);
-  const media=totalKg?lista.reduce((s,l)=>s+precoKgLote(l)*qtdSiLote(l),0)/totalKg:0;
-  const valores=lista.map(precoKgLote).filter(v=>v>0);
-  const ultimo=lista[0]?precoKgLote(lista[0]):0;
+  const totalQtd=lista.reduce((s,l)=>s+(Number(l.qtyEntrada)||0),0);
+  const media=totalQtd?lista.reduce((s,l)=>s+precoExibidoLote(l)*(Number(l.qtyEntrada)||0),0)/totalQtd:0;
+  const valores=lista.map(precoExibidoLote).filter(v=>v>0);
+  const ultimo=lista[0]?precoExibidoLote(lista[0]):0;
   const alvoMpId=document.getElementById('preco-filtro-mp')?.value||(lista[0]?String(lista[0].mpId):'');
   const serie=lista.filter(l=>String(l.mpId)===String(alvoMpId)).sort((a,b)=>{
     const da=dataPrecoLote(a), db=dataPrecoLote(b);
@@ -1830,8 +1837,8 @@ function resumoPrecos(lista){
     return String(a.id).localeCompare(String(b.id));
   });
   const primeiro=serie[0], anterior=serie.length>1?serie[serie.length-2]:null, atual=serie[serie.length-1];
-  const varAnterior=atual&&anterior&&precoKgLote(anterior)?((precoKgLote(atual)-precoKgLote(anterior))/precoKgLote(anterior))*100:null;
-  const varPeriodo=atual&&primeiro&&primeiro!==atual&&precoKgLote(primeiro)?((precoKgLote(atual)-precoKgLote(primeiro))/precoKgLote(primeiro))*100:null;
+  const varAnterior=atual&&anterior&&precoExibidoLote(anterior)?((precoExibidoLote(atual)-precoExibidoLote(anterior))/precoExibidoLote(anterior))*100:null;
+  const varPeriodo=atual&&primeiro&&primeiro!==atual&&precoExibidoLote(primeiro)?((precoExibidoLote(atual)-precoExibidoLote(primeiro))/precoExibidoLote(primeiro))*100:null;
   const mp=S.materiais.find(m=>String(m.id)===String(alvoMpId));
   return {ultimo,media,min:valores.length?Math.min(...valores):0,max:valores.length?Math.max(...valores):0,varAnterior,varPeriodo,atual,anterior,primeiro,mpNome:mp?mp.nome:''};
 }
@@ -1845,12 +1852,12 @@ function renderHistoricoPrecos(){
   const r=resumoPrecos(lista);
   const cards=document.getElementById('preco-cards');
   if(cards)cards.innerHTML=`
-    <div class="stat-card"><div class="stat-label">Entradas</div><div class="stat-value" style="font-size:22px">${lista.length}</div><div class="stat-sub">com valor por kg</div></div>
-    <div class="stat-card ok"><div class="stat-label">Último Valor/kg</div><div class="stat-value" style="font-size:20px">${r.ultimo?fmtMoeda(r.ultimo):'—'}</div><div class="stat-sub">entrada mais recente</div></div>
-    <div class="stat-card"><div class="stat-label">Valor Médio/kg</div><div class="stat-value" style="font-size:20px">${r.media?fmtMoeda(r.media):'—'}</div><div class="stat-sub">ponderado por kg</div></div>
-    <div class="stat-card warn"><div class="stat-label">Menor Valor/kg</div><div class="stat-value" style="font-size:20px">${r.min?fmtMoeda(r.min):'—'}</div><div class="stat-sub">no filtro atual</div></div>
-    <div class="stat-card danger"><div class="stat-label">Maior Valor/kg</div><div class="stat-value" style="font-size:20px">${r.max?fmtMoeda(r.max):'—'}</div><div class="stat-sub">no filtro atual</div></div>
-    <div class="stat-card ${classeVarPreco(r.varAnterior)}"><div class="stat-label">Var. Anterior</div><div class="stat-value" style="font-size:20px">${fmtPctPreco(r.varAnterior)}</div><div class="stat-sub">${r.anterior?`${fmtMoeda(precoKgLote(r.anterior))} → ${fmtMoeda(precoKgLote(r.atual))}`:'precisa de 2 entradas'}</div></div>
+    <div class="stat-card"><div class="stat-label">Entradas</div><div class="stat-value" style="font-size:22px">${lista.length}</div><div class="stat-sub">com valor de referência</div></div>
+    <div class="stat-card ok"><div class="stat-label">Último Valor Ref.</div><div class="stat-value" style="font-size:20px">${r.ultimo?fmtMoeda(r.ultimo):'—'}</div><div class="stat-sub">entrada mais recente</div></div>
+    <div class="stat-card"><div class="stat-label">Valor Médio Ref.</div><div class="stat-value" style="font-size:20px">${r.media?fmtMoeda(r.media):'—'}</div><div class="stat-sub">ponderado por entrada</div></div>
+    <div class="stat-card warn"><div class="stat-label">Menor Valor Ref.</div><div class="stat-value" style="font-size:20px">${r.min?fmtMoeda(r.min):'—'}</div><div class="stat-sub">no filtro atual</div></div>
+    <div class="stat-card danger"><div class="stat-label">Maior Valor Ref.</div><div class="stat-value" style="font-size:20px">${r.max?fmtMoeda(r.max):'—'}</div><div class="stat-sub">no filtro atual</div></div>
+    <div class="stat-card ${classeVarPreco(r.varAnterior)}"><div class="stat-label">Var. Anterior</div><div class="stat-value" style="font-size:20px">${fmtPctPreco(r.varAnterior)}</div><div class="stat-sub">${r.anterior?`${fmtMoeda(precoExibidoLote(r.anterior))} → ${fmtMoeda(precoExibidoLote(r.atual))}`:'precisa de 2 entradas'}</div></div>
     <div class="stat-card ${classeVarPreco(r.varPeriodo)}"><div class="stat-label">Var. Período</div><div class="stat-value" style="font-size:20px">${fmtPctPreco(r.varPeriodo)}</div><div class="stat-sub">${r.primeiro&&r.atual&&r.primeiro!==r.atual?`${fmtBR(dataPrecoLote(r.primeiro),true)} → ${fmtBR(dataPrecoLote(r.atual),true)}`:'precisa de histórico'}</div></div>`;
   renderGraficosPrecos(lista);
   const tbody=document.getElementById('tbody-precos');
@@ -1866,7 +1873,7 @@ function renderHistoricoPrecos(){
       <td><span class="badge b-lote">${l.lote||'—'}</span></td>
       <td>${fmtBR(dataPrecoLote(l))}</td>
       <td>${Number(l.qtyEntrada||0).toFixed(1)} ${mp?mp.un:''}</td>
-      <td>${fmtMoeda(precoKgLote(l))}</td>
+      <td>${fmtMoeda(precoExibidoLote(l))}</td>
       <td>${total?fmtMoeda(total):'—'}</td>
       <td>${l.ativo?'<span class="badge b-ok">Ativo</span>':'<span class="badge b-cat">Encerrado</span>'}</td>
     </tr>`;
@@ -1885,7 +1892,7 @@ function renderGraficosPrecos(lista){
   if(ctxLinha){
     if(chartP)chartP.destroy();
     const mp=S.materiais.find(m=>String(m.id)===String(alvoMpId));
-    chartP=new Chart(ctxLinha,{type:'line',data:{labels:pontos.map(l=>`${fmtBR(dataPrecoLote(l),true)} · ${l.lote||''}`),datasets:[{label:mp?'Valor/kg - '+mp.nome:'Valor/kg',data:pontos.map(precoKgLote),borderColor:'#1a5c38',backgroundColor:'rgba(26,92,56,.08)',tension:.25,fill:true,pointRadius:4,pointBackgroundColor:'#1a5c38'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,labels:{font:{size:11}}}},scales:{y:{beginAtZero:false,ticks:{font:{size:11},callback:v=>'R$ '+Number(v).toLocaleString('pt-BR')}},x:{ticks:{font:{size:10},maxRotation:35,minRotation:0}}}}});
+    chartP=new Chart(ctxLinha,{type:'line',data:{labels:pontos.map(l=>`${fmtBR(dataPrecoLote(l),true)} · ${l.lote||''}`),datasets:[{label:mp?'Valor ref. - '+mp.nome:'Valor ref.',data:pontos.map(precoExibidoLote),borderColor:'#1a5c38',backgroundColor:'rgba(26,92,56,.08)',tension:.25,fill:true,pointRadius:4,pointBackgroundColor:'#1a5c38'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,labels:{font:{size:11}}}},scales:{y:{beginAtZero:false,ticks:{font:{size:11},callback:v=>'R$ '+Number(v).toLocaleString('pt-BR')}},x:{ticks:{font:{size:10},maxRotation:35,minRotation:0}}}}});
   }
   const ultimos=new Map();
   lista.forEach(l=>{if(!ultimos.has(String(l.mpId)))ultimos.set(String(l.mpId),l);});
@@ -1893,7 +1900,7 @@ function renderGraficosPrecos(lista){
   const ctxBar=document.getElementById('chart-preco-ultimos');
   if(ctxBar){
     if(chartPU)chartPU.destroy();
-    chartPU=new Chart(ctxBar,{type:'bar',data:{labels:barras.map(x=>x.mp.nome.length>18?x.mp.nome.slice(0,18)+'…':x.mp.nome),datasets:[{label:'Último valor/kg',data:barras.map(x=>precoKgLote(x.l)),backgroundColor:'#2f6f4e',borderRadius:4}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:11},callback:v=>'R$ '+Number(v).toLocaleString('pt-BR')}},y:{ticks:{font:{size:10}}}}}});
+    chartPU=new Chart(ctxBar,{type:'bar',data:{labels:barras.map(x=>x.mp.nome.length>18?x.mp.nome.slice(0,18)+'…':x.mp.nome),datasets:[{label:'Último valor ref.',data:barras.map(x=>precoExibidoLote(x.l)),backgroundColor:'#2f6f4e',borderRadius:4}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:11},callback:v=>'R$ '+Number(v).toLocaleString('pt-BR')}},y:{ticks:{font:{size:10}}}}}});
   }
 }
 function limparFiltrosPrecos(){
@@ -1909,10 +1916,10 @@ function imprimirHistoricoPrecos(){
     return `<tr>
       <td>${escHtml(mp?mp.nome:'-')}</td><td>${escHtml(mp?mp.cat||'-':'-')}</td><td>${escHtml(l.forn||'-')}</td>
       <td>${escHtml(l.lote||'-')}</td><td>${escHtml(fmtBR(dataPrecoLote(l)))}</td><td>${Number(l.qtyEntrada||0).toFixed(1)} ${escHtml(mp?mp.un:'')}</td>
-      <td>${fmtMoeda(precoKgLote(l))}</td><td>${total?fmtMoeda(total):'-'}</td><td>${l.ativo?'Ativo':'Encerrado'}</td>
+      <td>${fmtMoeda(precoExibidoLote(l))}</td><td>${total?fmtMoeda(total):'-'}</td><td>${l.ativo?'Ativo':'Encerrado'}</td>
     </tr>`;
   });
-  abrirImpressaoPedido('Historico de Precos','Entradas conforme filtros atuais de Historico de Precos',['Materia-Prima','Categoria','Fornecedor','Lote','Entrada','Qtd Entrada','Valor/kg','Valor Total','Status Lote'],rows);
+  abrirImpressaoPedido('Historico de Precos','Entradas conforme filtros atuais de Historico de Precos',['Materia-Prima','Categoria','Fornecedor','Lote','Entrada','Qtd Entrada','Valor ref.','Valor Total','Status Lote'],rows);
 }
 
 function renderConfig(){
