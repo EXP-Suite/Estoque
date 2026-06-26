@@ -306,7 +306,12 @@ tbody tr:hover td{background:var(--bg)}
   <div class="card">
     <div class="card-title">Registrar Nova Entrada de Estoque — Novo Lote</div>
     <div class="form-grid">
-      <div class="form-group"><label>Matéria-Prima *</label><select id="ent-mp" onchange="atualizarFornecedores()"><option value="">Selecionar...</option></select></div>
+      <div class="form-group">
+        <label>Matéria-Prima *</label>
+        <input type="text" id="ent-mp-busca" list="ent-mp-list" placeholder="Digite para buscar..." autocomplete="off" oninput="selecionarMpEntrada()">
+        <input type="hidden" id="ent-mp">
+        <datalist id="ent-mp-list"></datalist>
+      </div>
       <div class="form-group"><label>Quantidade Recebida *</label><input type="number" id="ent-qty" placeholder="0" min="0" step="0.1"></div>
       <div class="form-group">
         <label>Fornecedor *</label>
@@ -1195,9 +1200,28 @@ function toggleLotes(mpId,btn){
 }
 
 // ═══ SELECTS ══════════════════════════════════════════════════
+function materiaisOrdenados(){
+  return [...S.materiais].sort((a,b)=>(a.cat||'Sem Categoria').localeCompare(b.cat||'Sem Categoria','pt-BR')||a.nome.localeCompare(b.nome,'pt-BR'));
+}
+function labelMPEntrada(m){ return `${m.cat||'Sem Categoria'} — ${m.nome}`; }
 function populateSelects(){
-  const opts='<option value="">Selecionar...</option>'+S.materiais.map(m=>`<option value="${m.id}">${m.nome}</option>`).join('');
-  ['ent-mp','sim-mp'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=opts;});
+  const mats=materiaisOrdenados();
+  const list=document.getElementById('ent-mp-list');
+  if(list)list.innerHTML=mats.map(m=>`<option value="${escHtml(labelMPEntrada(m))}"></option>`).join('');
+  const sim=document.getElementById('sim-mp');
+  if(sim){
+    const atual=sim.value;
+    let html='<option value="">Selecionar...</option>';
+    let catAtual=null;
+    mats.forEach(m=>{
+      const cat=m.cat||'Sem Categoria';
+      if(cat!==catAtual){ if(catAtual!==null)html+='</optgroup>'; html+=`<optgroup label="${escHtml(cat)}">`; catAtual=cat; }
+      html+=`<option value="${m.id}">${escHtml(m.nome)}</option>`;
+    });
+    if(catAtual!==null)html+='</optgroup>';
+    sim.innerHTML=html;
+    sim.value=atual;
+  }
   // Atualiza datalist de categorias com as existentes nos materiais (além das fixas)
   const catList=document.getElementById('cat-list');
   if(catList){
@@ -1208,15 +1232,31 @@ function populateSelects(){
   }
   atualizarFornecedores();
 }
+function resolverMpEntrada(){
+  const hidden=document.getElementById('ent-mp');
+  const txt=document.getElementById('ent-mp-busca')?.value.trim()||'';
+  if(hidden?.value){
+    const atual=S.materiais.find(m=>String(m.id)===String(hidden.value));
+    if(atual&&normTxt(txt)===normTxt(labelMPEntrada(atual)))return atual;
+  }
+  return materiaisOrdenados().find(m=>normTxt(txt)===normTxt(labelMPEntrada(m))||normTxt(txt)===normTxt(m.nome))||null;
+}
+function selecionarMpEntrada(){
+  const mp=resolverMpEntrada();
+  const hidden=document.getElementById('ent-mp');
+  if(hidden)hidden.value=mp?mp.id:'';
+  atualizarFornecedores();
+}
 function fornValido(f){ return f && f.trim()!=='' && f.trim().toUpperCase()!=='TRUE' && f.trim().toUpperCase()!=='FALSE'; }
 function atualizarFornecedores(){
-  const mpId=parseInt(document.getElementById('ent-mp')?.value);
+  const mp=resolverMpEntrada();
+  const mpId=mp?mp.id:null;
   const fornSet=new Set();
-  if(mpId){const mp=S.materiais.find(m=>m.id===String(mpId));if(mp&&mp.forn)mp.forn.split('/').map(f=>f.trim()).filter(fornValido).forEach(f=>fornSet.add(f));}
+  if(mpId&&mp&&mp.forn)mp.forn.split('/').map(f=>f.trim()).filter(fornValido).forEach(f=>fornSet.add(f));
   S.materiais.forEach(m=>{if(m.forn)m.forn.split('/').map(f=>f.trim()).filter(fornValido).forEach(f=>fornSet.add(f));});
   const opts=[...fornSet].sort().map(f=>`<option value="${f}">`).join('');
   ['forn-list','forn-list-cfg'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=opts;});
-  if(mpId){const mp=S.materiais.find(m=>m.id===String(mpId));if(mp&&mp.forn){const fns=mp.forn.split('/').map(f=>f.trim()).filter(fornValido);if(fns.length===1){const el=document.getElementById('ent-forn');if(el&&!el.value)el.value=fns[0];}}}
+  if(mp&&mp.forn){const fns=mp.forn.split('/').map(f=>f.trim()).filter(fornValido);if(fns.length===1){const el=document.getElementById('ent-forn');if(el&&!el.value)el.value=fns[0];}}
 }
 
 // ═══ ENTRADAS (LOTES) ═════════════════════════════════════════
@@ -1246,12 +1286,14 @@ function renderEntradas(){
   }).join(''):'<tr><td colspan="13" style="text-align:center;padding:20px;color:var(--text3)">Nenhum lote registrado.</td></tr>';
 }
 async function registrarLote(){
-  const mpId=parseInt(document.getElementById('ent-mp').value);
+  const mpSel=resolverMpEntrada();
+  const mpId=mpSel?parseInt(mpSel.id):0;
   const qty=parseFloat(document.getElementById('ent-qty').value);
   const forn=document.getElementById('ent-forn').value.trim();
   const lote=document.getElementById('ent-lote').value.trim().toUpperCase();
   const valorUnit=parseFloat(document.getElementById('ent-valor').value);
-  if(!mpId||!qty||!forn||!lote||!valorUnit||valorUnit<=0){notify('Preencha os campos obrigatórios: MP, Quantidade, Fornecedor, Lote e Valor de referência.','warn');return;}
+  if(!mpId){notify('Selecione uma matéria-prima válida na lista.','warn');return;}
+  if(!qty||!forn||!lote||!valorUnit||valorUnit<=0){notify('Preencha os campos obrigatórios: Quantidade, Fornecedor, Lote e Valor de referência.','warn');return;}
   const btn=document.getElementById('btn-ent');btn.disabled=true;btn.textContent='Salvando...';
   try {
     const r=await gsCall({action:'saveLote',data:{mpId,qtyEntrada:qty,forn,lote,dataCompra:'',dataEntrega:document.getElementById('ent-data-entrega').value,valorUnit,validade:document.getElementById('ent-validade').value,obs:document.getElementById('ent-obs').value}});
@@ -1266,7 +1308,7 @@ async function encerrarLote(id){
   if(r&&r.ok){await sincronizar(true);notify('Lote encerrado.');renderEntradas();}
   else if(r) notify(r.error||'Erro','error');
 }
-function limparEnt(){['ent-mp','ent-forn','ent-obs','ent-qty','ent-valor','ent-lote','ent-validade'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});document.getElementById('ent-data-entrega').value=hoje();}
+function limparEnt(){['ent-mp','ent-mp-busca','ent-forn','ent-obs','ent-qty','ent-valor','ent-lote','ent-validade'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});document.getElementById('ent-data-entrega').value=hoje();}
 
 // ═══ CONTAGEM ═════════════════════════════════════════════════
 function popularFiltrosCnt(){
