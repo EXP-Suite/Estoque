@@ -75,10 +75,10 @@ select:focus,input:focus{border-color:var(--accent)}
 .btn:disabled{opacity:.5;cursor:not-allowed}
 .btn-row{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
 /* Tabela */
-.table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:auto}
-table{width:100%;border-collapse:collapse}
+.table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:auto;max-height:min(68vh,720px)}
+table{width:100%;border-collapse:separate;border-spacing:0}
 thead{background:var(--surface2)}
-th{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;padding:9px 12px;text-align:left;border-bottom:2px solid var(--border2);white-space:nowrap}
+th{position:sticky;top:0;z-index:5;background:var(--surface2);font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;padding:9px 12px;text-align:left;border-bottom:2px solid var(--border2);white-space:nowrap;box-shadow:0 1px 0 var(--border2)}
 td{padding:9px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
 tr:last-child td{border-bottom:none}
 tbody tr:hover td{background:var(--bg)}
