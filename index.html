@@ -962,8 +962,11 @@ function normM(m){
   return {id:safeId(m.id),nome:String(m.nome||''),cat:String(m.cat||''),un:String(m.un||'un'),unSi:safeNum(m.unSi||m.unsi||m.unSI||m.UNSI)||1,saldo:safeNum(m.saldo),min:safeNum(m.min),seg:safeNum(m.seg),lead:safeNum(m.lead)||7,forn,obs,consumoSem:consumoSemPlanilha===''||consumoSemPlanilha==null?null:safeNum(consumoSemPlanilha)};
 }
 function normL(l){
+  const mpRaw=getCampo(l,['mpId','mpid','matéria-prima','materia prima','materia-prima','mp','material','nomeMP','nome mp']);
+  const mpRawTxt=String(mpRaw||'').trim();
+  const mpNomeRaw=getCampo(l,['mpNome','nomeMP','nome mp','matéria-prima','materia prima','materia-prima','material']);
   const valorRaw=getCampo(l,['valorUnit','valor unit','valor unitario','valor unitário','Valor Unit.','Valor/kg','valor kg','valorKg','precoKg','preço kg','preco kg','R$/kg']);
-  return {id:safeId(getCampo(l,['id'])),mpId:safeId(getCampo(l,['mpId','mpid'])),forn:String(getCampo(l,['forn','fornecedor'])||''),lote:String(getCampo(l,['lote'])||''),dataCompra:fmtD(getCampo(l,['dataCompra','data compra'])),prevEntrega:fmtD(getCampo(l,['prevEntrega','prev entrega','previsao entrega','previsão entrega'])),dataEntrega:fmtD(getCampo(l,['dataEntrega','data entrega','entrada'])),criadoEm:fmtD(getCampo(l,['criadoEm','criado em'])),qtyEntrada:safeNum(getCampo(l,['qtyEntrada','qtd entrada','quantidade','quantidade recebida'])),saldoLote:safeNum(getCampo(l,['saldoLote','saldo lote','saldo'])),valorUnit:valorRaw?safeNum(valorRaw):null,validade:fmtD(getCampo(l,['validade'])),obs:String(getCampo(l,['obs','observação','observacao'])||''),ativo:getCampo(l,['ativo'])!==false&&String(getCampo(l,['ativo'])).toLowerCase()!=='false'};
+  return {id:safeId(getCampo(l,['id'])),mpId:safeId(mpRaw),mpNome:String(mpNomeRaw||(/^\d+([,.]0+)?$/.test(mpRawTxt)?'':mpRawTxt)),forn:String(getCampo(l,['forn','fornecedor'])||''),lote:String(getCampo(l,['lote'])||''),dataCompra:fmtD(getCampo(l,['dataCompra','data compra'])),prevEntrega:fmtD(getCampo(l,['prevEntrega','prev entrega','previsao entrega','previsão entrega'])),dataEntrega:fmtD(getCampo(l,['dataEntrega','data entrega','entrada'])),criadoEm:fmtD(getCampo(l,['criadoEm','criado em'])),qtyEntrada:safeNum(getCampo(l,['qtyEntrada','qtd entrada','quantidade','quantidade recebida'])),saldoLote:safeNum(getCampo(l,['saldoLote','saldo lote','saldo'])),valorUnit:valorRaw?safeNum(valorRaw):null,validade:fmtD(getCampo(l,['validade'])),obs:String(getCampo(l,['obs','observação','observacao'])||''),ativo:getCampo(l,['ativo'])!==false&&String(getCampo(l,['ativo'])).toLowerCase()!=='false'};
 }
 function normPedido(p){ return {id:safeId(p.id),mpId:safeId(p.mpId),dataPedido:fmtD(p.dataPedido),prevEntrega:fmtD(p.prevEntrega),qty:safeNum(p.qty),status:String(p.status||'aberto').toLowerCase(),obs:String(p.obs||'')}; }
 // IDs sao strings para evitar perda de precisao com numeros grandes no JS
@@ -994,10 +997,28 @@ function fmtD(v){ if(!v)return''; if(typeof v==='string'&&v.includes('-'))return
 function fmtBR(s,curto){ if(!s)return'—'; const d=new Date(s+'T12:00'); return isNaN(d)?s:curto?d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}):d.toLocaleDateString('pt-BR'); }
 
 // ═══ CÁLCULOS CONSOLIDADOS POR MP ════════════════════════════
-// Lotes ativos de uma MP
-function lotesAtivos(mpId){ return S.lotes.filter(l=>l.mpId===String(mpId)&&l.ativo); }
-// Saldo consolidado = soma dos lotes ativos
-function saldoMP(mpId){ return lotesAtivos(mpId).reduce((a,l)=>a+l.saldoLote,0); }
+function normId(v){
+  const s=String(v??'').trim();
+  return /^\d+([,.]0+)?$/.test(s)?String(parseInt(s.replace(',','.'),10)):s;
+}
+function mesmoId(a,b){ return normId(a)===normId(b); }
+function loteDisponivel(l){ return l.ativo||Number(l.saldoLote)>0; }
+function lotePertenceMp(l,mpId){
+  const mp=S.materiais.find(m=>mesmoId(m.id,mpId));
+  if(mesmoId(l.mpId,mpId))return true;
+  if(mp&&normTxt(l.mpId)===normTxt(mp.nome))return true;
+  if(mp&&normTxt(l.mpNome)===normTxt(mp.nome))return true;
+  return false;
+}
+// Lotes disponíveis de uma MP. Se algum lote veio do Sheets com ativo=FALSE mas saldo positivo, ele continua contando.
+function lotesAtivos(mpId){ return S.lotes.filter(l=>lotePertenceMp(l,mpId)&&loteDisponivel(l)); }
+// Saldo consolidado = soma dos lotes disponíveis. Se não houver lotes vinculados, usa o saldo consolidado vindo de Materiais.
+function saldoMP(mpId){
+  const la=lotesAtivos(mpId);
+  if(la.length)return la.reduce((a,l)=>a+(Number(l.saldoLote)||0),0);
+  const mp=S.materiais.find(m=>mesmoId(m.id,mpId));
+  return mp?Number(mp.saldo)||0:0;
+}
 function totalFisicoContagem(c,mpId){
   const mid=String(mpId);
   return c.items.filter(x=>String(x.mpId)===mid).reduce((a,x)=>a+x.fisico,0);
@@ -1094,13 +1115,16 @@ function badgeValidade(val){
 
 // ═══ NAV ══════════════════════════════════════════════════════
 function pgAtual(){ const a=document.querySelector('.page.active'); return a?a.id.replace('page-',''):'dashboard'; }
+function navBtnPagina(p){ return [...document.querySelectorAll('.nav-btn')].find(b=>(b.getAttribute('onclick')||'').includes(`showPage('${p}'`)); }
 function showPage(p,btn){
+  const cliqueDireto=!!btn;
+  if(!btn)btn=navBtnPagina(p);
   document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(el=>el.classList.remove('active'));
   document.getElementById('page-'+p).classList.add('active');
   if(btn)btn.classList.add('active');
   renderPage(p);
-  if(p==='entradas'&&btn)setTimeout(abrirModalAjudaEntrada,80);
+  if(p==='entradas'&&cliqueDireto)setTimeout(abrirModalAjudaEntrada,80);
 }
 function renderPage(p){
   const m={dashboard:renderDashboard,estoque:renderEstoque,entradas:renderEntradas,contagem:renderContagem,consumo:renderConsumo,reposicao:renderReposicao,rastreabilidade:renderRastreabilidade,intel:renderIntel,precos:renderHistoricoPrecos,config:renderConfig};
@@ -1129,25 +1153,25 @@ function renderDashboard(){
   if(alertasCount)alertasCount.textContent=alertas.length?`${alertas.length} item(ns)`:'';
   document.getElementById('alertas-list').innerHTML=alertas.length?alertas.map(m=>{
     const st=stMP(m),dc=diasCob(m),s=saldoMP(m.id),la=lotesAtivos(m.id).length;
-    return`<div class="alert-item ${st}"><div class="alert-icon ${st}">${st==='danger'?'!':'↓'}</div><div class="alert-body"><div class="alert-name">${m.nome}</div><div class="alert-desc">${st==='danger'?`Saldo ${s.toFixed(1)} ${m.un} · Mín.: ${m.min} · ${la} lote(s)`:getCoberturaTexto(dc)+' · Lead: '+m.lead+'d'}</div></div><span class="alert-cta" onclick="showPage('reposicao')">Ver →</span></div>`;
+    return`<div class="alert-item ${st}"><div class="alert-icon ${st}">${st==='danger'?'!':'↓'}</div><div class="alert-body"><div class="alert-name">${m.nome}</div><div class="alert-desc">${st==='danger'?`Saldo ${s.toFixed(1)} ${m.un} · Mín.: ${m.min} · ${la} lote(s)`:getCoberturaTexto(dc)+' · Lead: '+m.lead+'d'}</div></div><span class="alert-cta" onclick="abrirRastreabilidadeInsumo('${m.id}')">Ver →</span></div>`;
   }).join(''):'<div class="empty">Nenhum alerta. Estoque em ordem.</div>';
 
   // Lotes recentes
   const recentes=[...S.lotes].filter(l=>l.dataEntrega).sort((a,b)=>b.dataEntrega>a.dataEntrega?1:-1).slice(0,5);
   document.getElementById('entradas-recentes').innerHTML=recentes.length?recentes.map(l=>{
-    const mp=S.materiais.find(m=>m.id===String(l.mpId));
+    const mp=mpDoLote(l);
     return`<div class="ent-item"><div class="ent-icon">+</div><div class="ent-body"><div class="ent-name">${mp?mp.nome:'—'} <span class="badge b-lote">${l.lote||'—'}</span></div><div class="ent-sub">${l.forn||'—'} · ${fmtBR(l.dataEntrega)}</div></div><div class="ent-qty">+${l.qtyEntrada} ${mp?mp.un:''}</div></div>`;
   }).join(''):'<div class="empty">Nenhum lote recebido.</div>';
 
   // Validades
   const lotesBad=S.lotes.filter(l=>l.ativo&&l.validade&&(vencido(l.validade)||urgente(l.validade)||proxVencer(l.validade))).sort((a,b)=>a.validade>b.validade?1:-1);
   document.getElementById('validades-alert').innerHTML=lotesBad.length?lotesBad.map(l=>{
-    const mp=S.materiais.find(m=>m.id===String(l.mpId));
+    const mp=mpDoLote(l);
     const isV=vencido(l.validade),isU=urgente(l.validade);
     const cls=isV?'danger':isU?'warn':'warn';
     const icon=isV?'✕':isU?'⚠':'!';
     const label=isV?'— <strong>VENCIDO</strong>':isU?'— <strong>URGENTE (≤7 dias)</strong>':'— Vence em breve (≤30 dias)';
-    return`<div class="alert-item ${cls}"><div class="alert-icon ${cls}">${icon}</div><div class="alert-body"><div class="alert-name">${mp?mp.nome:'—'} — Lote <span class="badge b-lote">${l.lote||'—'}</span></div><div class="alert-desc">${l.forn||'—'} · Saldo: ${l.saldoLote} ${mp?mp.un:''} · Validade: ${fmtBR(l.validade)} ${label}</div></div><span class="alert-cta" onclick="showPage('rastreabilidade')">Ver lote →</span></div>`;
+    return`<div class="alert-item ${cls}"><div class="alert-icon ${cls}">${icon}</div><div class="alert-body"><div class="alert-name">${mp?mp.nome:'—'} — Lote <span class="badge b-lote">${l.lote||'—'}</span></div><div class="alert-desc">${l.forn||'—'} · Saldo: ${l.saldoLote} ${mp?mp.un:''} · Validade: ${fmtBR(l.validade)} ${label}</div></div><span class="alert-cta" onclick="${mp?`abrirRastreabilidadeInsumo('${mp.id}')`:`showPage('rastreabilidade')`}">Ver lote →</span></div>`;
   }).join(''):'<div class="empty">Nenhum lote com validade crítica.</div>';
 
   // Chart consumo
@@ -1737,7 +1761,7 @@ function simularReposicao(){
 // ═══ RASTREABILIDADE ══════════════════════════════════════════
 function fmtMoeda(v){ return 'R$ '+(Number(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 function escHtml(v){ return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-function mpDoLote(l){ return S.materiais.find(m=>String(m.id)===String(l.mpId)); }
+function mpDoLote(l){ return S.materiais.find(m=>lotePertenceMp(l,m.id)); }
 function fatorUnSiMP(mp){ return mp&&Number(mp.unSi)>0?Number(mp.unSi):1; }
 function fatorUnSiLote(l){ return fatorUnSiMP(mpDoLote(l)); }
 function qtdSiLote(l){ return (Number(l.qtyEntrada)||0)*fatorUnSiLote(l); }
@@ -1756,11 +1780,24 @@ function precoPorUnidadeOperacional(l){
 function valorTotalSaldoLote(l){ return l.valorUnit&&l.saldoLote?precoPorUnidadeOperacional(l)*(Number(l.saldoLote)||0):0; }
 function valorTotalEntradaLote(l){ return l.valorUnit&&l.qtyEntrada?precoPorUnidadeOperacional(l)*(Number(l.qtyEntrada)||0):0; }
 function valorTotalLote(l){ return valorTotalSaldoLote(l); }
+function abrirRastreabilidadeInsumo(mpId){
+  const mp=S.materiais.find(m=>mesmoId(m.id,mpId));
+  showPage('rastreabilidade');
+  const busca=document.getElementById('busca-lote');
+  const filtro=document.getElementById('filtro-rastr');
+  if(filtro)filtro.value='';
+  if(busca){
+    busca.value=mp?mp.nome:String(mpId||'');
+    busca.focus();
+  }
+  filtrarRastreabilidade();
+}
 function obterLotesRastreabilidadeFiltrados(){
   const b=document.getElementById('busca-lote').value.toLowerCase();
   const f=document.getElementById('filtro-rastr').value;
   return S.lotes.filter(l=>{
-    if(b&&!`${l.lote} ${l.forn} ${(S.materiais.find(m=>m.id===String(l.mpId))||{}).nome||''}`.toLowerCase().includes(b))return false;
+    const mp=mpDoLote(l);
+    if(b&&!`${l.lote} ${l.forn} ${mp?mp.nome:''}`.toLowerCase().includes(b))return false;
     if(f==='ativo')return l.ativo;
     if(f==='encerrado')return !l.ativo;
     if(f==='vencido')return vencido(l.validade);
@@ -1781,7 +1818,7 @@ function filtrarRastreabilidade(){
     <div class="stat-card warn"><div class="stat-label">Sem valor</div><div class="stat-value" style="font-size:20px">${semValor}</div><div class="stat-sub">lotes sem preço ou quantidade</div></div>`;
 
   document.getElementById('tbody-rastreabilidade').innerHTML=lista.length?lista.map(l=>{
-    const mp=S.materiais.find(m=>m.id===String(l.mpId));
+    const mp=mpDoLote(l);
     const badgeV=badgeValidade(l.validade);
     const stL=l.ativo?'<span class="badge b-ok">Ativo</span>':'<span class="badge b-cat">Encerrado</span>';
     return`<tr>
@@ -1811,7 +1848,7 @@ function imprimirRastreabilidade(){
   const busca=document.getElementById('busca-lote').value.trim();
   const dataHoje=new Date().toLocaleDateString('pt-BR');
   const rows=lista.map((l,i)=>{
-    const mp=S.materiais.find(m=>m.id===String(l.mpId));
+    const mp=mpDoLote(l);
     const total=valorTotalLote(l);
     return `<tr class="${i%2?'alt':''}">
       <td>${escHtml(mp?mp.nome:'-')}</td><td>${escHtml(l.lote||'-')}</td><td>${escHtml(l.forn||'-')}</td>
