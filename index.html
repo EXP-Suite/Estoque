@@ -851,6 +851,8 @@ function resetParams(){
 
 // ═══ STATE ════════════════════════════════════════════════════
 let S = { materiais: [], lotes: [], contagens: [], pedidos: [] };
+let IDX = { matById:new Map(), matByName:new Map(), lotesByMp:new Map(), mpByLoteId:new Map() };
+let consumoSemCache = new Map();
 let consumoSemSyncKey = '';
 let consumoSemSyncTimer = null;
 let chartC = null, chartD = null, chartI = null, chartP = null, chartPU = null;
@@ -867,6 +869,7 @@ window.onload = () => {
     sincronizar(true);
   } else {
     S.materiais = DADOS_EXEMPLO();
+    rebuildIndices();
     renderPage('dashboard');
     setSyncStatus('offline','Sem conexão — configure a URL');
   }
@@ -917,6 +920,7 @@ async function sincronizar(silencioso) {
     S.lotes      = (data.result.lotes      || []).map(normL);
     S.contagens  = (data.result.contagens  || []).map(normCnt);
     S.pedidos    = (data.result.pedidos    || []).map(normPedido);
+    rebuildIndices();
 
     const hr = new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
     setSyncStatus('online','Sincronizado '+hr);
@@ -966,7 +970,7 @@ function normL(l){
   const mpRawTxt=String(mpRaw||'').trim();
   const mpNomeRaw=getCampo(l,['mpNome','nomeMP','nome mp','matéria-prima','materia prima','materia-prima','material']);
   const valorRaw=getCampo(l,['valorUnit','valor unit','valor unitario','valor unitário','Valor Unit.','Valor/kg','valor kg','valorKg','precoKg','preço kg','preco kg','R$/kg']);
-  return {id:safeId(getCampo(l,['id'])),mpId:safeId(mpRaw),mpNome:String(mpNomeRaw||(/^\d+([,.]0+)?$/.test(mpRawTxt)?'':mpRawTxt)),forn:String(getCampo(l,['forn','fornecedor'])||''),lote:String(getCampo(l,['lote'])||''),dataCompra:fmtD(getCampo(l,['dataCompra','data compra'])),prevEntrega:fmtD(getCampo(l,['prevEntrega','prev entrega','previsao entrega','previsão entrega'])),dataEntrega:fmtD(getCampo(l,['dataEntrega','data entrega','entrada'])),criadoEm:fmtD(getCampo(l,['criadoEm','criado em'])),qtyEntrada:safeNum(getCampo(l,['qtyEntrada','qtd entrada','quantidade','quantidade recebida'])),saldoLote:safeNum(getCampo(l,['saldoLote','saldo lote','saldo'])),valorUnit:valorRaw?safeNum(valorRaw):null,validade:fmtD(getCampo(l,['validade'])),obs:String(getCampo(l,['obs','observação','observacao'])||''),ativo:getCampo(l,['ativo'])!==false&&String(getCampo(l,['ativo'])).toLowerCase()!=='false'};
+  return {id:safeId(getCampo(l,['id'])),mpId:safeId(mpRaw),mpNome:String(mpNomeRaw||(/^\d+([,.]0+)?$/.test(mpRawTxt)?'':mpRawTxt)),rawText:normTxt(Object.values(l||{}).join(' ')),forn:String(getCampo(l,['forn','fornecedor'])||''),lote:String(getCampo(l,['lote'])||''),dataCompra:fmtD(getCampo(l,['dataCompra','data compra'])),prevEntrega:fmtD(getCampo(l,['prevEntrega','prev entrega','previsao entrega','previsão entrega'])),dataEntrega:fmtD(getCampo(l,['dataEntrega','data entrega','entrada'])),criadoEm:fmtD(getCampo(l,['criadoEm','criado em'])),qtyEntrada:safeNum(getCampo(l,['qtyEntrada','qtd entrada','quantidade','quantidade recebida'])),saldoLote:safeNum(getCampo(l,['saldoLote','saldo lote','saldo'])),valorUnit:valorRaw?safeNum(valorRaw):null,validade:fmtD(getCampo(l,['validade'])),obs:String(getCampo(l,['obs','observação','observacao'])||''),ativo:getCampo(l,['ativo'])!==false&&String(getCampo(l,['ativo'])).toLowerCase()!=='false'};
 }
 function normPedido(p){ return {id:safeId(p.id),mpId:safeId(p.mpId),dataPedido:fmtD(p.dataPedido),prevEntrega:fmtD(p.prevEntrega),qty:safeNum(p.qty),status:String(p.status||'aberto').toLowerCase(),obs:String(p.obs||'')}; }
 // IDs sao strings para evitar perda de precisao com numeros grandes no JS
@@ -989,7 +993,13 @@ function normTxt(v){ return String(v||'').normalize('NFD').replace(/[\u0300-\u03
 function normHeader(v){ return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9]/g,'').toLowerCase(); }
 function getCampo(obj,nomes){
   const alvo=nomes.map(normHeader);
-  for(const k of Object.keys(obj||{})){ if(alvo.includes(normHeader(k)))return obj[k]; }
+  let primeiro='';
+  for(const k of Object.keys(obj||{})){
+    if(!alvo.includes(normHeader(k)))continue;
+    if(primeiro==='')primeiro=obj[k];
+    if(obj[k]!==''&&obj[k]!==null&&obj[k]!==undefined)return obj[k];
+  }
+  if(primeiro!==''&&primeiro!==null&&primeiro!==undefined)return primeiro;
   return '';
 }
 function normCnt(c){ return {id:safeId(c.id),data:fmtD(c.data),obs:String(c.obs||''),items:(c.items||[]).map(i=>({contagemId:safeId(i.contagemId),loteId:safeId(i.loteId),mpId:safeId(i.mpId),teorico:safeNum(i.teorico),fisico:safeNum(i.fisico),div:safeNum(i.div)}))}; }
@@ -1002,21 +1012,40 @@ function normId(v){
   return /^\d+([,.]0+)?$/.test(s)?String(parseInt(s.replace(',','.'),10)):s;
 }
 function mesmoId(a,b){ return normId(a)===normId(b); }
-function loteDisponivel(l){ return l.ativo||Number(l.saldoLote)>0; }
+function loteDisponivel(l){ return l.ativo&&Number(l.saldoLote)>0; }
+function rebuildIndices(){
+  consumoSemCache = new Map();
+  const matById=new Map(), matByName=new Map(), lotesByMp=new Map(), mpByLoteId=new Map();
+  S.materiais.forEach(m=>{
+    matById.set(normId(m.id),m);
+    matByName.set(normTxt(m.nome),m);
+  });
+  S.lotes.forEach(l=>{
+    const mp=matById.get(normId(l.mpId))||matByName.get(normTxt(l.mpId))||matByName.get(normTxt(l.mpNome))||S.materiais.find(m=>l.rawText&&l.rawText.includes(normTxt(m.nome)));
+    if(!mp)return;
+    mpByLoteId.set(normId(l.id),mp);
+    if(!loteDisponivel(l))return;
+    const key=normId(mp.id);
+    if(!lotesByMp.has(key))lotesByMp.set(key,[]);
+    lotesByMp.get(key).push(l);
+  });
+  IDX={matById,matByName,lotesByMp,mpByLoteId};
+}
 function lotePertenceMp(l,mpId){
-  const mp=S.materiais.find(m=>mesmoId(m.id,mpId));
+  const mp=IDX.matById.get(normId(mpId))||S.materiais.find(m=>mesmoId(m.id,mpId));
   if(mesmoId(l.mpId,mpId))return true;
   if(mp&&normTxt(l.mpId)===normTxt(mp.nome))return true;
   if(mp&&normTxt(l.mpNome)===normTxt(mp.nome))return true;
+  if(mp&&l.rawText&&l.rawText.includes(normTxt(mp.nome)))return true;
   return false;
 }
-// Lotes disponíveis de uma MP. Se algum lote veio do Sheets com ativo=FALSE mas saldo positivo, ele continua contando.
-function lotesAtivos(mpId){ return S.lotes.filter(l=>lotePertenceMp(l,mpId)&&loteDisponivel(l)); }
-// Saldo consolidado = soma dos lotes disponíveis. Se não houver lotes vinculados, usa o saldo consolidado vindo de Materiais.
+// Lotes disponíveis de uma MP: ativo TRUE e saldo positivo. Data de entrega não entra neste cálculo.
+function lotesAtivos(mpId){ return IDX.lotesByMp.get(normId(mpId))||[]; }
+// Saldo consolidado = soma dos lotes ativos com saldo positivo. Se não houver lotes vinculados, usa o saldo consolidado vindo de Materiais.
 function saldoMP(mpId){
   const la=lotesAtivos(mpId);
   if(la.length)return la.reduce((a,l)=>a+(Number(l.saldoLote)||0),0);
-  const mp=S.materiais.find(m=>mesmoId(m.id,mpId));
+  const mp=IDX.matById.get(normId(mpId))||S.materiais.find(m=>mesmoId(m.id,mpId));
   return mp?Number(mp.saldo)||0:0;
 }
 function totalFisicoContagem(c,mpId){
@@ -1025,6 +1054,9 @@ function totalFisicoContagem(c,mpId){
 }
 // Consumo semanal calculado a partir das contagens (visão consolidada)
 function consumoSem(mpId){
+  const cacheKey=normId(mpId);
+  if(consumoSemCache.has(cacheKey))return consumoSemCache.get(cacheKey);
+  const cacheRet=v=>(consumoSemCache.set(cacheKey,v),v);
   const mid=String(mpId);
   // Filtra contagens que têm itens desta MP, ordena por data crescente
   const cntsDia=new Map();
@@ -1036,19 +1068,19 @@ function consumoSem(mpId){
       if(!atual||c.ord>atual.ord)cntsDia.set(c.data,c);
     });
   const cnts=[...cntsDia.values()].sort((a,b)=>a.data<b.data?-1:a.data>b.data?1:0);
-  if(cnts.length<2) return null;
+  if(cnts.length<2) return cacheRet(null);
   // Media semanal pelo periodo completo, usando uma contagem consolidada por dia.
   let consumoTotal=0;
   for(let i=1;i<cnts.length;i++){
     const cons=cnts[i-1].totalMP-cnts[i].totalMP;
     if(cons>0)consumoTotal+=cons;
   }
-  if(consumoTotal<=0)return 0;
+  if(consumoTotal<=0)return cacheRet(0);
   const d1=new Date(cnts[0].data+'T12:00');
   const d2=new Date(cnts[cnts.length-1].data+'T12:00');
   const diasTotal=(d2-d1)/864e5;
-  if(diasTotal<=0)return 0;
-  return Math.round(consumoTotal/diasTotal*7*10)/10;
+  if(diasTotal<=0)return cacheRet(0);
+  return cacheRet(Math.round(consumoTotal/diasTotal*7*10)/10);
 }
 function payloadConsumoSemMateriais(){
   return S.materiais.map(m=>{
@@ -1135,10 +1167,10 @@ function renderPage(p){
 // ═══ DASHBOARD ════════════════════════════════════════════════
 function renderDashboard(){
   const mats=S.materiais;
-  const ok=mats.filter(m=>stMP(m)==='ok').length;
-  const w=mats.filter(m=>stMP(m)==='warn').length;
-  const d=mats.filter(m=>stMP(m)==='danger').length;
-  const lotesAtivosTotal=S.lotes.filter(l=>l.ativo&&l.dataEntrega).length;
+  const analises=mats.map(m=>analiseReposicao(m));
+  const ok=analises.filter(a=>a.st==='ok').length;
+  const w=analises.filter(a=>a.st==='warn').length;
+  const d=analises.filter(a=>a.st==='danger').length;
   const vencidos=S.lotes.filter(l=>l.ativo&&vencido(l.validade)).length;
   document.getElementById('dash-metrics').innerHTML=`
     <div class="stat-card"><div class="stat-label">Matérias-Primas</div><div class="stat-value">${mats.length}</div><div class="stat-sub">cadastradas</div></div>
@@ -1148,12 +1180,12 @@ function renderDashboard(){
     <div class="stat-card ${vencidos>0?'danger':'ok'}"><div class="stat-label">Lotes Vencidos</div><div class="stat-value">${vencidos}</div><div class="stat-sub">em estoque</div></div>`;
 
   // Alertas
-  const alertas=mats.filter(m=>stMP(m)!=='ok').sort((a,b)=>stMP(a)==='danger'?-1:1);
+  const alertas=analises.filter(a=>a.st!=='ok').sort((a,b)=>a.st==='danger'?-1:b.st==='danger'?1:0);
   const alertasCount=document.getElementById('alertas-count');
   if(alertasCount)alertasCount.textContent=alertas.length?`${alertas.length} item(ns)`:'';
-  document.getElementById('alertas-list').innerHTML=alertas.length?alertas.map(m=>{
-    const st=stMP(m),dc=diasCob(m),s=saldoMP(m.id),la=lotesAtivos(m.id).length;
-    return`<div class="alert-item ${st}"><div class="alert-icon ${st}">${st==='danger'?'!':'↓'}</div><div class="alert-body"><div class="alert-name">${m.nome}</div><div class="alert-desc">${st==='danger'?`Saldo ${s.toFixed(1)} ${m.un} · Mín.: ${m.min} · ${la} lote(s)`:getCoberturaTexto(dc)+' · Lead: '+m.lead+'d'}</div></div><span class="alert-cta" onclick="abrirRastreabilidadeInsumo('${m.id}')">Ver →</span></div>`;
+  document.getElementById('alertas-list').innerHTML=alertas.length?alertas.map(a=>{
+    const m=a.m,st=a.st,dc=a.dc,s=a.s,la=a.la;
+    return`<div class="alert-item ${st}"><div class="alert-icon ${st}">${st==='danger'?'!':'↓'}</div><div class="alert-body"><div class="alert-name">${m.nome}</div><div class="alert-desc">${st==='danger'?`Saldo ${s.toFixed(1)} ${m.un} · Mín.: ${m.min} · ${la} lote(s)`:getCoberturaTexto(dc)+' · Lead: '+m.lead+'d'}</div></div><span class="alert-cta" onclick="abrirReposicaoInsumo('${m.id}')">Ver →</span></div>`;
   }).join(''):'<div class="empty">Nenhum alerta. Estoque em ordem.</div>';
 
   // Lotes recentes
@@ -1176,7 +1208,7 @@ function renderDashboard(){
 
   // Chart consumo
   const lbs=mats.slice(0,7).map(m=>m.nome.length>13?m.nome.slice(0,13)+'…':m.nome);
-  const dt=mats.slice(0,7).map(m=>{const cs=consumoSem(m.id);return cs?Math.round(cs*4.33):0;});
+  const dt=analises.slice(0,7).map(a=>a.cs?Math.round(a.cs*4.33):0);
   if(chartC)chartC.destroy();
   chartC=new Chart(document.getElementById('chart-consumo'),{type:'bar',data:{labels:lbs,datasets:[{label:'Consumo mensal est.',data:dt,backgroundColor:'#1a5c38',borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:11}}},y:{ticks:{font:{size:11}}}}}});
 }
@@ -1604,6 +1636,17 @@ function limparFiltrosPedido(prefix,renderFn){
   ['cat','forn','mp','status'].forEach(k=>{const el=document.getElementById(prefix+'-filtro-'+k);if(el)el.value='';});
   window[renderFn]();
 }
+function abrirReposicaoInsumo(mpId){
+  const mp=IDX.matById.get(normId(mpId))||S.materiais.find(m=>mesmoId(m.id,mpId));
+  showPage('reposicao');
+  ['cat','forn','status'].forEach(k=>{const el=document.getElementById('rep-filtro-'+k);if(el)el.value='';});
+  const filtroMp=document.getElementById('rep-filtro-mp');
+  if(filtroMp){
+    filtroMp.value=mp?String(mp.id):String(mpId||'');
+    filtroMp.focus();
+  }
+  renderReposicao();
+}
 function listaReposicaoFiltrada(prefix, somenteAlertas){
   popularFiltrosPedido(prefix);
   return S.materiais.map(analiseReposicao).filter(a=>(!somenteAlertas||a.st!=='ok')&&passaFiltrosPedido(a,prefix));
@@ -1761,7 +1804,9 @@ function simularReposicao(){
 // ═══ RASTREABILIDADE ══════════════════════════════════════════
 function fmtMoeda(v){ return 'R$ '+(Number(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 function escHtml(v){ return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-function mpDoLote(l){ return S.materiais.find(m=>lotePertenceMp(l,m.id)); }
+function mpDoLote(l){
+  return IDX.mpByLoteId.get(normId(l.id))||IDX.matById.get(normId(l.mpId))||IDX.matByName.get(normTxt(l.mpId))||IDX.matByName.get(normTxt(l.mpNome))||null;
+}
 function fatorUnSiMP(mp){ return mp&&Number(mp.unSi)>0?Number(mp.unSi):1; }
 function fatorUnSiLote(l){ return fatorUnSiMP(mpDoLote(l)); }
 function qtdSiLote(l){ return (Number(l.qtyEntrada)||0)*fatorUnSiLote(l); }
