@@ -1353,10 +1353,20 @@ async function registrarLote(){
   const dataEntrega=document.getElementById('ent-data-entrega').value;
   if(!mpId){notify('Selecione uma matéria-prima válida na lista.','warn');return;}
   if(!qty||!forn||!lote||!validade||!dataEntrega||!valorUnit||valorUnit<=0){notify('Preencha os campos obrigatórios: Quantidade, Fornecedor, Lote, Validade, Data Efetiva de Entrega e Valor de referência.','warn');return;}
+  const pedidoAntes=pedidoAberto(mpId);
   const btn=document.getElementById('btn-ent');btn.disabled=true;btn.textContent='Salvando...';
   try {
     const r=await gsCall({action:'saveLote',data:{mpId,qtyEntrada:qty,forn,lote,dataCompra:'',dataEntrega,valorUnit,validade,obs:document.getElementById('ent-obs').value}});
-    if(r&&r.ok){await sincronizar(true);notify('Lote registrado com sucesso!');limparEnt();renderEntradas();}
+    if(r&&r.ok){
+      let pedidoCancelado=Number(r.result&&r.result.pedidosCancelados)||0;
+      if(pedidoAntes&&!pedidoCancelado){
+        const rc=await gsCall({action:'savePedido',data:{id:pedidoAntes.id,status:'cancelado'}});
+        if(rc&&rc.ok)pedidoCancelado=1;
+      }
+      await sincronizar(true);
+      notify(pedidoCancelado?'Lote registrado com sucesso! Pedido aberto cancelado automaticamente.':'Lote registrado com sucesso!');
+      limparEnt();renderEntradas();
+    }
     else if(r) notify(r.error||'Erro ao salvar lote.','error');
     else notify('Sem resposta do servidor.','error');
   } finally { btn.disabled=false;btn.textContent='Registrar Lote'; }
