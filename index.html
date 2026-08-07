@@ -184,6 +184,24 @@ tbody tr:hover td{background:var(--bg)}
 .toast.show{opacity:1;transform:none}
 .toast.error{background:var(--danger)}
 .toast.warn-t{background:#8a5e00}
+.login-screen{position:fixed;inset:0;background:linear-gradient(135deg,#f7f6f3,#e8f4ed);z-index:100000;display:none;align-items:center;justify-content:center;padding:24px}
+.login-card{width:min(420px,94vw);background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:26px;box-shadow:0 18px 60px rgba(0,0,0,.16)}
+.login-brand{display:flex;align-items:center;gap:12px;margin-bottom:20px;color:var(--accent)}
+.login-brand img{width:46px;height:46px;border-radius:8px;object-fit:contain;border:1px solid var(--border);padding:3px;background:#fff}
+.login-title{font-size:19px;font-weight:700;line-height:1.2}
+.login-sub{font-size:12px;font-weight:700;font-style:italic;color:var(--text2);margin-top:3px}
+.login-card .form-group{margin-bottom:12px}
+.login-actions{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:16px}
+.login-error{display:none;margin-top:12px;padding:9px 11px;border-radius:8px;background:var(--danger-bg);color:var(--danger);font-size:12px;font-weight:600}
+.audit-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+.audit-item{border:1px solid var(--border);border-radius:8px;padding:12px;background:var(--surface)}
+.audit-item.danger{border-color:#f3b7b0;background:var(--danger-bg)}
+.audit-item.warn{border-color:#f0d060;background:var(--warn-bg)}
+.audit-item.ok{border-color:#bdd8c8;background:var(--accent-bg)}
+.audit-item-title{font-size:13px;font-weight:700;margin-bottom:5px;color:var(--text)}
+.audit-item-desc{font-size:12px;color:var(--text2);line-height:1.45}
+.user-menu-checks{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:6px;margin-top:6px}
+.user-menu-checks label{font-size:12px;color:var(--text2);display:flex;align-items:center;gap:6px}
 /* Loading */
 .loading-overlay{display:none;position:fixed;inset:0;background:rgba(247,246,243,.8);z-index:100;align-items:center;justify-content:center;flex-direction:column;gap:12px}
 .loading-overlay.show{display:flex}
@@ -209,6 +227,24 @@ tbody tr:hover td{background:var(--bg)}
 </style>
 </head>
 <body>
+<div class="login-screen" id="login-screen">
+  <div class="login-card">
+    <div class="login-brand">
+      <img src="https://explosaoalimentos.com.br/wp-content/uploads/2024/11/logo-menor-e1731554322568.png" alt="Explosão Alimentos">
+      <div>
+        <div class="login-title">WMS Explosão</div>
+        <div class="login-sub">Warehouse Management System</div>
+      </div>
+    </div>
+    <div class="form-group"><label>Usuário</label><input type="text" id="login-usuario" autocomplete="username" placeholder="Digite o login"></div>
+    <div class="form-group"><label>Senha</label><input type="password" id="login-senha" autocomplete="current-password" placeholder="Digite a senha" onkeydown="if(event.key==='Enter')fazerLogin()"></div>
+    <div class="login-actions">
+      <span style="font-size:11px;color:var(--text3)">A sessão encerra ao fechar o navegador.</span>
+      <button class="btn btn-primary" onclick="fazerLogin()">Entrar</button>
+    </div>
+    <div class="login-error" id="login-erro"></div>
+  </div>
+</div>
 <div class="loading-overlay" id="loading-overlay"><div class="spinner"></div><div class="loading-msg" id="loading-msg">Carregando...</div></div>
 
 <div class="topbar">
@@ -220,23 +256,26 @@ tbody tr:hover td{background:var(--bg)}
     </div>
   </div>
   <div class="topbar-right">
+    <div class="sync-info" id="usuario-info" style="display:none"><span id="usuario-label"></span></div>
     <div class="sync-info"><div class="sync-dot offline" id="sync-dot"></div><span id="sync-label">Sem conexão</span></div>
     <button class="btn btn-sm" onclick="abrirConfig()">⚙ Configurar Sheets</button>
     <button class="btn btn-sm" onclick="sincronizar()">↻ Sincronizar</button>
+    <button class="btn btn-sm" onclick="logout()">Sair</button>
   </div>
 </div>
 
 <div class="nav">
-  <button class="nav-btn active" onclick="showPage('dashboard',this)">Dashboard<span class="info-btn" data-tip="Visão geral do estoque: totais, alertas críticos, validades vencendo e últimas entradas.">ⓘ</span></button>
-  <button class="nav-btn" onclick="showPage('estoque',this)">Estoque por Lote<span class="info-btn" data-tip="Saldo atual de cada MP com seus lotes ativos. Clique na seta ▶ para ver os lotes individuais com validade e rastreabilidade.">ⓘ</span></button>
-  <button class="nav-btn" onclick="showPage('entradas',this)">Registrar Entrada<span class="info-btn" data-tip="Use aqui quando chegar mercadoria. Cada entrada vira um lote independente com número, fornecedor e validade rastreáveis.">ⓘ</span></button>
-  <button class="nav-btn" onclick="showPage('contagem',this)">Contagem Física<span class="info-btn" data-tip="O operador conta o estoque físico e lança aqui (ou usa a ficha impressa). Ao salvar, os saldos são atualizados automaticamente.">ⓘ</span></button>
-  <button class="nav-btn" onclick="showPage('consumo',this)">Análise de Consumo<span class="info-btn" data-tip="Selecione uma MP e veja o gráfico de evolução de saldo, consumo semanal e mensal estimado com base nas contagens realizadas.">ⓘ</span></button>
-  <button class="nav-btn" onclick="showPage('reposicao',this)">Reposição<span class="info-btn" data-tip="Tabela com todas as MPs mostrando quando e quanto pedir, com base no consumo histórico, lead time e dias de segurança cadastrados.">ⓘ</span></button>
-  <button class="nav-btn" onclick="showPage('rastreabilidade',this)">Rastreabilidade<span class="info-btn" data-tip="Busque qualquer lote por nome, fornecedor ou número. Veja todo o histórico: origem, data, saldo atual, validade e valor.">ⓘ</span></button>
-  <button class="nav-btn" onclick="showPage('intel',this)">🧠 Inteligência<span class="info-btn" data-tip="Análises automáticas: valor do estoque em R$, sugestão de compra com quantidade ideal, detecção de consumo anormal e histórico de divergências.">ⓘ</span></button>
-  <button class="nav-btn" onclick="showPage('precos',this)">Histórico de Preços<span class="info-btn" data-tip="Acompanhe a evolução do preço pago na referência de cada matéria-prima: kg, milheiro ou unidade cadastrada.">ⓘ</span></button>
-  <button class="nav-btn" onclick="showPage('config',this)">Configurações<span class="info-btn" data-tip="Conexão com o Google Sheets, cadastro de novas MPs e parâmetros globais de inteligência e reposição.">ⓘ</span></button>
+  <button class="nav-btn active" data-page="dashboard" onclick="showPage('dashboard',this)">Dashboard<span class="info-btn" data-tip="Visão geral do estoque: totais, alertas críticos, validades vencendo e últimas entradas.">ⓘ</span></button>
+  <button class="nav-btn" data-page="estoque" onclick="showPage('estoque',this)">Estoque por Lote<span class="info-btn" data-tip="Saldo atual de cada MP com seus lotes ativos. Clique na seta ▶ para ver os lotes individuais com validade e rastreabilidade.">ⓘ</span></button>
+  <button class="nav-btn" data-page="entradas" onclick="showPage('entradas',this)">Registrar Entrada<span class="info-btn" data-tip="Use aqui quando chegar mercadoria. Cada entrada vira um lote independente com número, fornecedor e validade rastreáveis.">ⓘ</span></button>
+  <button class="nav-btn" data-page="contagem" onclick="showPage('contagem',this)">Contagem Física<span class="info-btn" data-tip="O operador conta o estoque físico e lança aqui (ou usa a ficha impressa). Ao salvar, os saldos são atualizados automaticamente.">ⓘ</span></button>
+  <button class="nav-btn" data-page="consumo" onclick="showPage('consumo',this)">Análise de Consumo<span class="info-btn" data-tip="Selecione uma MP e veja o gráfico de evolução de saldo, consumo semanal e mensal estimado com base nas contagens realizadas.">ⓘ</span></button>
+  <button class="nav-btn" data-page="reposicao" onclick="showPage('reposicao',this)">Reposição<span class="info-btn" data-tip="Tabela com todas as MPs mostrando quando e quanto pedir, com base no consumo histórico, lead time e dias de segurança cadastrados.">ⓘ</span></button>
+  <button class="nav-btn" data-page="rastreabilidade" onclick="showPage('rastreabilidade',this)">Rastreabilidade<span class="info-btn" data-tip="Busque qualquer lote por nome, fornecedor ou número. Veja todo o histórico: origem, data, saldo atual, validade e valor.">ⓘ</span></button>
+  <button class="nav-btn" data-page="intel" onclick="showPage('intel',this)">🧠 Inteligência<span class="info-btn" data-tip="Análises automáticas: valor do estoque em R$, sugestão de compra com quantidade ideal, detecção de consumo anormal e histórico de divergências.">ⓘ</span></button>
+  <button class="nav-btn" data-page="auditoria" onclick="showPage('auditoria',this)">Auditoria<span class="info-btn" data-tip="Conferência de preenchimentos, variações de preço, pedidos registrados, anomalias de entrada e logs de usuário.">ⓘ</span></button>
+  <button class="nav-btn" data-page="precos" onclick="showPage('precos',this)">Histórico de Preços<span class="info-btn" data-tip="Acompanhe a evolução do preço pago na referência de cada matéria-prima: kg, milheiro ou unidade cadastrada.">ⓘ</span></button>
+  <button class="nav-btn" data-page="config" onclick="showPage('config',this)">Configurações<span class="info-btn" data-tip="Conexão com o Google Sheets, cadastro de novas MPs e parâmetros globais de inteligência e reposição.">ⓘ</span></button>
 </div>
 
 <div id="config-banner">
@@ -523,6 +562,48 @@ tbody tr:hover td{background:var(--bg)}
 
 </div>
 
+<!-- ═══ AUDITORIA ═══════════════════════════════════════════════ -->
+<div class="page" id="page-auditoria">
+  <div class="toolbar">
+    <select id="audit-filtro-tipo" onchange="renderAuditoria()" style="font-size:13px;padding:5px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text)">
+      <option value="">Todos os tipos</option>
+      <option value="critico">Críticos</option>
+      <option value="preco">Variação de preço</option>
+      <option value="entrada">Entrada fora do padrão</option>
+      <option value="pedido">Pedidos</option>
+      <option value="cadastro">Cadastro/preenchimento</option>
+      <option value="log">Logs de usuário</option>
+    </select>
+    <button class="btn btn-sm" onclick="renderAuditoria()">↻ Atualizar</button>
+    <button class="btn btn-sm" onclick="imprimirAuditoria()" style="background:var(--surface2);border:1px solid var(--border)">Imprimir</button>
+  </div>
+  <div class="summary-grid" id="audit-cards"></div>
+  <div class="card">
+    <div class="card-title">Pontos de Atenção</div>
+    <div class="audit-grid" id="audit-list"></div>
+  </div>
+  <div class="grid2">
+    <div class="card">
+      <div class="card-title">Pedidos Registrados</div>
+      <div class="table-wrap" style="max-height:360px">
+        <table>
+          <thead><tr><th>Matéria-Prima</th><th>Pedido</th><th>Previsão</th><th>Qtd</th><th>Status</th></tr></thead>
+          <tbody id="tbody-audit-pedidos"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Logs de Usuário</div>
+      <div class="table-wrap" style="max-height:360px">
+        <table>
+          <thead><tr><th>Data/Hora</th><th>Usuário</th><th>Ação</th><th>Detalhe</th></tr></thead>
+          <tbody id="tbody-audit-logs"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ═══ HISTÓRICO DE PREÇOS ════════════════════════════════════ -->
 <div class="page" id="page-precos">
   <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px;padding:12px 0 4px;border-bottom:1px solid var(--border)">
@@ -635,6 +716,28 @@ tbody tr:hover td{background:var(--bg)}
       <button class="btn" onclick="sincronizar()">↻ Testar</button>
     </div>
   </div>
+  <div class="card master-only" id="card-usuarios">
+    <div class="card-title">Usuários e Permissões</div>
+    <input type="hidden" id="usr-id">
+    <div class="form-grid">
+      <div class="form-group"><label>Nome *</label><input type="text" id="usr-nome" placeholder="Nome do colaborador"></div>
+      <div class="form-group"><label>Login *</label><input type="text" id="usr-login" placeholder="Ex: joao"></div>
+      <div class="form-group"><label>Senha *</label><input type="text" id="usr-senha" placeholder="Senha provisória"></div>
+      <div class="form-group"><label>Perfil</label><select id="usr-perfil" onchange="renderMenusUsuario()"><option value="comum">comum</option><option value="master">master</option></select></div>
+    </div>
+    <div class="user-menu-checks" id="usr-menus"></div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="salvarUsuario()">Salvar usuário</button>
+      <button class="btn" onclick="limparUsuarioForm()">Limpar</button>
+    </div>
+    <div class="table-wrap" style="margin-top:14px;max-height:320px">
+      <table>
+        <thead><tr><th>Nome</th><th>Login</th><th>Perfil</th><th>Menus</th><th>Ações</th></tr></thead>
+        <tbody id="tbody-usuarios"></tbody>
+      </table>
+    </div>
+    <p class="form-note">Usuários ficam em localStorage na chave exp_usuarios. Quando o Apps Script estiver atualizado, também podem ser sincronizados com a planilha.</p>
+  </div>
   <div class="card">
     <div class="card-title">Cadastrar Nova Matéria-Prima</div>
     <div class="form-grid">
@@ -697,13 +800,20 @@ tbody tr:hover td{background:var(--bg)}
 
 </div><!-- /main -->
 <div class="toast" id="toast"></div>
-<div id="app-version">Rev 12.3</div>
+<div id="app-version">Rev 13.2</div>
 
 <script>
 // ═══ CONFIG ═══════════════════════════════════════════════════
 const URL_FIXA = 'https://script.google.com/macros/s/AKfycbxbQW8d8Y2WC5zl1RNfFKFrBSbodm5EoyJ405nm6aWXu62pFFmRIcxNMITy1d5vfIHu/exec';
 const LOGO_URL = 'https://explosaoalimentos.com.br/wp-content/uploads/2024/11/logo-menor-e1731554322568.png';
 let SCRIPT_URL = localStorage.getItem('ea_estoque_url') || URL_FIXA;
+const MENUS_SISTEMA = [
+  ['dashboard','Dashboard'],['estoque','Estoque por Lote'],['entradas','Registrar Entrada'],
+  ['contagem','Contagem Física'],['consumo','Análise de Consumo'],['reposicao','Reposição'],
+  ['rastreabilidade','Rastreabilidade'],['intel','Inteligência'],['auditoria','Auditoria'],
+  ['precos','Histórico de Preços'],['config','Configurações']
+];
+const LOGIN_PADRAO = {id:'master',nome:'Administrador',login:'admin',senha:'admin',perfil:'master',menus:MENUS_SISTEMA.map(m=>m[0])};
 
 // ═══ TOOLTIP GLOBAL ══════════════════════════════════════════════
 (function(){
@@ -779,7 +889,7 @@ const TABLE_TIPS = {
   'observação':'Informação livre cadastrada sobre o lote ou material.',
   'contagem física':'Quantidade real encontrada pelo operador na contagem.',
   'divergência':'Diferença entre a contagem física e o saldo teórico.',
-  'consumo/sem':'Consumo médio por semana, calculado pelas quedas de saldo entre contagens consolidadas por dia.',
+  'consumo/sem':'Consumo médio por semana por ciclos: o ciclo atual tem mais peso e ciclos anteriores recentes entram como histórico.',
   'lead time':'Dias entre fazer o pedido e a mercadoria chegar.',
   'ponto de pedido':'Saldo em que o sistema recomenda pedir: mínimo + consumo diário durante lead time e segurança.',
   'data ideal do pedido':'Data estimada para fazer o pedido antes de chegar ao ponto de risco.',
@@ -850,7 +960,7 @@ function resetParams(){
 }
 
 // ═══ STATE ════════════════════════════════════════════════════
-let S = { materiais: [], lotes: [], contagens: [], pedidos: [] };
+let S = { materiais: [], lotes: [], contagens: [], pedidos: [], usuarios: [], logs: [] };
 let IDX = { matById:new Map(), matByName:new Map(), lotesByMp:new Map(), mpByLoteId:new Map() };
 let consumoSemCache = new Map();
 let consumoSemSyncKey = '';
@@ -862,19 +972,167 @@ window.onload = () => {
   carregarParams();
   document.getElementById('cnt-data').value = hoje();
   document.getElementById('ent-data-entrega').value = hoje();
+  inicializarUsuarios();
   if (SCRIPT_URL) {
     document.getElementById('url-input').value = SCRIPT_URL;
     document.getElementById('url-config').value = SCRIPT_URL;
     document.getElementById('config-banner').classList.add('hidden');
+  } else {
+    setSyncStatus('offline','Sem conexão — configure a URL');
+  }
+  if(usuarioLogado()){
+    iniciarSistema();
+  }else{
+    mostrarLogin();
+  }
+};
+function iniciarSistema(){
+  document.getElementById('login-screen').style.display='none';
+  atualizarUsuarioTopo();
+  aplicarPermissoes();
+  if (SCRIPT_URL) {
     sincronizar(true);
   } else {
     S.materiais = DADOS_EXEMPLO();
     rebuildIndices();
     renderPage('dashboard');
-    setSyncStatus('offline','Sem conexão — configure a URL');
   }
-};
+}
 function hoje(){ return new Date().toISOString().split('T')[0]; }
+
+// ═══ LOGIN, PERMISSÕES E LOGS ════════════════════════════════
+function inicializarUsuarios(){
+  let usuarios=[];
+  try{ usuarios=JSON.parse(localStorage.getItem('exp_usuarios')||'[]'); }catch(e){ usuarios=[]; }
+  usuarios=garantirUsuarioAdmin(usuarios);
+  localStorage.setItem('exp_usuarios',JSON.stringify(usuarios));
+  S.usuarios=usuarios;
+  try{ S.logs=JSON.parse(localStorage.getItem('exp_logs_usuario')||'[]')||[]; }catch(e){ S.logs=[]; }
+}
+function garantirUsuarioAdmin(usuarios){
+  if(!Array.isArray(usuarios))usuarios=[];
+  const existe=usuarios.some(u=>String(u.login||'').trim()==='admin');
+  return existe?usuarios:[LOGIN_PADRAO,...usuarios];
+}
+function salvarUsuariosLocal(){
+  S.usuarios=garantirUsuarioAdmin(S.usuarios);
+  localStorage.setItem('exp_usuarios',JSON.stringify(S.usuarios));
+}
+function usuarioLogado(){
+  try{return JSON.parse(sessionStorage.getItem('usuario_logado')||'null');}catch(e){return null;}
+}
+function isMaster(u=usuarioLogado()){ return !!u&&u.perfil==='master'; }
+function menusUsuario(u=usuarioLogado()){ return isMaster(u)?MENUS_SISTEMA.map(m=>m[0]):(u&&Array.isArray(u.menus)?u.menus:[]); }
+function podeAcessar(page){
+  const u=usuarioLogado();
+  return !!u&&(isMaster(u)||menusUsuario(u).includes(page));
+}
+function mostrarLogin(){
+  document.getElementById('login-screen').style.display='flex';
+  setTimeout(()=>document.getElementById('login-usuario')?.focus(),50);
+}
+function fazerLogin(){
+  inicializarUsuarios();
+  const login=document.getElementById('login-usuario').value.trim();
+  const senha=document.getElementById('login-senha').value;
+  const u=S.usuarios.find(x=>String(x.login).trim()===login&&String(x.senha)===String(senha));
+  const erro=document.getElementById('login-erro');
+  if(!u){erro.textContent='Usuário ou senha inválidos.';erro.style.display='block';return;}
+  const sess={id:u.id,nome:u.nome,login:u.login,perfil:u.perfil,menus:u.menus||[]};
+  sessionStorage.setItem('usuario_logado',JSON.stringify(sess));
+  registrarLog('login','Usuário entrou no sistema',u.login);
+  iniciarSistema();
+}
+function logout(){
+  const u=usuarioLogado();
+  registrarLog('logout','Usuário saiu do sistema',u&&u.login);
+  sessionStorage.removeItem('usuario_logado');
+  location.reload();
+}
+function atualizarUsuarioTopo(){
+  const u=usuarioLogado();
+  const info=document.getElementById('usuario-info'),label=document.getElementById('usuario-label');
+  if(info&&label&&u){info.style.display='flex';label.textContent=`${u.nome} · ${u.perfil}`;}
+}
+function primeiraPaginaPermitida(){
+  const menus=menusUsuario();
+  return menus.find(p=>document.getElementById('page-'+p))||'dashboard';
+}
+function aplicarPermissoes(){
+  const u=usuarioLogado();
+  document.querySelectorAll('.nav-btn[data-page]').forEach(btn=>{
+    const p=btn.dataset.page;
+    btn.style.display=u&&(isMaster(u)||menusUsuario(u).includes(p))?'':'none';
+  });
+  document.querySelectorAll('.master-only').forEach(el=>el.style.display=isMaster(u)?'':'none');
+  const atual=pgAtual();
+  if(!podeAcessar(atual))showPage(primeiraPaginaPermitida());
+}
+function registrarLog(acao,detalhe,login){
+  const u=usuarioLogado();
+  const item={id:String(Date.now()),dataHora:new Date().toISOString(),usuario:login||(u?u.login:'sistema'),nome:u?u.nome:'',acao,detalhe:String(detalhe||'')};
+  S.logs=[item,...(S.logs||[])].slice(0,300);
+  localStorage.setItem('exp_logs_usuario',JSON.stringify(S.logs));
+  if(SCRIPT_URL&&acao!=='navegacao')fetch(SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'saveLogUsuario',data:item}),redirect:'follow'}).catch(()=>{});
+}
+function renderMenusUsuario(){
+  const perfil=document.getElementById('usr-perfil')?.value||'comum';
+  const wrap=document.getElementById('usr-menus');
+  if(!wrap)return;
+  wrap.innerHTML=MENUS_SISTEMA.map(([id,nome])=>`<label><input type="checkbox" value="${id}" ${perfil==='master'?'checked disabled':''}> ${nome}</label>`).join('');
+}
+function limparUsuarioForm(){
+  ['usr-id','usr-nome','usr-login','usr-senha'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  const perfil=document.getElementById('usr-perfil');if(perfil)perfil.value='comum';
+  renderMenusUsuario();
+}
+function salvarUsuario(){
+  if(!isMaster()){notify('Apenas usuário master pode gerenciar usuários.','warn');return;}
+  const id=document.getElementById('usr-id').value||String(Date.now());
+  const nome=document.getElementById('usr-nome').value.trim();
+  const login=document.getElementById('usr-login').value.trim();
+  const senha=document.getElementById('usr-senha').value;
+  const perfil=document.getElementById('usr-perfil').value;
+  const menus=perfil==='master'?MENUS_SISTEMA.map(m=>m[0]):[...document.querySelectorAll('#usr-menus input:checked')].map(i=>i.value);
+  if(!nome||!login||!senha){notify('Informe nome, login e senha.','warn');return;}
+  const duplicado=S.usuarios.some(u=>u.login===login&&String(u.id)!==String(id));
+  if(duplicado){notify('Já existe usuário com este login.','warn');return;}
+  const usr={id,nome,login,senha,perfil,menus};
+  const idx=S.usuarios.findIndex(u=>String(u.id)===String(id));
+  if(idx>=0)S.usuarios[idx]=usr; else S.usuarios.push(usr);
+  salvarUsuariosLocal();
+  registrarLog('usuario_salvo',`Usuário ${login} salvo`);
+  sincronizarUsuariosSheets();
+  limparUsuarioForm();renderUsuariosConfig();aplicarPermissoes();notify('Usuário salvo.');
+}
+function editarUsuario(id){
+  const u=S.usuarios.find(x=>String(x.id)===String(id));if(!u)return;
+  document.getElementById('usr-id').value=u.id;
+  document.getElementById('usr-nome').value=u.nome;
+  document.getElementById('usr-login').value=u.login;
+  document.getElementById('usr-senha').value=u.senha;
+  document.getElementById('usr-perfil').value=u.perfil||'comum';
+  renderMenusUsuario();
+  document.querySelectorAll('#usr-menus input').forEach(i=>i.checked=(u.menus||[]).includes(i.value)||u.perfil==='master');
+}
+function removerUsuario(id){
+  if(!isMaster())return;
+  const u=S.usuarios.find(x=>String(x.id)===String(id));
+  if(!u||u.login==='admin'){notify('O usuário admin padrão não pode ser removido.','warn');return;}
+  if(!confirm('Remover usuário '+u.login+'?'))return;
+  S.usuarios=S.usuarios.filter(x=>String(x.id)!==String(id));
+  salvarUsuariosLocal();registrarLog('usuario_removido',`Usuário ${u.login} removido`);
+  sincronizarUsuariosSheets();renderUsuariosConfig();notify('Usuário removido.');
+}
+function renderUsuariosConfig(){
+  renderMenusUsuario();
+  const tbody=document.getElementById('tbody-usuarios');if(!tbody)return;
+  tbody.innerHTML=S.usuarios.map(u=>`<tr><td>${escHtml(u.nome)}</td><td>${escHtml(u.login)}</td><td>${escHtml(u.perfil)}</td><td style="font-size:11px">${(u.perfil==='master'?MENUS_SISTEMA.map(m=>m[0]):(u.menus||[])).join(', ')}</td><td><button class="btn btn-sm" onclick="editarUsuario('${u.id}')">Editar</button> <button class="btn btn-sm btn-danger" onclick="removerUsuario('${u.id}')">Remover</button></td></tr>`).join('');
+}
+function sincronizarUsuariosSheets(){
+  if(!SCRIPT_URL)return;
+  gsCall({action:'saveUsuarios',data:{usuarios:S.usuarios}}).catch(()=>{});
+}
 
 // ═══ GOOGLE SHEETS ════════════════════════════════════════════
 async function gsCall(payload) {
@@ -920,6 +1178,16 @@ async function sincronizar(silencioso) {
     S.lotes      = (data.result.lotes      || []).map(normL);
     S.contagens  = (data.result.contagens  || []).map(normCnt);
     S.pedidos    = (data.result.pedidos    || []).map(normPedido);
+    if(Array.isArray(data.result.usuarios)&&data.result.usuarios.length){
+      S.usuarios=garantirUsuarioAdmin(data.result.usuarios.map(normUsuario));
+      salvarUsuariosLocal();
+    }
+    if(Array.isArray(data.result.logsUsuario)){
+      const uniq=new Map();
+      data.result.logsUsuario.map(normLogUsuario).concat(S.logs||[]).forEach(l=>{ if(l&&l.id&&!uniq.has(l.id))uniq.set(l.id,l); });
+      S.logs=[...uniq.values()].slice(0,300);
+      localStorage.setItem('exp_logs_usuario',JSON.stringify(S.logs));
+    }
     rebuildIndices();
 
     const hr = new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
@@ -973,6 +1241,12 @@ function normL(l){
   return {id:safeId(getCampo(l,['id'])),mpId:safeId(mpRaw),mpNome:String(mpNomeRaw||(/^\d+([,.]0+)?$/.test(mpRawTxt)?'':mpRawTxt)),rawText:normTxt(Object.values(l||{}).join(' ')),forn:String(getCampo(l,['forn','fornecedor'])||''),lote:String(getCampo(l,['lote'])||''),dataCompra:fmtD(getCampo(l,['dataCompra','data compra'])),prevEntrega:fmtD(getCampo(l,['prevEntrega','prev entrega','previsao entrega','previsão entrega'])),dataEntrega:fmtD(getCampo(l,['dataEntrega','data entrega','entrada'])),criadoEm:fmtD(getCampo(l,['criadoEm','criado em'])),qtyEntrada:safeNum(getCampo(l,['qtyEntrada','qtd entrada','quantidade','quantidade recebida'])),saldoLote:safeNum(getCampo(l,['saldoLote','saldo lote','saldo'])),valorUnit:valorRaw?safeNum(valorRaw):null,validade:fmtD(getCampo(l,['validade'])),obs:String(getCampo(l,['obs','observação','observacao'])||''),ativo:getCampo(l,['ativo'])!==false&&String(getCampo(l,['ativo'])).toLowerCase()!=='false'};
 }
 function normPedido(p){ return {id:safeId(p.id),mpId:safeId(p.mpId),dataPedido:fmtD(p.dataPedido),prevEntrega:fmtD(p.prevEntrega),qty:safeNum(p.qty),status:String(p.status||'aberto').toLowerCase(),obs:String(p.obs||'')}; }
+function normUsuario(u){
+  let menus=u.menus;
+  if(typeof menus==='string')menus=menus.split(',').map(x=>x.trim()).filter(Boolean);
+  return {id:safeId(u.id)||String(Date.now()),nome:String(u.nome||''),login:String(u.login||''),senha:String(u.senha||''),perfil:String(u.perfil||'comum'),menus:Array.isArray(menus)?menus:[]};
+}
+function normLogUsuario(l){ return {id:safeId(l.id)||String(Date.now()),dataHora:String(l.dataHora||l.data||''),usuario:String(l.usuario||''),nome:String(l.nome||''),acao:String(l.acao||''),detalhe:String(l.detalhe||'')}; }
 // IDs sao strings para evitar perda de precisao com numeros grandes no JS
 function safeId(v){ return String(v||'').trim(); }
 function safeNum(v){
@@ -1052,13 +1326,11 @@ function totalFisicoContagem(c,mpId){
   const mid=String(mpId);
   return c.items.filter(x=>String(x.mpId)===mid).reduce((a,x)=>a+x.fisico,0);
 }
-// Consumo semanal calculado a partir das contagens (visão consolidada)
-function consumoSem(mpId){
-  const cacheKey=normId(mpId);
-  if(consumoSemCache.has(cacheKey))return consumoSemCache.get(cacheKey);
-  const cacheRet=v=>(consumoSemCache.set(cacheKey,v),v);
+const CONSUMO_CICLO_MIN_DIAS = 7;
+const CONSUMO_HISTORICO_DIAS = 180;
+const CONSUMO_PESO_CICLO_ATUAL = 0.70;
+function contagensConsolidadasMP(mpId){
   const mid=String(mpId);
-  // Filtra contagens que têm itens desta MP, ordena por data crescente
   const cntsDia=new Map();
   S.contagens
     .filter(c=>c.data&&c.items.some(i=>String(i.mpId)===mid))
@@ -1067,20 +1339,53 @@ function consumoSem(mpId){
       const atual=cntsDia.get(c.data);
       if(!atual||c.ord>atual.ord)cntsDia.set(c.data,c);
     });
-  const cnts=[...cntsDia.values()].sort((a,b)=>a.data<b.data?-1:a.data>b.data?1:0);
-  if(cnts.length<2) return cacheRet(null);
-  // Media semanal pelo periodo completo, usando uma contagem consolidada por dia.
-  let consumoTotal=0;
+  return [...cntsDia.values()].sort((a,b)=>a.data<b.data?-1:a.data>b.data?1:0);
+}
+function aumentoRelevanteSaldo(antes,depois){
+  const dif=Number(depois)-Number(antes);
+  if(dif<=0)return false;
+  return dif>=1||dif>=Math.max(Number(antes)||0,1)*0.15;
+}
+function diasEntreDatas(a,b){
+  const d1=new Date(a+'T12:00'),d2=new Date(b+'T12:00');
+  return (d2-d1)/864e5;
+}
+function ciclosConsumoMP(mpId){
+  const cnts=contagensConsolidadasMP(mpId);
+  if(cnts.length<2)return [];
+  const ciclos=[];
+  let ini=0;
   for(let i=1;i<cnts.length;i++){
-    const cons=cnts[i-1].totalMP-cnts[i].totalMP;
-    if(cons>0)consumoTotal+=cons;
+    if(aumentoRelevanteSaldo(cnts[i-1].totalMP,cnts[i].totalMP)){
+      ciclos.push({inicio:cnts[ini],fim:cnts[i-1]});
+      ini=i;
+    }
   }
-  if(consumoTotal<=0)return cacheRet(0);
-  const d1=new Date(cnts[0].data+'T12:00');
-  const d2=new Date(cnts[cnts.length-1].data+'T12:00');
-  const diasTotal=(d2-d1)/864e5;
-  if(diasTotal<=0)return cacheRet(0);
-  return cacheRet(Math.round(consumoTotal/diasTotal*7*10)/10);
+  ciclos.push({inicio:cnts[ini],fim:cnts[cnts.length-1]});
+  const limite=new Date(cnts[cnts.length-1].data+'T12:00');
+  limite.setDate(limite.getDate()-CONSUMO_HISTORICO_DIAS);
+  return ciclos.map((c,idx)=> {
+    const dias=diasEntreDatas(c.inicio.data,c.fim.data);
+    const consumo=Math.max(0,Number(c.inicio.totalMP)-Number(c.fim.totalMP));
+    return {...c,idx,dias,consumo,sem:dias>0?consumo/dias*7:0,atual:idx===ciclos.length-1};
+  }).filter(c=>c.dias>=CONSUMO_CICLO_MIN_DIAS&&c.consumo>0&&new Date(c.fim.data+'T12:00')>=limite);
+}
+// Consumo semanal calculado por ciclos: ciclo atual com maior peso + histórico recente válido.
+function consumoSem(mpId){
+  const cacheKey=normId(mpId);
+  if(consumoSemCache.has(cacheKey))return consumoSemCache.get(cacheKey);
+  const cacheRet=v=>(consumoSemCache.set(cacheKey,v),v);
+  const ciclos=ciclosConsumoMP(mpId);
+  if(!ciclos.length)return cacheRet(contagensConsolidadasMP(mpId).length<2?null:0);
+  const atual=ciclos.find(c=>c.atual)||ciclos[ciclos.length-1];
+  const anteriores=ciclos.filter(c=>c!==atual);
+  let semanal=atual.sem;
+  if(anteriores.length){
+    const diasAnt=anteriores.reduce((a,c)=>a+c.dias,0);
+    const histSem=diasAnt>0?anteriores.reduce((a,c)=>a+c.sem*c.dias,0)/diasAnt:0;
+    semanal=atual.sem*CONSUMO_PESO_CICLO_ATUAL+histSem*(1-CONSUMO_PESO_CICLO_ATUAL);
+  }
+  return cacheRet(Math.round(semanal*10)/10);
 }
 function payloadConsumoSemMateriais(){
   return S.materiais.map(m=>{
@@ -1149,6 +1454,10 @@ function badgeValidade(val){
 function pgAtual(){ const a=document.querySelector('.page.active'); return a?a.id.replace('page-',''):'dashboard'; }
 function navBtnPagina(p){ return [...document.querySelectorAll('.nav-btn')].find(b=>(b.getAttribute('onclick')||'').includes(`showPage('${p}'`)); }
 function showPage(p,btn){
+  if(usuarioLogado()&&!podeAcessar(p)){
+    p=primeiraPaginaPermitida();
+    btn=navBtnPagina(p);
+  }
   const cliqueDireto=!!btn;
   if(!btn)btn=navBtnPagina(p);
   document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
@@ -1156,10 +1465,11 @@ function showPage(p,btn){
   document.getElementById('page-'+p).classList.add('active');
   if(btn)btn.classList.add('active');
   renderPage(p);
+  registrarLog('navegacao','Acessou menu '+p);
   if(p==='entradas'&&cliqueDireto)setTimeout(abrirModalAjudaEntrada,80);
 }
 function renderPage(p){
-  const m={dashboard:renderDashboard,estoque:renderEstoque,entradas:renderEntradas,contagem:renderContagem,consumo:renderConsumo,reposicao:renderReposicao,rastreabilidade:renderRastreabilidade,intel:renderIntel,precos:renderHistoricoPrecos,config:renderConfig};
+  const m={dashboard:renderDashboard,estoque:renderEstoque,entradas:renderEntradas,contagem:renderContagem,consumo:renderConsumo,reposicao:renderReposicao,rastreabilidade:renderRastreabilidade,intel:renderIntel,auditoria:renderAuditoria,precos:renderHistoricoPrecos,config:renderConfig};
   if(m[p])m[p]();
   aplicarDicasTabelas();
 }
@@ -1365,6 +1675,7 @@ async function registrarLote(){
       }
       await sincronizar(true);
       notify(pedidoCancelado?'Lote registrado com sucesso! Pedido aberto cancelado automaticamente.':'Lote registrado com sucesso!');
+      registrarLog('entrada_registrada',`${mpSel.nome} · lote ${lote} · ${qty}`);
       limparEnt();renderEntradas();
     }
     else if(r) notify(r.error||'Erro ao salvar lote.','error');
@@ -1575,6 +1886,7 @@ async function salvarContagem(){
         await sincronizar(true);
         notify(`Contagem salva! ${items.length} lotes atualizados.`);
       }
+      registrarLog('contagem_salva',`Contagem ${data} · ${items.length} lotes`);
       renderContagem();
     }
     else if(r) notify(r.error||'Erro ao salvar','error');
@@ -1720,13 +2032,13 @@ async function salvarPedidoReposicao(){
     status:'aberto'
   };
   const r=await gsCall({action:'savePedido',data:payload});
-  if(r&&r.ok){fecharModalPedido();await sincronizar(true);notify('Pedido salvo.');renderPage(pgAtual());}
+  if(r&&r.ok){registrarLog('pedido_salvo',`MP ${mpId} · previsão ${prevEntrega}`);fecharModalPedido();await sincronizar(true);notify('Pedido salvo.');renderPage(pgAtual());}
 }
 async function alterarStatusPedido(id,status){
   const texto=status==='recebido'?'marcar este pedido como recebido':'cancelar este pedido';
   if(!confirm('Deseja '+texto+'?'))return;
   const r=await gsCall({action:'savePedido',data:{id,status}});
-  if(r&&r.ok){await sincronizar(true);notify(status==='recebido'?'Pedido marcado como recebido.':'Pedido cancelado.');renderPage(pgAtual());}
+  if(r&&r.ok){registrarLog('pedido_status',`Pedido ${id} -> ${status}`);await sincronizar(true);notify(status==='recebido'?'Pedido marcado como recebido.':'Pedido cancelado.');renderPage(pgAtual());}
 }
 function textoPedidoPrint(p,m){
   if(!p)return '--';
@@ -1758,6 +2070,73 @@ function renderReposicao(){
   }).join('')||'<tr><td colspan="10" style="text-align:center;padding:20px;color:var(--text3)">Nenhuma matéria-prima encontrada com os filtros selecionados.</td></tr>';
   sincronizarConsumoSemMateriais(payloadConsumoSemMateriais());
   aplicarDicasTabelas();
+}
+
+// ═══ AUDITORIA ════════════════════════════════════════════════
+function mediana(vals){
+  const v=vals.filter(x=>Number(x)>0).map(Number).sort((a,b)=>a-b);
+  if(!v.length)return 0;
+  const m=Math.floor(v.length/2);
+  return v.length%2?v[m]:(v[m-1]+v[m])/2;
+}
+function fmtDataHora(v){
+  if(!v)return'-';
+  const d=new Date(v);
+  return isNaN(d)?v:d.toLocaleString('pt-BR');
+}
+function itensAuditoria(){
+  const itens=[];
+  S.materiais.map(analiseReposicao).filter(a=>a.st!=='ok').forEach(a=>{
+    itens.push({tipo:'critico',nivel:a.st==='danger'?'danger':'warn',titulo:a.m.nome,desc:`Status ${a.st==='danger'?'crítico':'atenção'}: saldo ${a.s.toFixed(1)} ${a.m.un}, mínimo ${a.m.min}, cobertura ${a.dc>=999?'sem consumo calculado':a.dc+' dias'}.`});
+  });
+  S.materiais.forEach(m=>{
+    const lotes=S.lotes.filter(l=>lotePertenceMp(l,m.id)&&l.valorUnit).sort((a,b)=>(dataPrecoLote(a)||'').localeCompare(dataPrecoLote(b)||''));
+    if(lotes.length>=2){
+      const ult=lotes[lotes.length-1], ant=lotes[lotes.length-2], pUlt=precoExibidoLote(ult), pAnt=precoExibidoLote(ant);
+      if(pAnt>0){
+        const variacao=(pUlt-pAnt)/pAnt*100;
+        if(Math.abs(variacao)>=25)itens.push({tipo:'preco',nivel:Math.abs(variacao)>=50?'danger':'warn',titulo:m.nome,desc:`Valor ref. variou ${variacao.toFixed(1)}%: de ${fmtMoeda(pAnt)} para ${fmtMoeda(pUlt)} no lote ${ult.lote||'-'}.`});
+      }
+    }
+    const qtds=S.lotes.filter(l=>lotePertenceMp(l,m.id)&&l.qtyEntrada>0).map(l=>Number(l.qtyEntrada));
+    const med=mediana(qtds);
+    if(med>0){
+      S.lotes.filter(l=>lotePertenceMp(l,m.id)&&l.qtyEntrada>0).forEach(l=>{
+        const q=Number(l.qtyEntrada);
+        if(q>=med*3&&q-med>=10)itens.push({tipo:'entrada',nivel:q>=med*6?'danger':'warn',titulo:m.nome,desc:`Entrada fora do padrão: lote ${l.lote||'-'} com ${q} ${m.un}. Mediana histórica: ${med.toFixed(1)} ${m.un}.`});
+      });
+    }
+  });
+  S.pedidos.filter(p=>!['recebido','cancelado','encerrado'].includes(String(p.status||'').toLowerCase())).forEach(p=>{
+    const mp=IDX.matById.get(normId(p.mpId));
+    itens.push({tipo:'pedido',nivel:pedidoAtrasado(p)?'danger':'warn',titulo:mp?mp.nome:'Pedido sem MP',desc:`Pedido aberto em ${fmtBR(p.dataPedido)} com previsão ${fmtBR(p.prevEntrega)}${pedidoAtrasado(p)?' (atrasado)':''}.`});
+  });
+  S.lotes.forEach(l=>{
+    const mp=mpDoLote(l), nome=mp?mp.nome:'Lote sem matéria-prima vinculada';
+    if(l.ativo&&Number(l.saldoLote)<=0)itens.push({tipo:'cadastro',nivel:'warn',titulo:nome,desc:`Lote ${l.lote||'-'} está ativo, mas saldo é ${l.saldoLote}.`});
+    if(l.ativo&&Number(l.saldoLote)>0&&!l.valorUnit)itens.push({tipo:'cadastro',nivel:'danger',titulo:nome,desc:`Lote ${l.lote||'-'} tem saldo, mas está sem valor de referência.`});
+    if(l.ativo&&Number(l.saldoLote)>0&&!l.validade)itens.push({tipo:'cadastro',nivel:'warn',titulo:nome,desc:`Lote ${l.lote||'-'} tem saldo, mas está sem validade.`});
+  });
+  (S.logs||[]).slice(0,15).forEach(l=>itens.push({tipo:'log',nivel:'ok',titulo:`${l.usuario||'sistema'} · ${l.acao}`,desc:`${fmtDataHora(l.dataHora)} - ${l.detalhe||''}`}));
+  return itens;
+}
+function renderAuditoria(){
+  const filtro=document.getElementById('audit-filtro-tipo')?.value||'';
+  const todos=itensAuditoria();
+  const itens=filtro?todos.filter(i=>i.tipo===filtro||i.nivel===filtro):todos;
+  const crit=todos.filter(i=>i.nivel==='danger').length, warn=todos.filter(i=>i.nivel==='warn').length;
+  const preco=todos.filter(i=>i.tipo==='preco').length, entrada=todos.filter(i=>i.tipo==='entrada').length, cad=todos.filter(i=>i.tipo==='cadastro').length;
+  document.getElementById('audit-cards').innerHTML=`<div class="stat-card danger"><div class="stat-label">Críticos</div><div class="stat-value">${crit}</div><div class="stat-sub">exigem conferência</div></div><div class="stat-card warn"><div class="stat-label">Atenção</div><div class="stat-value">${warn}</div><div class="stat-sub">risco operacional</div></div><div class="stat-card"><div class="stat-label">Preço</div><div class="stat-value">${preco}</div><div class="stat-sub">variações relevantes</div></div><div class="stat-card"><div class="stat-label">Entradas</div><div class="stat-value">${entrada}</div><div class="stat-sub">fora do padrão</div></div><div class="stat-card"><div class="stat-label">Cadastro</div><div class="stat-value">${cad}</div><div class="stat-sub">dados incompletos</div></div>`;
+  document.getElementById('audit-list').innerHTML=itens.length?itens.map(i=>`<div class="audit-item ${i.nivel}"><div class="audit-item-title">${escHtml(i.titulo)}</div><div class="audit-item-desc">${escHtml(i.desc)}</div><span class="badge b-cat" style="margin-top:8px">${escHtml(i.tipo)}</span></div>`).join(''):'<div class="empty">Nenhum ponto encontrado para este filtro.</div>';
+  document.getElementById('tbody-audit-pedidos').innerHTML=S.pedidos.slice().sort((a,b)=>(b.dataPedido||'').localeCompare(a.dataPedido||'')).slice(0,60).map(p=>{
+    const mp=IDX.matById.get(normId(p.mpId));
+    return `<tr><td>${escHtml(mp?mp.nome:'-')}</td><td>${fmtBR(p.dataPedido)}</td><td>${fmtBR(p.prevEntrega)}</td><td>${p.qty||'-'}</td><td>${escHtml(p.status||'aberto')}</td></tr>`;
+  }).join('')||'<tr><td colspan="5" class="empty">Nenhum pedido registrado.</td></tr>';
+  document.getElementById('tbody-audit-logs').innerHTML=(S.logs||[]).slice(0,80).map(l=>`<tr><td>${fmtDataHora(l.dataHora)}</td><td>${escHtml(l.usuario||'-')}</td><td>${escHtml(l.acao||'-')}</td><td>${escHtml(l.detalhe||'-')}</td></tr>`).join('')||'<tr><td colspan="4" class="empty">Nenhum log registrado.</td></tr>';
+}
+function imprimirAuditoria(){
+  const rows=itensAuditoria().map(i=>`<tr><td>${escHtml(i.tipo)}</td><td>${escHtml(i.nivel)}</td><td>${escHtml(i.titulo)}</td><td>${escHtml(i.desc)}</td></tr>`);
+  abrirImpressaoPedido('Auditoria WMS','Conferência de preenchimentos, custos, pedidos e logs',['Tipo','Nível','Item','Detalhe'],rows);
 }
 function textoStatusPedido(st){return st==='danger'?'Critico':st==='warn'?'Atencao':'Normal';}
 function fornecedoresPedidoTexto(m){return fornecedoresMP(m).join(', ')||'--';}
@@ -2069,6 +2448,8 @@ function imprimirHistoricoPrecos(){
 
 function renderConfig(){
   document.getElementById('url-config').value=SCRIPT_URL;
+  aplicarPermissoes();
+  if(isMaster())renderUsuariosConfig();
   document.getElementById('tbody-config').innerHTML=S.materiais.length
     ?S.materiais.map(m=>`<tr><td style="font-weight:600">${m.nome}${m.obs?'<br><span style="font-size:10px;color:var(--warn-text);font-weight:400">⚠ '+m.obs+'</span>':''}</td><td>${m.cat}</td><td>${m.un}</td><td>${saldoMP(m.id).toFixed(1)}</td><td>${m.min}</td><td>${m.seg}</td><td>${m.lead}d</td><td>${m.forn||'—'}</td><td><button class="btn btn-sm btn-danger" onclick="remMP(${m.id})">Remover</button></td></tr>`).join('')
     :'<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--text3)">Nenhuma matéria-prima.</td></tr>';
@@ -2080,7 +2461,7 @@ async function adicionarMP(){
   try {
     const obsEl=document.getElementById('cfg-obs');
     const r=await gsCall({action:'saveMaterial',data:{nome,cat:document.getElementById('cfg-cat').value,un:document.getElementById('cfg-un').value,min:Number(document.getElementById('cfg-min').value)||0,seg:Number(document.getElementById('cfg-seg').value)||0,lead:Number(document.getElementById('cfg-lead').value)||7,forn:document.getElementById('cfg-forn').value,obs:obsEl?obsEl.value:''}});
-    if(r&&r.ok){await sincronizar(true);notify('Cadastrado!');limparCfg();renderConfig();}
+    if(r&&r.ok){registrarLog('materia_prima_salva',nome);await sincronizar(true);notify('Cadastrado!');limparCfg();renderConfig();}
     else if(r) notify(r.error||'Erro ao salvar. Verifique o Apps Script.','error');
     else notify('Sem resposta do servidor. Verifique a URL.','error');
   } finally {
@@ -2090,7 +2471,7 @@ async function adicionarMP(){
 async function remMP(id){
   if(!confirm('Confirma remoção?'))return;
   const r=await gsCall({action:'deleteMaterial',data:{id}});
-  if(r&&r.ok){await sincronizar(true);notify('Removido.');renderConfig();}
+  if(r&&r.ok){registrarLog('materia_prima_removida',String(id));await sincronizar(true);notify('Removido.');renderConfig();}
   else if(r) notify(r.error||'Erro','error');
 }
 function limparCfg(){['cfg-nome','cfg-min','cfg-seg','cfg-lead','cfg-forn'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';})}
