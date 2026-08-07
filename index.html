@@ -31,11 +31,12 @@ html,body{height:100%}body{font-family:-apple-system,BlinkMacSystemFont,'Segoe U
 .sync-dot.offline{background:#e74c3c}
 .sync-dot.loading{background:#f39c12;animation:pulse 1s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
-.nav{background:var(--surface);border-bottom:1px solid var(--border);padding:0 2rem;display:flex;gap:2px;overflow-x:auto;position:sticky;top:64px;z-index:49}
-.nav::-webkit-scrollbar{height:3px}
-.nav-btn{padding:11px 14px;font-size:13px;color:var(--text2);background:none;border:none;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;font-family:inherit;font-weight:500;transition:all .15s}
+.nav{background:var(--surface);border-bottom:1px solid var(--border);padding:6px 2rem;display:flex;gap:4px;flex-wrap:wrap;overflow:visible;position:sticky;top:64px;z-index:49}
+.nav::-webkit-scrollbar{height:10px}
+.nav-btn{padding:8px 12px;font-size:12px;color:var(--text2);background:none;border:none;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;font-family:inherit;font-weight:500;transition:all .15s;border-radius:var(--radius-sm)}
 .nav-btn:hover{color:var(--text)}
-.nav-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
+.nav-btn.active{color:var(--accent);border-bottom-color:var(--accent);background:var(--accent-bg)}
+@media(max-width:900px){.nav{padding:6px .75rem}.nav-btn{font-size:11px;padding:7px 9px}}
 #config-banner{background:var(--warn-bg);border:1px solid #f0d060;border-radius:var(--radius);padding:1rem 1.25rem;margin:1.5rem 2rem 0;display:flex;align-items:flex-start;gap:12px}
 #config-banner.hidden{display:none}
 .banner-text p{font-size:13px;color:var(--warn-text);line-height:1.6}
@@ -258,7 +259,7 @@ tbody tr:hover td{background:var(--bg)}
   <div class="topbar-right">
     <div class="sync-info" id="usuario-info" style="display:none"><span id="usuario-label"></span></div>
     <div class="sync-info"><div class="sync-dot offline" id="sync-dot"></div><span id="sync-label">Sem conexão</span></div>
-    <button class="btn btn-sm" onclick="abrirConfig()">⚙ Configurar Sheets</button>
+    <button class="btn btn-sm master-only" onclick="abrirConfig()">⚙ Configurar Sheets</button>
     <button class="btn btn-sm" onclick="sincronizar()">↻ Sincronizar</button>
     <button class="btn btn-sm" onclick="logout()">Sair</button>
   </div>
@@ -275,7 +276,8 @@ tbody tr:hover td{background:var(--bg)}
   <button class="nav-btn" data-page="intel" onclick="showPage('intel',this)">🧠 Inteligência<span class="info-btn" data-tip="Análises automáticas: valor do estoque em R$, sugestão de compra com quantidade ideal, detecção de consumo anormal e histórico de divergências.">ⓘ</span></button>
   <button class="nav-btn" data-page="auditoria" onclick="showPage('auditoria',this)">Auditoria<span class="info-btn" data-tip="Conferência de preenchimentos, variações de preço, pedidos registrados, anomalias de entrada e logs de usuário.">ⓘ</span></button>
   <button class="nav-btn" data-page="precos" onclick="showPage('precos',this)">Histórico de Preços<span class="info-btn" data-tip="Acompanhe a evolução do preço pago na referência de cada matéria-prima: kg, milheiro ou unidade cadastrada.">ⓘ</span></button>
-  <button class="nav-btn" data-page="config" onclick="showPage('config',this)">Configurações<span class="info-btn" data-tip="Conexão com o Google Sheets, cadastro de novas MPs e parâmetros globais de inteligência e reposição.">ⓘ</span></button>
+  <button class="nav-btn" data-page="materiais" onclick="showPage('materiais',this)">Matérias-Primas<span class="info-btn" data-tip="Cadastro e manutenção das matérias-primas, separado das configurações sensíveis do sistema.">ⓘ</span></button>
+  <button class="nav-btn" data-page="config" onclick="showPage('config',this)">Configurações<span class="info-btn" data-tip="Conexão com o Google Sheets, usuários, senhas e parâmetros globais de inteligência e reposição.">ⓘ</span></button>
 </div>
 
 <div id="config-banner">
@@ -649,6 +651,69 @@ tbody tr:hover td{background:var(--bg)}
   </div>
 </div>
 
+<!-- ═══ MATÉRIAS-PRIMAS ════════════════════════════════════════ -->
+<div class="page" id="page-materiais">
+  <div class="card">
+    <div class="card-title">Cadastrar Nova Matéria-Prima</div>
+    <div class="form-grid">
+      <div class="form-group"><label>Nome *</label><input type="text" id="cfg-nome" placeholder="Ex: Açúcar Cristal"></div>
+      <div class="form-group"><label>Categoria <span class="info-btn" data-tip="Selecione uma categoria existente ou digite o nome de uma nova categoria diretamente no campo.">ⓘ</span></label>
+        <input type="text" id="cfg-cat" list="cat-list" placeholder="Selecione ou digite nova categoria..." autocomplete="off">
+        <datalist id="cat-list">
+          <option value="Aroma Líquido">
+          <option value="Aroma Seco">
+          <option value="Aditivo">
+          <option value="Corante">
+          <option value="Grão">
+          <option value="Insumo Industrial">
+          <option value="Pellet">
+          <option value="Bobina Explosão">
+          <option value="Bobina Terceirizados">
+          <option value="Capa Fardo">
+          <option value="Produto Terceirizado">
+        </datalist>
+      </div>
+      <div class="form-group"><label>Unidade</label>
+        <input type="text" id="cfg-un" placeholder="Ex: saco, rolo, kg, milheiro, caixa..." list="un-list">
+        <datalist id="un-list">
+          <option value="saco">
+          <option value="rolo">
+          <option value="milheiro">
+          <option value="kg">
+          <option value="galão">
+          <option value="caixa">
+          <option value="fardo">
+          <option value="tambor">
+          <option value="unidade">
+          <option value="bobina">
+        </datalist>
+      </div>
+      <div class="form-group"><label>Estoque Mínimo <span class="info-btn" data-tip="Quantidade física mínima que você quer manter. Se o saldo cair abaixo disso, vira CRÍTICO (vermelho).">ⓘ</span></label><input type="number" id="cfg-min" placeholder="0" step="0.1" min="0"></div>
+      <div class="form-group"><label>Seg. (dias) <span class="info-btn" data-tip="Dias de buffer para imprevistos. O sistema vai sugerir repor antes de chegar nesse limite. Ex: 3 = alerta com 3 dias de antecedência.">ⓘ</span></label><input type="number" id="cfg-seg" placeholder="0" step="0.1" min="0"></div>
+      <div class="form-group"><label>Lead Time (dias) <span class="info-btn" data-tip="Dias entre o pedido e a entrega para este fornecedor. Usado para calcular a data ideal do pedido.">ⓘ</span></label><input type="number" id="cfg-lead" placeholder="7" min="1"></div>
+      <div class="form-group">
+        <label>Fornecedor(es)</label>
+        <input type="text" id="cfg-forn" list="forn-list-cfg" placeholder="Ex: Cargill / Moinho Verde">
+        <datalist id="forn-list-cfg"></datalist>
+        <span class="forn-hint">Múltiplos: separe com / (ex: Safia / Taí)</span>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="adicionarMP()" id="btn-add-mp">Salvar na Planilha</button>
+      <button class="btn" onclick="limparCfg()">Limpar</button>
+    </div>
+  </div>
+  <div>
+    <div class="section-header"><h3>Matérias-Primas Cadastradas</h3><button class="btn btn-sm" onclick="sincronizar()">↻ Sincronizar</button></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Nome</th><th>Categoria</th><th>Un</th><th>Saldo</th><th>Mínimo</th><th>Segurança (dias)</th><th>Lead</th><th>Fornecedor(es)</th><th></th></tr></thead>
+        <tbody id="tbody-config"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
 <!-- ═══ CONFIGURAÇÕES ════════════════════════════════════════════ -->
 <div class="page" id="page-config">
   <!-- PARÂMETROS GLOBAIS DE INTELIGÊNCIA -->
@@ -705,7 +770,7 @@ tbody tr:hover td{background:var(--bg)}
       <button class="btn btn-primary" onclick="salvarParams()">💾 Salvar Parâmetros</button>
       <button class="btn" onclick="resetParams()">Restaurar Padrões</button>
     </div>
-    <p class="form-note" style="margin-top:10px">Os parâmetros são salvos localmente neste navegador. Para cada MP individualmente, ajuste os campos Mínimo, Segurança em dias e Lead Time no cadastro abaixo.</p>
+    <p class="form-note" style="margin-top:10px">Os parâmetros são salvos localmente neste navegador. Para cada MP individualmente, ajuste Mínimo, Segurança em dias e Lead Time no menu Matérias-Primas.</p>
   </div>
 
   <div class="card">
@@ -738,69 +803,11 @@ tbody tr:hover td{background:var(--bg)}
     </div>
     <p class="form-note">Usuários ficam em localStorage na chave exp_usuarios. Quando o Apps Script estiver atualizado, também podem ser sincronizados com a planilha.</p>
   </div>
-  <div class="card">
-    <div class="card-title">Cadastrar Nova Matéria-Prima</div>
-    <div class="form-grid">
-      <div class="form-group"><label>Nome *</label><input type="text" id="cfg-nome" placeholder="Ex: Açúcar Cristal"></div>
-      <div class="form-group"><label>Categoria <span class="info-btn" data-tip="Selecione uma categoria existente ou digite o nome de uma nova categoria diretamente no campo.">ⓘ</span></label>
-        <input type="text" id="cfg-cat" list="cat-list" placeholder="Selecione ou digite nova categoria..." autocomplete="off">
-        <datalist id="cat-list">
-          <option value="Aroma Líquido">
-          <option value="Aroma Seco">
-          <option value="Aditivo">
-          <option value="Corante">
-          <option value="Grão">
-          <option value="Insumo Industrial">
-          <option value="Pellet">
-          <option value="Bobina Explosão">
-          <option value="Bobina Terceirizados">
-          <option value="Capa Fardo">
-        </datalist>
-      </div>
-      <div class="form-group"><label>Unidade</label>
-        <input type="text" id="cfg-un" placeholder="Ex: saco, rolo, kg, milheiro, caixa..." list="un-list">
-        <datalist id="un-list">
-          <option value="saco">
-          <option value="rolo">
-          <option value="milheiro">
-          <option value="kg">
-          <option value="galão">
-          <option value="caixa">
-          <option value="fardo">
-          <option value="tambor">
-          <option value="unidade">
-          <option value="bobina">
-        </datalist>
-      </div>
-      <div class="form-group"><label>Estoque Mínimo <span class="info-btn" data-tip="Quantidade física mínima que você quer manter. Se o saldo cair abaixo disso, vira CRÍTICO (vermelho).">ⓘ</span></label><input type="number" id="cfg-min" placeholder="0" step="0.1" min="0"></div>
-      <div class="form-group"><label>Seg. (dias) <span class="info-btn" data-tip="Dias de buffer para imprevistos. O sistema vai sugerir repor antes de chegar nesse limite. Ex: 3 = alerta com 3 dias de antecedência.">ⓘ</span></label><input type="number" id="cfg-seg" placeholder="0" step="0.1" min="0"></div>
-      <div class="form-group"><label>Lead Time (dias) <span class="info-btn" data-tip="Dias entre o pedido e a entrega para este fornecedor. Usado para calcular a data ideal do pedido.">ⓘ</span></label><input type="number" id="cfg-lead" placeholder="7" min="1"></div>
-      <div class="form-group">
-        <label>Fornecedor(es)</label>
-        <input type="text" id="cfg-forn" list="forn-list-cfg" placeholder="Ex: Cargill / Moinho Verde">
-        <datalist id="forn-list-cfg"></datalist>
-        <span class="forn-hint">Múltiplos: separe com / (ex: Safia / Taí)</span>
-      </div>
-    </div>
-    <div class="btn-row">
-      <button class="btn btn-primary" onclick="adicionarMP()" id="btn-add-mp">Salvar na Planilha</button>
-      <button class="btn" onclick="limparCfg()">Limpar</button>
-    </div>
-  </div>
-  <div>
-    <div class="section-header"><h3>Matérias-Primas Cadastradas</h3><button class="btn btn-sm" onclick="sincronizar()">↻ Sincronizar</button></div>
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th>Nome</th><th>Categoria</th><th>Un</th><th>Saldo</th><th>Mínimo</th><th>Segurança (dias)</th><th>Lead</th><th>Fornecedor(es)</th><th></th></tr></thead>
-        <tbody id="tbody-config"></tbody>
-      </table>
-    </div>
-  </div>
 </div>
 
 </div><!-- /main -->
 <div class="toast" id="toast"></div>
-<div id="app-version">Rev 13.2</div>
+<div id="app-version">Rev 13.4</div>
 
 <script>
 // ═══ CONFIG ═══════════════════════════════════════════════════
@@ -811,7 +818,7 @@ const MENUS_SISTEMA = [
   ['dashboard','Dashboard'],['estoque','Estoque por Lote'],['entradas','Registrar Entrada'],
   ['contagem','Contagem Física'],['consumo','Análise de Consumo'],['reposicao','Reposição'],
   ['rastreabilidade','Rastreabilidade'],['intel','Inteligência'],['auditoria','Auditoria'],
-  ['precos','Histórico de Preços'],['config','Configurações']
+  ['precos','Histórico de Preços'],['materiais','Matérias-Primas'],['config','Configurações']
 ];
 const LOGIN_PADRAO = {id:'master',nome:'Administrador',login:'admin',senha:'admin',perfil:'master',menus:MENUS_SISTEMA.map(m=>m[0])};
 
@@ -1469,7 +1476,7 @@ function showPage(p,btn){
   if(p==='entradas'&&cliqueDireto)setTimeout(abrirModalAjudaEntrada,80);
 }
 function renderPage(p){
-  const m={dashboard:renderDashboard,estoque:renderEstoque,entradas:renderEntradas,contagem:renderContagem,consumo:renderConsumo,reposicao:renderReposicao,rastreabilidade:renderRastreabilidade,intel:renderIntel,auditoria:renderAuditoria,precos:renderHistoricoPrecos,config:renderConfig};
+  const m={dashboard:renderDashboard,estoque:renderEstoque,entradas:renderEntradas,contagem:renderContagem,consumo:renderConsumo,reposicao:renderReposicao,rastreabilidade:renderRastreabilidade,intel:renderIntel,auditoria:renderAuditoria,precos:renderHistoricoPrecos,materiais:renderMateriais,config:renderConfig};
   if(m[p])m[p]();
   aplicarDicasTabelas();
 }
@@ -2450,9 +2457,13 @@ function renderConfig(){
   document.getElementById('url-config').value=SCRIPT_URL;
   aplicarPermissoes();
   if(isMaster())renderUsuariosConfig();
+}
+function renderMateriais(){
+  populateSelects();
   document.getElementById('tbody-config').innerHTML=S.materiais.length
     ?S.materiais.map(m=>`<tr><td style="font-weight:600">${m.nome}${m.obs?'<br><span style="font-size:10px;color:var(--warn-text);font-weight:400">⚠ '+m.obs+'</span>':''}</td><td>${m.cat}</td><td>${m.un}</td><td>${saldoMP(m.id).toFixed(1)}</td><td>${m.min}</td><td>${m.seg}</td><td>${m.lead}d</td><td>${m.forn||'—'}</td><td><button class="btn btn-sm btn-danger" onclick="remMP(${m.id})">Remover</button></td></tr>`).join('')
     :'<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--text3)">Nenhuma matéria-prima.</td></tr>';
+  aplicarDicasTabelas();
 }
 async function adicionarMP(){
   const nome=document.getElementById('cfg-nome').value.trim();
@@ -2461,7 +2472,7 @@ async function adicionarMP(){
   try {
     const obsEl=document.getElementById('cfg-obs');
     const r=await gsCall({action:'saveMaterial',data:{nome,cat:document.getElementById('cfg-cat').value,un:document.getElementById('cfg-un').value,min:Number(document.getElementById('cfg-min').value)||0,seg:Number(document.getElementById('cfg-seg').value)||0,lead:Number(document.getElementById('cfg-lead').value)||7,forn:document.getElementById('cfg-forn').value,obs:obsEl?obsEl.value:''}});
-    if(r&&r.ok){registrarLog('materia_prima_salva',nome);await sincronizar(true);notify('Cadastrado!');limparCfg();renderConfig();}
+    if(r&&r.ok){registrarLog('materia_prima_salva',nome);await sincronizar(true);notify('Cadastrado!');limparCfg();renderMateriais();}
     else if(r) notify(r.error||'Erro ao salvar. Verifique o Apps Script.','error');
     else notify('Sem resposta do servidor. Verifique a URL.','error');
   } finally {
@@ -2471,7 +2482,7 @@ async function adicionarMP(){
 async function remMP(id){
   if(!confirm('Confirma remoção?'))return;
   const r=await gsCall({action:'deleteMaterial',data:{id}});
-  if(r&&r.ok){registrarLog('materia_prima_removida',String(id));await sincronizar(true);notify('Removido.');renderConfig();}
+  if(r&&r.ok){registrarLog('materia_prima_removida',String(id));await sincronizar(true);notify('Removido.');renderMateriais();}
   else if(r) notify(r.error||'Erro','error');
 }
 function limparCfg(){['cfg-nome','cfg-min','cfg-seg','cfg-lead','cfg-forn'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';})}
