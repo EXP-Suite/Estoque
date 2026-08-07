@@ -807,7 +807,7 @@ tbody tr:hover td{background:var(--bg)}
 
 </div><!-- /main -->
 <div class="toast" id="toast"></div>
-<div id="app-version">Rev 13.4</div>
+<div id="app-version">Rev 13.5</div>
 
 <script>
 // ═══ CONFIG ═══════════════════════════════════════════════════
@@ -972,6 +972,7 @@ let IDX = { matById:new Map(), matByName:new Map(), lotesByMp:new Map(), mpByLot
 let consumoSemCache = new Map();
 let consumoSemSyncKey = '';
 let consumoSemSyncTimer = null;
+let usuariosRemotosPromise = null;
 let chartC = null, chartD = null, chartI = null, chartP = null, chartPU = null;
 
 // ═══ INIT ═════════════════════════════════════════════════════
@@ -991,6 +992,7 @@ window.onload = () => {
     iniciarSistema();
   }else{
     mostrarLogin();
+    carregarUsuariosRemotosLogin();
   }
 };
 function iniciarSistema(){
@@ -1038,13 +1040,42 @@ function mostrarLogin(){
   document.getElementById('login-screen').style.display='flex';
   setTimeout(()=>document.getElementById('login-usuario')?.focus(),50);
 }
-function fazerLogin(){
+async function carregarUsuariosRemotosLogin(){
+  if(!SCRIPT_URL)return;
+  if(usuariosRemotosPromise)return usuariosRemotosPromise;
+  usuariosRemotosPromise=(async()=>{
+    const erro=document.getElementById('login-erro');
+    try{
+      if(erro){erro.textContent='Carregando usuários do Sheets...';erro.style.display='block';}
+      const payload=encodeURIComponent(JSON.stringify({action:'getAll'}));
+      const r=await fetch(SCRIPT_URL+'?payload='+payload,{method:'GET',redirect:'follow'});
+      const data=await r.json();
+      if(data&&data.ok&&data.result&&Array.isArray(data.result.usuarios)){
+        S.usuarios=garantirUsuarioAdmin(data.result.usuarios.map(normUsuario));
+        salvarUsuariosLocal();
+      }
+      if(erro)erro.style.display='none';
+    }catch(e){
+      if(erro){erro.textContent='Não foi possível carregar usuários do Sheets. Tentando usuários locais.';erro.style.display='block';}
+    }
+  })();
+  return usuariosRemotosPromise;
+}
+async function fazerLogin(){
   inicializarUsuarios();
+  const erro=document.getElementById('login-erro');
+  const btn=document.querySelector('#login-screen .btn-primary');
+  if(btn){btn.disabled=true;btn.textContent='Entrando...';}
+  await carregarUsuariosRemotosLogin();
   const login=document.getElementById('login-usuario').value.trim();
   const senha=document.getElementById('login-senha').value;
   const u=S.usuarios.find(x=>String(x.login).trim()===login&&String(x.senha)===String(senha));
-  const erro=document.getElementById('login-erro');
-  if(!u){erro.textContent='Usuário ou senha inválidos.';erro.style.display='block';return;}
+  if(!u){
+    erro.textContent='Usuário ou senha inválidos.';
+    erro.style.display='block';
+    if(btn){btn.disabled=false;btn.textContent='Entrar';}
+    return;
+  }
   const sess={id:u.id,nome:u.nome,login:u.login,perfil:u.perfil,menus:u.menus||[]};
   sessionStorage.setItem('usuario_logado',JSON.stringify(sess));
   registrarLog('login','Usuário entrou no sistema',u.login);
