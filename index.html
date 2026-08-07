@@ -243,6 +243,7 @@ tbody tr:hover td{background:var(--bg)}
       <span style="font-size:11px;color:var(--text3)">A sessão encerra ao fechar o navegador.</span>
       <button class="btn btn-primary" onclick="fazerLogin()">Entrar</button>
     </div>
+    <button class="btn btn-sm" onclick="carregarUsuariosRemotosLogin(true)" style="margin-top:10px;width:100%;background:var(--surface2)">Recarregar usuários do Sheets</button>
     <div class="login-error" id="login-erro"></div>
   </div>
 </div>
@@ -807,7 +808,7 @@ tbody tr:hover td{background:var(--bg)}
 
 </div><!-- /main -->
 <div class="toast" id="toast"></div>
-<div id="app-version">Rev 13.5</div>
+<div id="app-version">Rev 13.6</div>
 
 <script>
 // ═══ CONFIG ═══════════════════════════════════════════════════
@@ -1040,21 +1041,21 @@ function mostrarLogin(){
   document.getElementById('login-screen').style.display='flex';
   setTimeout(()=>document.getElementById('login-usuario')?.focus(),50);
 }
-async function carregarUsuariosRemotosLogin(){
+async function carregarUsuariosRemotosLogin(force){
   if(!SCRIPT_URL)return;
-  if(usuariosRemotosPromise)return usuariosRemotosPromise;
+  if(usuariosRemotosPromise&&!force)return usuariosRemotosPromise;
   usuariosRemotosPromise=(async()=>{
     const erro=document.getElementById('login-erro');
     try{
       if(erro){erro.textContent='Carregando usuários do Sheets...';erro.style.display='block';}
       const payload=encodeURIComponent(JSON.stringify({action:'getAll'}));
-      const r=await fetch(SCRIPT_URL+'?payload='+payload,{method:'GET',redirect:'follow'});
+      const r=await fetch(SCRIPT_URL+'?payload='+payload+'&_='+Date.now(),{method:'GET',redirect:'follow',cache:'no-store'});
       const data=await r.json();
       if(data&&data.ok&&data.result&&Array.isArray(data.result.usuarios)){
         S.usuarios=garantirUsuarioAdmin(data.result.usuarios.map(normUsuario));
         salvarUsuariosLocal();
+        if(erro){erro.textContent=`Usuários carregados do Sheets: ${S.usuarios.length}`;erro.style.display='block';}
       }
-      if(erro)erro.style.display='none';
     }catch(e){
       if(erro){erro.textContent='Não foi possível carregar usuários do Sheets. Tentando usuários locais.';erro.style.display='block';}
     }
@@ -1066,12 +1067,12 @@ async function fazerLogin(){
   const erro=document.getElementById('login-erro');
   const btn=document.querySelector('#login-screen .btn-primary');
   if(btn){btn.disabled=true;btn.textContent='Entrando...';}
-  await carregarUsuariosRemotosLogin();
+  await carregarUsuariosRemotosLogin(true);
   const login=document.getElementById('login-usuario').value.trim();
-  const senha=document.getElementById('login-senha').value;
-  const u=S.usuarios.find(x=>String(x.login).trim()===login&&String(x.senha)===String(senha));
+  const senha=document.getElementById('login-senha').value.trim();
+  const u=S.usuarios.find(x=>String(x.login).trim().toLowerCase()===login.toLowerCase()&&String(x.senha).trim()===String(senha));
   if(!u){
-    erro.textContent='Usuário ou senha inválidos.';
+    erro.textContent=`Usuário ou senha inválidos. Usuários carregados: ${S.usuarios.length}.`;
     erro.style.display='block';
     if(btn){btn.disabled=false;btn.textContent='Entrar';}
     return;
