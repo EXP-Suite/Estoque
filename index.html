@@ -808,7 +808,7 @@ tbody tr:hover td{background:var(--bg)}
 
 </div><!-- /main -->
 <div class="toast" id="toast"></div>
-<div id="app-version">Rev 13.6</div>
+<div id="app-version">Rev 13.8</div>
 
 <script>
 // ═══ CONFIG ═══════════════════════════════════════════════════
@@ -1041,6 +1041,8 @@ function mostrarLogin(){
   document.getElementById('login-screen').style.display='flex';
   setTimeout(()=>document.getElementById('login-usuario')?.focus(),50);
 }
+function normLoginCred(v){ return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[\u200B-\u200D\uFEFF]/g,'').trim().toLowerCase(); }
+function normSenhaCred(v){ return String(v||'').replace(/\u00a0/g,' ').replace(/[\u200B-\u200D\uFEFF]/g,'').trim(); }
 async function carregarUsuariosRemotosLogin(force){
   if(!SCRIPT_URL)return;
   if(usuariosRemotosPromise&&!force)return usuariosRemotosPromise;
@@ -1068,11 +1070,14 @@ async function fazerLogin(){
   const btn=document.querySelector('#login-screen .btn-primary');
   if(btn){btn.disabled=true;btn.textContent='Entrando...';}
   await carregarUsuariosRemotosLogin(true);
-  const login=document.getElementById('login-usuario').value.trim();
-  const senha=document.getElementById('login-senha').value.trim();
-  const u=S.usuarios.find(x=>String(x.login).trim().toLowerCase()===login.toLowerCase()&&String(x.senha).trim()===String(senha));
+  const login=normLoginCred(document.getElementById('login-usuario').value);
+  const senha=normSenhaCred(document.getElementById('login-senha').value);
+  const usuarioEncontrado=S.usuarios.find(x=>normLoginCred(x.login)===login);
+  const u=usuarioEncontrado&&normSenhaCred(usuarioEncontrado.senha)===senha?usuarioEncontrado:null;
   if(!u){
-    erro.textContent=`Usuário ou senha inválidos. Usuários carregados: ${S.usuarios.length}.`;
+    erro.textContent=usuarioEncontrado
+      ? `Usuário encontrado, mas a senha não confere. Usuários carregados: ${S.usuarios.length}.`
+      : `Usuário não encontrado. Usuários carregados: ${S.usuarios.length}.`;
     erro.style.display='block';
     if(btn){btn.disabled=false;btn.textContent='Entrar';}
     return;
@@ -2051,10 +2056,28 @@ function fecharModalPedido(){document.getElementById('modal-pedido').style.displ
 function abrirModalAjudaEntrada(){
   const modal=document.getElementById('modal-ajuda-entrada');
   if(modal)modal.style.display='flex';
+  calcularMilheiroPopup();
 }
 function fecharModalAjudaEntrada(){
   const modal=document.getElementById('modal-ajuda-entrada');
   if(modal)modal.style.display='none';
+}
+function calcularMilheiroPopup(){
+  const valorKg=safeNum(document.getElementById('calc-milheiro-valor-kg')?.value);
+  const kgPacote=safeNum(document.getElementById('calc-milheiro-kg-pacote')?.value);
+  const unPacote=safeNum(document.getElementById('calc-milheiro-un-pacote')?.value);
+  const out=document.getElementById('calc-milheiro-resultado');
+  const detalhe=document.getElementById('calc-milheiro-detalhe');
+  if(!out||!detalhe)return;
+  if(valorKg<=0||kgPacote<=0||unPacote<=0){
+    out.textContent='Informe os 3 campos';
+    detalhe.textContent='Exemplo: R$/kg x kg do pacote / unidades do pacote x 1000.';
+    return;
+  }
+  const valorUn=(valorKg*kgPacote)/unPacote;
+  const valorMilheiro=valorUn*1000;
+  out.textContent=fmtMoeda(valorMilheiro);
+  detalhe.textContent=`Valor por unidade: ${fmtMoeda(valorUn)} · Fórmula: ${valorKg.toLocaleString('pt-BR')} x ${kgPacote.toLocaleString('pt-BR')} / ${unPacote.toLocaleString('pt-BR')} x 1000`;
 }
 async function salvarPedidoReposicao(){
   const mpId=document.getElementById('pedido-mp-id').value;
@@ -2875,7 +2898,7 @@ tr.cat-row td{background:#d4edda;color:#1a472a;font-weight:700;font-size:10.5px;
 
 <!-- AJUDA REGISTRAR ENTRADA -->
 <div id="modal-ajuda-entrada" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.48);z-index:10000;align-items:center;justify-content:center;padding:18px">
-  <div style="background:var(--surface);border-radius:12px;padding:24px;max-width:680px;width:94%;box-shadow:0 10px 34px rgba(0,0,0,.24);border:1px solid var(--border)">
+  <div style="background:var(--surface);border-radius:12px;padding:24px;max-width:760px;width:94%;box-shadow:0 10px 34px rgba(0,0,0,.24);border:1px solid var(--border);max-height:92vh;overflow:auto">
     <h3 style="margin:0 0 10px;font-size:18px;color:var(--accent)">Atenção antes de registrar a entrada</h3>
     <p style="font-size:14px;color:var(--text2);line-height:1.45;margin:0 0 14px">
       Preencha a quantidade conforme a unidade que você controla no estoque, e preencha o valor conforme a referência correta.
@@ -2901,6 +2924,22 @@ tr.cat-row td{background:#d4edda;color:#1a472a;font-weight:700;font-size:10.5px;
     <p style="font-size:13px;color:var(--text2);line-height:1.45;margin:0">
       O sistema usa o <strong>unSi</strong> cadastrado na matéria-prima para calcular o valor total corretamente.
     </p>
+    <div style="margin-top:14px;border:1px solid var(--border);border-radius:8px;padding:12px;background:#fbfcfb">
+      <strong style="display:block;margin-bottom:8px">Calculadora rápida: valor do milheiro</strong>
+      <div class="form-grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px">
+        <div class="form-group"><label>Valor da embalagem (R$/kg)</label><input type="number" id="calc-milheiro-valor-kg" min="0" step="0.01" placeholder="Ex: 42,50" oninput="calcularMilheiroPopup()"></div>
+        <div class="form-group"><label>Kg por pacote</label><input type="number" id="calc-milheiro-kg-pacote" min="0" step="0.001" placeholder="Ex: 18" oninput="calcularMilheiroPopup()"></div>
+        <div class="form-group"><label>Unidades por pacote</label><input type="number" id="calc-milheiro-un-pacote" min="1" step="1" placeholder="Ex: 1000" oninput="calcularMilheiroPopup()"></div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:10px;padding:10px;border-radius:8px;background:var(--accent-bg);border:1px solid #bdd8c8">
+        <div>
+          <div style="font-size:11px;color:var(--text2);text-transform:uppercase;font-weight:700">Valor do milheiro</div>
+          <div id="calc-milheiro-resultado" style="font-size:22px;font-weight:700;color:var(--accent)">Informe os 3 campos</div>
+        </div>
+        <div id="calc-milheiro-detalhe" style="font-size:12px;color:var(--text2);max-width:360px">Exemplo: R$/kg x kg do pacote / unidades do pacote x 1000.</div>
+      </div>
+      <p style="font-size:11px;color:var(--text3);margin-top:8px">Essa calculadora é apenas visual. Ela não salva nada no Sheets e não preenche o lote automaticamente.</p>
+    </div>
     <div style="display:flex;justify-content:flex-end;margin-top:18px">
       <button class="btn btn-primary" onclick="fecharModalAjudaEntrada()">Entendi</button>
     </div>
