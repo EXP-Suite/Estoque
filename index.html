@@ -134,6 +134,11 @@ tbody tr:hover td{background:var(--bg)}
 .form-group input,.form-group select{width:100%}
 .form-note{font-size:11px;color:var(--text3);margin-top:10px}
 .forn-hint{font-size:11px;color:var(--text3);margin-top:3px}
+.valor-ref-hint{font-size:11px;color:var(--text3);margin-top:3px;line-height:1.35;min-height:15px}
+.valor-ref-hint.ok{color:var(--accent)}
+.valor-ref-hint.warn{color:#9a5b00;font-weight:600}
+.valor-ref-hint.danger{color:var(--danger);font-weight:700}
+.form-group input.valor-fora-padrao{border-color:var(--danger);box-shadow:0 0 0 2px rgba(190,45,45,.12)}
 /* Alertas */
 .alert-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--radius-sm);margin-bottom:7px;border:1px solid transparent}
 .alert-item.danger{background:var(--danger-bg);border-color:#f5c6c2}
@@ -275,7 +280,7 @@ tbody tr:hover td{background:var(--bg)}
   <button class="nav-btn" data-page="reposicao" onclick="showPage('reposicao',this)">Reposição<span class="info-btn" data-tip="Tabela com todas as MPs mostrando quando e quanto pedir, com base no consumo histórico, lead time e dias de segurança cadastrados.">ⓘ</span></button>
   <button class="nav-btn" data-page="rastreabilidade" onclick="showPage('rastreabilidade',this)">Rastreabilidade<span class="info-btn" data-tip="Busque qualquer lote por nome, fornecedor ou número. Veja todo o histórico: origem, data, saldo atual, validade e valor.">ⓘ</span></button>
   <button class="nav-btn" data-page="intel" onclick="showPage('intel',this)">🧠 Inteligência<span class="info-btn" data-tip="Análises automáticas: valor do estoque em R$, sugestão de compra com quantidade ideal, detecção de consumo anormal e histórico de divergências.">ⓘ</span></button>
-  <button class="nav-btn" data-page="auditoria" onclick="showPage('auditoria',this)">Auditoria<span class="info-btn" data-tip="Conferência de preenchimentos, variações de preço, pedidos registrados, anomalias de entrada e logs de usuário.">ⓘ</span></button>
+  <button class="nav-btn" data-page="auditoria" onclick="showPage('auditoria',this)">Auditoria<span class="info-btn" data-tip="Aponta possíveis erros de digitação, valores fora do padrão, inconsistências cadastrais e mantém os logs de usuário.">ⓘ</span></button>
   <button class="nav-btn" data-page="precos" onclick="showPage('precos',this)">Histórico de Preços<span class="info-btn" data-tip="Acompanhe a evolução do preço pago na referência de cada matéria-prima: kg, milheiro ou unidade cadastrada.">ⓘ</span></button>
   <button class="nav-btn" data-page="materiais" onclick="showPage('materiais',this)">Matérias-Primas<span class="info-btn" data-tip="Cadastro e manutenção das matérias-primas, separado das configurações sensíveis do sistema.">ⓘ</span></button>
   <button class="nav-btn" data-page="config" onclick="showPage('config',this)">Configurações<span class="info-btn" data-tip="Conexão com o Google Sheets, usuários, senhas e parâmetros globais de inteligência e reposição.">ⓘ</span></button>
@@ -364,7 +369,7 @@ tbody tr:hover td{background:var(--bg)}
       <div class="form-group"><label>Número do Lote *</label><input type="text" id="ent-lote" placeholder="Ex: 16SD6F1A5D1" style="text-transform:uppercase"></div>
       <div class="form-group"><label>Validade *</label><input type="date" id="ent-validade" required></div>
       <div class="form-group"><label>Data Efetiva de Entrega *</label><input type="date" id="ent-data-entrega" title="Ao preencher, o lote entra no saldo disponível" required></div>
-      <div class="form-group"><label>Valor ref. (kg/milheiro) R$ * <span class="info-btn" onclick="abrirModalAjudaEntrada()" style="cursor:pointer" data-tip="Clique para ver como lançar quantidade e valor corretamente.">ⓘ</span></label><input type="number" id="ent-valor" step="0.01" min="0.01" placeholder="0,00" required></div>
+      <div class="form-group"><label>Valor ref. (kg/milheiro) R$ * <span class="info-btn" onclick="abrirModalAjudaEntrada()" style="cursor:pointer" data-tip="Clique para ver como lançar quantidade e valor corretamente.">ⓘ</span></label><input type="number" id="ent-valor" step="0.01" min="0.01" placeholder="0,00" required oninput="validarValorEntrada()"><span id="ent-valor-referencia" class="valor-ref-hint">Selecione a matéria-prima para consultar o histórico.</span></div>
       <div class="form-group"><label>Observações</label><input type="text" id="ent-obs" placeholder="Opcional"></div>
     </div>
     <div class="btn-row">
@@ -569,40 +574,29 @@ tbody tr:hover td{background:var(--bg)}
 <div class="page" id="page-auditoria">
   <div class="toolbar">
     <select id="audit-filtro-tipo" onchange="renderAuditoria()" style="font-size:13px;padding:5px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text)">
-      <option value="">Todos os tipos</option>
-      <option value="critico">Críticos</option>
-      <option value="preco">Variação de preço</option>
-      <option value="entrada">Entrada fora do padrão</option>
-      <option value="pedido">Pedidos</option>
+      <option value="">Todas as inconsistências</option>
+      <option value="preco">Preço fora do padrão</option>
+      <option value="entrada">Quantidade de entrada</option>
+      <option value="contagem">Contagem física</option>
+      <option value="consumo">Consumo fora do padrão</option>
       <option value="cadastro">Cadastro/preenchimento</option>
-      <option value="log">Logs de usuário</option>
     </select>
     <button class="btn btn-sm" onclick="renderAuditoria()">↻ Atualizar</button>
     <button class="btn btn-sm" onclick="imprimirAuditoria()" style="background:var(--surface2);border:1px solid var(--border)">Imprimir</button>
   </div>
   <div class="summary-grid" id="audit-cards"></div>
   <div class="card">
-    <div class="card-title">Pontos de Atenção</div>
+    <div class="card-title">Possíveis Erros para Conferência</div>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:12px">A comparação usa o histórico anterior da própria matéria-prima. Os avisos indicam dados muito fora do padrão e devem ser conferidos antes de qualquer correção.</p>
     <div class="audit-grid" id="audit-list"></div>
   </div>
-  <div class="grid2">
-    <div class="card">
-      <div class="card-title">Pedidos Registrados</div>
-      <div class="table-wrap" style="max-height:360px">
-        <table>
-          <thead><tr><th>Matéria-Prima</th><th>Pedido</th><th>Previsão</th><th>Qtd</th><th>Status</th></tr></thead>
-          <tbody id="tbody-audit-pedidos"></tbody>
-        </table>
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-title">Logs de Usuário</div>
-      <div class="table-wrap" style="max-height:360px">
-        <table>
-          <thead><tr><th>Data/Hora</th><th>Usuário</th><th>Ação</th><th>Detalhe</th></tr></thead>
-          <tbody id="tbody-audit-logs"></tbody>
-        </table>
-      </div>
+  <div class="card">
+    <div class="card-title">Logs de Usuário</div>
+    <div class="table-wrap" style="max-height:360px">
+      <table>
+        <thead><tr><th>Data/Hora</th><th>Usuário</th><th>Ação</th><th>Detalhe</th></tr></thead>
+        <tbody id="tbody-audit-logs"></tbody>
+      </table>
     </div>
   </div>
 </div>
@@ -808,7 +802,7 @@ tbody tr:hover td{background:var(--bg)}
 
 </div><!-- /main -->
 <div class="toast" id="toast"></div>
-<div id="app-version">Rev 13.9</div>
+<div id="app-version">Rev 14.1</div>
 
 <script>
 // ═══ CONFIG ═══════════════════════════════════════════════════
@@ -1652,11 +1646,72 @@ function resolverMpEntrada(){
   }
   return materiaisOrdenados().find(m=>normTxt(txt)===normTxt(labelMPEntrada(m))||normTxt(txt)===normTxt(m.nome))||null;
 }
+function unidadeReferenciaEntrada(mp){ return Number(mp&&mp.unSi)>=1000?'milheiro':'kg'; }
+function padraoValorEntrada(mp){
+  if(!mp)return null;
+  const lotes=S.lotes.filter(l=>lotePertenceMp(l,mp.id)&&Number(l.valorUnit)>0).sort((a,b)=>{
+    const da=dataPrecoLote(a)||'',db=dataPrecoLote(b)||'';
+    return db.localeCompare(da)||String(b.id||'').localeCompare(String(a.id||''));
+  });
+  if(!lotes.length)return null;
+  const recentes=lotes.slice(0,5);
+  const valores=recentes.map(precoExibidoLote).filter(v=>v>0);
+  const med=mediana(valores);
+  const valoresValidos=valores.length>=3?valores.filter(v=>v>=med/3&&v<=med*3):valores;
+  const media=valoresValidos.reduce((s,v)=>s+v,0)/Math.max(valoresValidos.length,1);
+  return {ultimo:lotes[0],media,quantidade:valoresValidos.length,unidade:unidadeReferenciaEntrada(mp)};
+}
+function avaliacaoValorEntrada(valor,mp){
+  const padrao=padraoValorEntrada(mp);
+  const atual=Number(valor);
+  if(!padrao||!(padrao.media>0)||!(atual>0))return null;
+  const variacao=(atual-padrao.media)/padrao.media*100;
+  const abs=Math.abs(variacao);
+  return {padrao,variacao,abs,nivel:abs>=100?'danger':abs>=25?'warn':'ok'};
+}
+function atualizarReferenciaValorEntrada(mp){
+  const hint=document.getElementById('ent-valor-referencia');
+  const input=document.getElementById('ent-valor');
+  if(!hint||!input)return;
+  hint.className='valor-ref-hint';
+  input.classList.remove('valor-fora-padrao');
+  if(!mp){hint.textContent='Selecione a matéria-prima para consultar o histórico.';return;}
+  const p=padraoValorEntrada(mp);
+  if(!p){hint.textContent=`Sem histórico de preço para esta matéria-prima. Informe o valor por ${unidadeReferenciaEntrada(mp)}.`;return;}
+  const data=dataPrecoLote(p.ultimo),lote=p.ultimo.lote?` · lote ${p.ultimo.lote}`:'';
+  hint.textContent=`Último: ${fmtMoeda(precoExibidoLote(p.ultimo))}/${p.unidade}${lote}${data?' · '+fmtBR(data):''}. Média recente: ${fmtMoeda(p.media)}/${p.unidade} (${p.quantidade} entrada${p.quantidade===1?'':'s'}).`;
+  validarValorEntrada();
+}
+function validarValorEntrada(){
+  const hint=document.getElementById('ent-valor-referencia');
+  const input=document.getElementById('ent-valor');
+  const mp=resolverMpEntrada();
+  if(!hint||!input)return null;
+  const p=padraoValorEntrada(mp);
+  if(!mp||!p){atualizarReferenciaValorEntrada(mp);return null;}
+  const data=dataPrecoLote(p.ultimo),lote=p.ultimo.lote?` · lote ${p.ultimo.lote}`:'';
+  const base=`Último: ${fmtMoeda(precoExibidoLote(p.ultimo))}/${p.unidade}${lote}${data?' · '+fmtBR(data):''}. Média recente: ${fmtMoeda(p.media)}/${p.unidade} (${p.quantidade} entrada${p.quantidade===1?'':'s'}).`;
+  const av=avaliacaoValorEntrada(input.value,mp);
+  hint.className='valor-ref-hint';
+  input.classList.remove('valor-fora-padrao');
+  if(!av){hint.textContent=base;return null;}
+  const sentido=av.variacao>=0?'acima':'abaixo';
+  if(av.nivel==='ok'){
+    hint.classList.add('ok');
+    hint.textContent=`${base} Valor digitado dentro do padrão (${Math.abs(av.variacao).toFixed(1)}% ${sentido}).`;
+  }else{
+    hint.classList.add(av.nivel);
+    input.classList.add('valor-fora-padrao');
+    hint.textContent=`ATENÇÃO: ${fmtMoeda(Number(input.value))}/${p.unidade} está ${Math.abs(av.variacao).toFixed(1)}% ${sentido} da média. Confira a conversão. ${base}`;
+  }
+  return av;
+}
 function selecionarMpEntrada(){
   const mp=resolverMpEntrada();
   const hidden=document.getElementById('ent-mp');
   if(hidden)hidden.value=mp?mp.id:'';
   atualizarFornecedores();
+  atualizarReferenciaValorEntrada(mp);
 }
 function fornValido(f){ return f && f.trim()!=='' && f.trim().toUpperCase()!=='TRUE' && f.trim().toUpperCase()!=='FALSE'; }
 function atualizarFornecedores(){
@@ -1707,6 +1762,8 @@ async function registrarLote(){
   const dataEntrega=document.getElementById('ent-data-entrega').value;
   if(!mpId){notify('Selecione uma matéria-prima válida na lista.','warn');return;}
   if(!qty||!forn||!lote||!validade||!dataEntrega||!valorUnit||valorUnit<=0){notify('Preencha os campos obrigatórios: Quantidade, Fornecedor, Lote, Validade, Data Efetiva de Entrega e Valor de referência.','warn');return;}
+  const avValor=avaliacaoValorEntrada(valorUnit,mpSel);
+  if(avValor&&avValor.abs>=50&&!confirm(`O valor ${fmtMoeda(valorUnit)}/${avValor.padrao.unidade} está ${avValor.abs.toFixed(1)}% diferente da média recente de ${fmtMoeda(avValor.padrao.media)}/${avValor.padrao.unidade}.\n\nConfira se foi informado o preço por ${avValor.padrao.unidade}. Deseja registrar mesmo assim?`))return;
   const pedidoAntes=pedidoAberto(mpId);
   const btn=document.getElementById('btn-ent');btn.disabled=true;btn.textContent='Salvando...';
   try {
@@ -1732,7 +1789,7 @@ async function encerrarLote(id){
   if(r&&r.ok){await sincronizar(true);notify('Lote encerrado.');renderEntradas();}
   else if(r) notify(r.error||'Erro','error');
 }
-function limparEnt(){['ent-mp','ent-mp-busca','ent-forn','ent-obs','ent-qty','ent-valor','ent-lote','ent-validade'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});document.getElementById('ent-data-entrega').value=hoje();}
+function limparEnt(){['ent-mp','ent-mp-busca','ent-forn','ent-obs','ent-qty','ent-valor','ent-lote','ent-validade'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});document.getElementById('ent-data-entrega').value=hoje();atualizarReferenciaValorEntrada(null);}
 
 // ═══ CONTAGEM ═════════════════════════════════════════════════
 function popularFiltrosCnt(){
@@ -2148,59 +2205,96 @@ function fmtDataHora(v){
   const d=new Date(v);
   return isNaN(d)?v:d.toLocaleString('pt-BR');
 }
+function ordemLoteAuditoria(l){ return dataPrecoLote(l)||String(l.id||''); }
+function rotuloTipoAuditoria(tipo){
+  return {preco:'Preço',entrada:'Qtd. entrada',contagem:'Contagem',consumo:'Consumo',cadastro:'Cadastro'}[tipo]||tipo;
+}
+function foraDoPadrao(valor,referencia,limiarRazao){
+  const atual=Number(valor),base=Number(referencia);
+  if(!(atual>0)||!(base>0))return null;
+  const razao=atual/base;
+  const fora=razao>=limiarRazao||razao<=1/limiarRazao;
+  if(!fora||Math.abs(atual-base)<Math.max(1,base*.35))return null;
+  return {razao,nivel:razao>=6||razao<=1/6?'danger':'warn'};
+}
 function itensAuditoria(){
   const itens=[];
-  S.materiais.map(analiseReposicao).filter(a=>a.st!=='ok').forEach(a=>{
-    itens.push({tipo:'critico',nivel:a.st==='danger'?'danger':'warn',titulo:a.m.nome,desc:`Status ${a.st==='danger'?'crítico':'atenção'}: saldo ${a.s.toFixed(1)} ${a.m.un}, mínimo ${a.m.min}, cobertura ${a.dc>=999?'sem consumo calculado':a.dc+' dias'}.`});
-  });
   S.materiais.forEach(m=>{
-    const lotes=S.lotes.filter(l=>lotePertenceMp(l,m.id)&&l.valorUnit).sort((a,b)=>(dataPrecoLote(a)||'').localeCompare(dataPrecoLote(b)||''));
-    if(lotes.length>=2){
-      const ult=lotes[lotes.length-1], ant=lotes[lotes.length-2], pUlt=precoExibidoLote(ult), pAnt=precoExibidoLote(ant);
-      if(pAnt>0){
-        const variacao=(pUlt-pAnt)/pAnt*100;
-        if(Math.abs(variacao)>=25)itens.push({tipo:'preco',nivel:Math.abs(variacao)>=50?'danger':'warn',titulo:m.nome,desc:`Valor ref. variou ${variacao.toFixed(1)}%: de ${fmtMoeda(pAnt)} para ${fmtMoeda(pUlt)} no lote ${ult.lote||'-'}.`});
+    const lotesMp=S.lotes.filter(l=>lotePertenceMp(l,m.id)).sort((a,b)=>ordemLoteAuditoria(a).localeCompare(ordemLoteAuditoria(b)));
+
+    const lotesPreco=lotesMp.filter(l=>Number(l.valorUnit)>0);
+    if(lotesPreco.length>=2){
+      const ult=lotesPreco[lotesPreco.length-1];
+      const historico=lotesPreco.slice(Math.max(0,lotesPreco.length-7),-1).map(precoExibidoLote).filter(v=>v>0);
+      const base=mediana(historico),pUlt=precoExibidoLote(ult);
+      if(base>0){
+        const variacao=(pUlt-base)/base*100;
+        if(Math.abs(variacao)>=25)itens.push({tipo:'preco',nivel:Math.abs(variacao)>=50?'danger':'warn',titulo:m.nome,desc:`Possível erro no preço do lote ${ult.lote||'-'}: ${fmtMoeda(pUlt)} contra mediana anterior de ${fmtMoeda(base)} (${variacao>0?'+':''}${variacao.toFixed(1)}%).`});
       }
     }
-    const qtds=S.lotes.filter(l=>lotePertenceMp(l,m.id)&&l.qtyEntrada>0).map(l=>Number(l.qtyEntrada));
-    const med=mediana(qtds);
-    if(med>0){
-      S.lotes.filter(l=>lotePertenceMp(l,m.id)&&l.qtyEntrada>0).forEach(l=>{
-        const q=Number(l.qtyEntrada);
-        if(q>=med*3&&q-med>=10)itens.push({tipo:'entrada',nivel:q>=med*6?'danger':'warn',titulo:m.nome,desc:`Entrada fora do padrão: lote ${l.lote||'-'} com ${q} ${m.un}. Mediana histórica: ${med.toFixed(1)} ${m.un}.`});
-      });
+
+    const entradas=lotesMp.filter(l=>Number(l.qtyEntrada)>0);
+    const inicio=Math.max(1,entradas.length-3);
+    for(let idx=inicio;idx<entradas.length;idx++){
+      const l=entradas[idx];
+      const anteriores=entradas.slice(Math.max(0,idx-8),idx).map(x=>Number(x.qtyEntrada)).filter(v=>v>0);
+      const base=mediana(anteriores),q=Number(l.qtyEntrada);
+      const desvio=foraDoPadrao(q,base,anteriores.length>=2?3:6);
+      if(desvio&&Math.abs(q-base)>=5){
+        const sentido=q>base?'acima':'abaixo';
+        itens.push({tipo:'entrada',nivel:desvio.nivel,titulo:m.nome,desc:`Possível erro na quantidade do lote ${l.lote||'-'}: ${q.toFixed(1)} ${m.un}, ${sentido} da mediana anterior de ${base.toFixed(1)} ${m.un}.`});
+      }
     }
-  });
-  S.pedidos.filter(p=>!['recebido','cancelado','encerrado'].includes(String(p.status||'').toLowerCase())).forEach(p=>{
-    const mp=IDX.matById.get(normId(p.mpId));
-    itens.push({tipo:'pedido',nivel:pedidoAtrasado(p)?'danger':'warn',titulo:mp?mp.nome:'Pedido sem MP',desc:`Pedido aberto em ${fmtBR(p.dataPedido)} com previsão ${fmtBR(p.prevEntrega)}${pedidoAtrasado(p)?' (atrasado)':''}.`});
+
+    const registrosContagem=S.contagens.flatMap(c=>c.items.filter(i=>mesmoId(i.mpId,m.id)).map(i=>({...i,data:c.data,ord:Number(c.id)||0}))).sort((a,b)=>a.data===b.data?a.ord-b.ord:a.data.localeCompare(b.data)).slice(-3);
+    registrosContagem.forEach(i=>{
+      const teorico=Number(i.teorico),fisico=Number(i.fisico);
+      const baseMenor=Math.min(teorico,fisico),baseMaior=Math.max(teorico,fisico);
+      if(baseMaior>0&&baseMaior-baseMenor>=5&&(baseMenor===0||baseMaior/baseMenor>=3)){
+        const lote=S.lotes.find(l=>mesmoId(l.id,i.loteId));
+        itens.push({tipo:'contagem',nivel:baseMenor===0||baseMaior/baseMenor>=6?'danger':'warn',titulo:m.nome,desc:`Contagem atípica em ${fmtBR(i.data)}${lote&&lote.lote?' · lote '+lote.lote:''}: teórico ${teorico.toFixed(1)} e físico ${fisico.toFixed(1)} ${m.un}. Confira possível erro de digitação.`});
+      }
+    });
+
+    const ciclos=ciclosConsumoMP(m.id);
+    const atual=ciclos.find(c=>c.atual)||ciclos[ciclos.length-1];
+    const anteriores=ciclos.filter(c=>c!==atual).slice(-6);
+    if(atual&&anteriores.length){
+      const base=mediana(anteriores.map(c=>c.sem));
+      const desvio=foraDoPadrao(atual.sem,base,3);
+      if(desvio&&atual.sem>base&&atual.sem-base>=1){
+        itens.push({tipo:'consumo',nivel:desvio.nivel,titulo:m.nome,desc:`Consumo do ciclo atual muito acima do histórico: ${atual.sem.toFixed(1)} ${m.un}/sem contra mediana anterior de ${base.toFixed(1)} ${m.un}/sem. Confira as contagens de ${fmtBR(atual.inicio.data)} a ${fmtBR(atual.fim.data)}.`});
+      }
+    }
   });
   S.lotes.forEach(l=>{
     const mp=mpDoLote(l), nome=mp?mp.nome:'Lote sem matéria-prima vinculada';
     if(l.ativo&&Number(l.saldoLote)<=0)itens.push({tipo:'cadastro',nivel:'warn',titulo:nome,desc:`Lote ${l.lote||'-'} está ativo, mas saldo é ${l.saldoLote}.`});
     if(l.ativo&&Number(l.saldoLote)>0&&!l.valorUnit)itens.push({tipo:'cadastro',nivel:'danger',titulo:nome,desc:`Lote ${l.lote||'-'} tem saldo, mas está sem valor de referência.`});
     if(l.ativo&&Number(l.saldoLote)>0&&!l.validade)itens.push({tipo:'cadastro',nivel:'warn',titulo:nome,desc:`Lote ${l.lote||'-'} tem saldo, mas está sem validade.`});
+    if(l.ativo&&Number(l.saldoLote)>0&&!l.dataEntrega)itens.push({tipo:'cadastro',nivel:'warn',titulo:nome,desc:`Lote ${l.lote||'-'} tem saldo, mas está sem data efetiva de entrada.`});
+    if(l.dataEntrega&&l.validade&&l.validade<l.dataEntrega)itens.push({tipo:'cadastro',nivel:'danger',titulo:nome,desc:`Datas incoerentes no lote ${l.lote||'-'}: validade ${fmtBR(l.validade)} é anterior à entrada ${fmtBR(l.dataEntrega)}.`});
+    if(Number(l.qtyEntrada)>0&&Number(l.saldoLote)>Number(l.qtyEntrada)*1.1&&Number(l.saldoLote)-Number(l.qtyEntrada)>=1)itens.push({tipo:'cadastro',nivel:'warn',titulo:nome,desc:`Saldo do lote ${l.lote||'-'} (${Number(l.saldoLote).toFixed(1)}) está maior que a quantidade recebida (${Number(l.qtyEntrada).toFixed(1)}).`});
   });
-  (S.logs||[]).slice(0,15).forEach(l=>itens.push({tipo:'log',nivel:'ok',titulo:`${l.usuario||'sistema'} · ${l.acao}`,desc:`${fmtDataHora(l.dataHora)} - ${l.detalhe||''}`}));
-  return itens;
+  const peso={danger:0,warn:1,ok:2};
+  return itens.sort((a,b)=>(peso[a.nivel]??9)-(peso[b.nivel]??9)||a.titulo.localeCompare(b.titulo));
 }
 function renderAuditoria(){
   const filtro=document.getElementById('audit-filtro-tipo')?.value||'';
   const todos=itensAuditoria();
-  const itens=filtro?todos.filter(i=>i.tipo===filtro||i.nivel===filtro):todos;
+  const itens=filtro?todos.filter(i=>i.tipo===filtro):todos;
   const crit=todos.filter(i=>i.nivel==='danger').length, warn=todos.filter(i=>i.nivel==='warn').length;
-  const preco=todos.filter(i=>i.tipo==='preco').length, entrada=todos.filter(i=>i.tipo==='entrada').length, cad=todos.filter(i=>i.tipo==='cadastro').length;
-  document.getElementById('audit-cards').innerHTML=`<div class="stat-card danger"><div class="stat-label">Críticos</div><div class="stat-value">${crit}</div><div class="stat-sub">exigem conferência</div></div><div class="stat-card warn"><div class="stat-label">Atenção</div><div class="stat-value">${warn}</div><div class="stat-sub">risco operacional</div></div><div class="stat-card"><div class="stat-label">Preço</div><div class="stat-value">${preco}</div><div class="stat-sub">variações relevantes</div></div><div class="stat-card"><div class="stat-label">Entradas</div><div class="stat-value">${entrada}</div><div class="stat-sub">fora do padrão</div></div><div class="stat-card"><div class="stat-label">Cadastro</div><div class="stat-value">${cad}</div><div class="stat-sub">dados incompletos</div></div>`;
-  document.getElementById('audit-list').innerHTML=itens.length?itens.map(i=>`<div class="audit-item ${i.nivel}"><div class="audit-item-title">${escHtml(i.titulo)}</div><div class="audit-item-desc">${escHtml(i.desc)}</div><span class="badge b-cat" style="margin-top:8px">${escHtml(i.tipo)}</span></div>`).join(''):'<div class="empty">Nenhum ponto encontrado para este filtro.</div>';
-  document.getElementById('tbody-audit-pedidos').innerHTML=S.pedidos.slice().sort((a,b)=>(b.dataPedido||'').localeCompare(a.dataPedido||'')).slice(0,60).map(p=>{
-    const mp=IDX.matById.get(normId(p.mpId));
-    return `<tr><td>${escHtml(mp?mp.nome:'-')}</td><td>${fmtBR(p.dataPedido)}</td><td>${fmtBR(p.prevEntrega)}</td><td>${p.qty||'-'}</td><td>${escHtml(p.status||'aberto')}</td></tr>`;
-  }).join('')||'<tr><td colspan="5" class="empty">Nenhum pedido registrado.</td></tr>';
+  const preco=todos.filter(i=>i.tipo==='preco').length, entrada=todos.filter(i=>i.tipo==='entrada').length;
+  const operacional=todos.filter(i=>i.tipo==='contagem'||i.tipo==='consumo').length, cad=todos.filter(i=>i.tipo==='cadastro').length;
+  document.getElementById('audit-cards').innerHTML=`<div class="stat-card danger"><div class="stat-label">Erros prováveis</div><div class="stat-value">${crit}</div><div class="stat-sub">prioridade alta</div></div><div class="stat-card warn"><div class="stat-label">Conferir</div><div class="stat-value">${warn}</div><div class="stat-sub">possíveis inconsistências</div></div><div class="stat-card"><div class="stat-label">Preço</div><div class="stat-value">${preco}</div><div class="stat-sub">fora do histórico</div></div><div class="stat-card"><div class="stat-label">Qtd. entradas</div><div class="stat-value">${entrada}</div><div class="stat-sub">fora do histórico</div></div><div class="stat-card"><div class="stat-label">Contagem/consumo</div><div class="stat-value">${operacional}</div><div class="stat-sub">desvios atípicos</div></div><div class="stat-card"><div class="stat-label">Cadastro</div><div class="stat-value">${cad}</div><div class="stat-sub">dados incoerentes</div></div>`;
+  document.getElementById('audit-list').innerHTML=itens.length?itens.map(i=>`<div class="audit-item ${i.nivel}"><div class="audit-item-title">${escHtml(i.titulo)}</div><div class="audit-item-desc">${escHtml(i.desc)}</div><span class="badge b-cat" style="margin-top:8px">${escHtml(rotuloTipoAuditoria(i.tipo))}</span></div>`).join(''):'<div class="empty">Nenhuma inconsistência encontrada para este filtro.</div>';
   document.getElementById('tbody-audit-logs').innerHTML=(S.logs||[]).slice(0,80).map(l=>`<tr><td>${fmtDataHora(l.dataHora)}</td><td>${escHtml(l.usuario||'-')}</td><td>${escHtml(l.acao||'-')}</td><td>${escHtml(l.detalhe||'-')}</td></tr>`).join('')||'<tr><td colspan="4" class="empty">Nenhum log registrado.</td></tr>';
 }
 function imprimirAuditoria(){
-  const rows=itensAuditoria().map(i=>`<tr><td>${escHtml(i.tipo)}</td><td>${escHtml(i.nivel)}</td><td>${escHtml(i.titulo)}</td><td>${escHtml(i.desc)}</td></tr>`);
-  abrirImpressaoPedido('Auditoria WMS','Conferência de preenchimentos, custos, pedidos e logs',['Tipo','Nível','Item','Detalhe'],rows);
+  const filtro=document.getElementById('audit-filtro-tipo')?.value||'';
+  const itens=itensAuditoria().filter(i=>!filtro||i.tipo===filtro);
+  const rows=itens.map(i=>`<tr><td>${escHtml(rotuloTipoAuditoria(i.tipo))}</td><td>${escHtml(i.nivel==='danger'?'Erro provável':'Conferir')}</td><td>${escHtml(i.titulo)}</td><td>${escHtml(i.desc)}</td></tr>`);
+  abrirImpressaoPedido('Auditoria WMS','Possíveis erros e inconsistências conforme o filtro selecionado',['Tipo','Prioridade','Item','Detalhe'],rows);
 }
 function textoStatusPedido(st){return st==='danger'?'Critico':st==='warn'?'Atencao':'Normal';}
 function fornecedoresPedidoTexto(m){return fornecedoresMP(m).join(', ')||'--';}
