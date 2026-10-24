@@ -138,6 +138,16 @@ tbody tr:hover td{background:var(--bg)}
 .valor-ref-hint.ok{color:var(--accent)}
 .valor-ref-hint.warn{color:#9a5b00;font-weight:600}
 .valor-ref-hint.danger{color:var(--danger);font-weight:700}
+.ent-mp-card{margin-top:14px;border:1px solid #bdd8c8;border-left:5px solid var(--accent);border-radius:8px;background:var(--accent-bg);padding:12px 14px}
+.ent-mp-card .mp-nome{font-size:18px;font-weight:700;color:var(--accent)}
+.ent-mp-card .mp-linha{font-size:12px;color:var(--text2);margin-top:4px;line-height:1.5}
+.conf-tab{width:100%;border-collapse:collapse;margin:10px 0}
+.conf-tab td{padding:6px 8px;border-bottom:1px solid var(--border);font-size:13px}
+.conf-tab td:first-child{color:var(--text2);width:38%;font-weight:600}
+.conf-msg{padding:8px 10px;border-radius:6px;font-size:12.5px;line-height:1.45;margin-top:6px}
+.conf-msg.erro{background:var(--danger-bg);color:var(--danger);border:1px solid #f5c6c2;font-weight:600}
+.conf-msg.aviso{background:var(--warn-bg);color:var(--warn-text);border:1px solid #f0d060}
+.form-group input.data-errada{border-color:var(--danger);box-shadow:0 0 0 2px rgba(190,45,45,.15)}
 .form-group input.valor-fora-padrao{border-color:var(--danger);box-shadow:0 0 0 2px rgba(190,45,45,.12)}
 /* Alertas */
 .alert-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--radius-sm);margin-bottom:7px;border:1px solid transparent}
@@ -382,6 +392,7 @@ tbody tr:hover td{background:var(--bg)}
         <input type="text" id="ent-mp-busca" list="ent-mp-list" placeholder="Digite para buscar..." autocomplete="off" oninput="selecionarMpEntrada()">
         <input type="hidden" id="ent-mp">
         <datalist id="ent-mp-list"></datalist>
+        <span id="ent-mp-hint" class="valor-ref-hint">Digite parte do nome e escolha na lista.</span>
       </div>
       <div class="form-group"><label>Quantidade Recebida *</label><input type="number" id="ent-qty" placeholder="0" min="0" step="0.1"></div>
       <div class="form-group">
@@ -391,13 +402,15 @@ tbody tr:hover td{background:var(--bg)}
         <span class="forn-hint">Selecione ou digite. Para múltiplos fornecedores, cadastre na aba Config.</span>
       </div>
       <div class="form-group"><label>Número do Lote *</label><input type="text" id="ent-lote" placeholder="Ex: 16SD6F1A5D1" style="text-transform:uppercase"></div>
-      <div class="form-group"><label>Validade *</label><input type="date" id="ent-validade" required></div>
-      <div class="form-group"><label>Data Efetiva de Entrega *</label><input type="date" id="ent-data-entrega" title="Ao preencher, o lote entra no saldo disponível" required></div>
+      <div class="form-group"><label>Nº Nota Fiscal <span style="font-weight:400;color:var(--text3)">(opcional)</span></label><input type="text" id="ent-nf" placeholder="Ex: 123456" inputmode="numeric" autocomplete="off"></div>
+      <div class="form-group"><label>Data Efetiva de Entrega * <span class="info-btn" data-tip="Dia em que o material CHEGOU na fábrica. Normalmente é hoje.">ⓘ</span></label><input type="date" id="ent-data-entrega" title="Dia em que o material chegou" required oninput="validarValidadeEntrada()"></div>
+      <div class="form-group"><label>Validade (da embalagem) * <span class="info-btn" data-tip="Data de VALIDADE impressa na embalagem do fornecedor. NÃO é a data de hoje nem a data de entrega. Nenhuma matéria-prima tem validade menor que 2 meses.">ⓘ</span></label><input type="date" id="ent-validade" required oninput="validarValidadeEntrada()"><span id="ent-validade-hint" class="valor-ref-hint">Copie a data de validade impressa na embalagem.</span></div>
       <div class="form-group"><label>Valor ref. (kg/milheiro) R$ * <span class="info-btn" onclick="abrirModalAjudaEntrada()" style="cursor:pointer" data-tip="Clique para ver como lançar quantidade e valor corretamente.">ⓘ</span></label><input type="number" id="ent-valor" step="0.01" min="0.01" placeholder="0,00" required oninput="validarValorEntrada()"><span id="ent-valor-referencia" class="valor-ref-hint">Selecione a matéria-prima para consultar o histórico.</span></div>
       <div class="form-group"><label>Observações</label><input type="text" id="ent-obs" placeholder="Opcional"></div>
     </div>
+    <div id="ent-mp-card" class="ent-mp-card" style="display:none"></div>
     <div class="btn-row">
-      <button class="btn btn-primary" onclick="registrarLote()" id="btn-ent">Registrar Lote</button>
+      <button class="btn btn-primary" onclick="registrarLote()" id="btn-ent">Conferir e Registrar</button>
       <button class="btn" onclick="limparEnt()">Limpar</button>
     </div>
     <p class="form-note">* Campos obrigatórios. Cada entrada cria um lote independente rastreável. O saldo só entra no sistema ao preencher a Data Efetiva de Entrega.</p>
@@ -407,7 +420,7 @@ tbody tr:hover td{background:var(--bg)}
     <div class="table-wrap">
       <table>
         <thead><tr>
-          <th>Data Entrada</th><th>Matéria-Prima</th><th>Lote</th><th>Fornecedor</th>
+          <th>Data Entrada</th><th>Matéria-Prima</th><th>Lote</th><th>Fornecedor</th><th>NF</th>
           <th>Qtd Entrada</th><th>Saldo Lote</th><th>Un</th><th>Validade</th>
           <th>Valor ref.</th><th>Valor Total</th><th>Status</th><th>Observação</th><th>Ações</th>
         </tr></thead>
@@ -503,7 +516,7 @@ tbody tr:hover td{background:var(--bg)}
 <!-- ═══ RASTREABILIDADE ══════════════════════════════════════════ -->
 <div class="page" id="page-rastreabilidade">
   <div class="toolbar">
-    <input type="text" id="busca-lote" placeholder="Buscar por lote, fornecedor ou MP..." oninput="filtrarRastreabilidade()" style="width:280px">
+    <input type="text" id="busca-lote" placeholder="Buscar por lote, NF, fornecedor ou MP..." oninput="filtrarRastreabilidade()" style="width:280px">
     <select id="filtro-rastr" onchange="filtrarRastreabilidade()">
       <option value="">Todos os lotes</option>
       <option value="ativo">Lotes ativos</option>
@@ -518,7 +531,7 @@ tbody tr:hover td{background:var(--bg)}
   <div class="table-wrap">
     <table>
       <thead><tr>
-        <th>Matéria-Prima</th><th>Lote</th><th>Fornecedor</th>
+        <th>Matéria-Prima</th><th>Lote</th><th>Fornecedor</th><th>NF</th>
         <th>Entrada</th><th>Qtd Entrada</th><th>Saldo Atual</th><th>Un</th>
         <th>Validade</th><th>Valor ref.</th><th>Valor Total</th><th>Status Lote</th><th>Observação</th><th></th>
       </tr></thead>
@@ -854,7 +867,7 @@ tbody tr:hover td{background:var(--bg)}
 
 </div><!-- /main -->
 <div class="toast" id="toast"></div>
-<div id="app-version">Rev 15.0</div>
+<div id="app-version">Rev 15.2</div>
 
 <script>
 // ═══ CONFIG ═══════════════════════════════════════════════════
@@ -927,6 +940,7 @@ const TABLE_TIPS = {
   'status lote':'Mostra se o lote ainda está ativo ou se já foi encerrado.',
   'data entrada':'Data em que o lote entrou no estoque disponível.',
   'entrada':'Data em que o lote entrou no estoque disponível.',
+  'nf':'Número da nota fiscal de entrada do lote (opcional).',
   'lote':'Código do lote usado para rastrear origem, validade e movimentações.',
   'fornecedor':'Empresa ou origem de onde veio o lote/material.',
   'fornecedor(es)':'Fornecedores cadastrados para essa matéria-prima.',
@@ -1054,7 +1068,7 @@ function iniciarSistema(){
     renderPage('dashboard');
   }
 }
-function hoje(){ return new Date().toISOString().split('T')[0]; }
+function hoje(){ const d=new Date(); d.setMinutes(d.getMinutes()-d.getTimezoneOffset()); return d.toISOString().split('T')[0]; }
 
 // ═══ LOGIN, PERMISSÕES E LOGS ════════════════════════════════
 function inicializarUsuarios(){
@@ -1328,7 +1342,7 @@ function normL(l){
   const mpRawTxt=String(mpRaw||'').trim();
   const mpNomeRaw=getCampo(l,['mpNome','nomeMP','nome mp','matéria-prima','materia prima','materia-prima','material']);
   const valorRaw=getCampo(l,['valorUnit','valor unit','valor unitario','valor unitário','Valor Unit.','Valor/kg','valor kg','valorKg','precoKg','preço kg','preco kg','R$/kg']);
-  return {id:safeId(getCampo(l,['id'])),mpId:safeId(mpRaw),mpNome:String(mpNomeRaw||(/^\d+([,.]0+)?$/.test(mpRawTxt)?'':mpRawTxt)),rawText:normTxt(Object.values(l||{}).join(' ')),forn:String(getCampo(l,['forn','fornecedor'])||''),lote:String(getCampo(l,['lote'])||''),dataCompra:fmtD(getCampo(l,['dataCompra','data compra'])),prevEntrega:fmtD(getCampo(l,['prevEntrega','prev entrega','previsao entrega','previsão entrega'])),dataEntrega:fmtD(getCampo(l,['dataEntrega','data entrega','entrada'])),criadoEm:fmtD(getCampo(l,['criadoEm','criado em'])),qtyEntrada:safeNum(getCampo(l,['qtyEntrada','qtd entrada','quantidade','quantidade recebida'])),saldoLote:safeNum(getCampo(l,['saldoLote','saldo lote','saldo'])),valorUnit:valorRaw?safeNum(valorRaw):null,validade:fmtD(getCampo(l,['validade'])),obs:String(getCampo(l,['obs','observação','observacao'])||''),ativo:getCampo(l,['ativo'])!==false&&String(getCampo(l,['ativo'])).toLowerCase()!=='false'};
+  return {id:safeId(getCampo(l,['id'])),mpId:safeId(mpRaw),mpNome:String(mpNomeRaw||(/^\d+([,.]0+)?$/.test(mpRawTxt)?'':mpRawTxt)),rawText:normTxt(Object.values(l||{}).join(' ')),forn:String(getCampo(l,['forn','fornecedor'])||''),lote:String(getCampo(l,['lote'])||''),nf:String(getCampo(l,['nf','nota fiscal','notaFiscal','numero nf','nfe'])||''),dataCompra:fmtD(getCampo(l,['dataCompra','data compra'])),prevEntrega:fmtD(getCampo(l,['prevEntrega','prev entrega','previsao entrega','previsão entrega'])),dataEntrega:fmtD(getCampo(l,['dataEntrega','data entrega','entrada'])),criadoEm:fmtD(getCampo(l,['criadoEm','criado em'])),qtyEntrada:safeNum(getCampo(l,['qtyEntrada','qtd entrada','quantidade','quantidade recebida'])),saldoLote:safeNum(getCampo(l,['saldoLote','saldo lote','saldo'])),valorUnit:valorRaw?safeNum(valorRaw):null,validade:fmtD(getCampo(l,['validade'])),obs:String(getCampo(l,['obs','observação','observacao'])||''),ativo:getCampo(l,['ativo'])!==false&&String(getCampo(l,['ativo'])).toLowerCase()!=='false'};
 }
 function normPedido(p){ return {id:safeId(p.id),mpId:safeId(p.mpId),dataPedido:fmtD(p.dataPedido),prevEntrega:fmtD(p.prevEntrega),qty:safeNum(p.qty),status:String(p.status||'aberto').toLowerCase(),obs:String(p.obs||'')}; }
 function normUsuario(u){
@@ -1764,6 +1778,8 @@ function selecionarMpEntrada(){
   if(hidden)hidden.value=mp?mp.id:'';
   atualizarFornecedores();
   atualizarReferenciaValorEntrada(mp);
+  renderCardMpEntrada(mp);
+  validarValidadeEntrada();
 }
 function fornValido(f){ return f && f.trim()!=='' && f.trim().toUpperCase()!=='TRUE' && f.trim().toUpperCase()!=='FALSE'; }
 function atualizarFornecedores(){
@@ -1791,6 +1807,7 @@ function renderEntradas(){
       <td style="font-weight:600">${mp?mp.nome:'—'}</td>
       <td><span class="badge b-lote">${l.lote||'—'}</span></td>
       <td>${l.forn||'—'}</td>
+      <td>${l.nf?escHtml(l.nf):'—'}</td>
       <td>${l.qtyEntrada}</td>
       <td><strong>${l.saldoLote.toFixed(1)}</strong></td>
       <td>${mp?mp.un:''}</td>
@@ -1801,26 +1818,175 @@ function renderEntradas(){
       <td style="font-size:11px;color:var(--text2);max-width:200px">${l.obs||'—'}</td>
       <td>${l.ativo?`<button class="btn btn-sm btn-danger" onclick="encerrarLote(${l.id})">Encerrar</button>`:'—'}</td>
     </tr>`;
-  }).join(''):'<tr><td colspan="13" style="text-align:center;padding:20px;color:var(--text3)">Nenhum lote registrado.</td></tr>';
+  }).join(''):'<tr><td colspan="14" style="text-align:center;padding:20px;color:var(--text3)">Nenhum lote registrado.</td></tr>';
 }
-async function registrarLote(){
+// ═══ VALIDAÇÕES DE ENTRADA (anti-erro de digitação) ══════════
+const VALIDADE_MIN_DIAS = 60;   // nenhuma MP tem validade menor que 2 meses
+const ENTREGA_ANTIGA_DIAS = 7;  // entrega com mais de 7 dias atrás gera aviso
+let ENTRADA_PENDENTE = null;
+function diffDias(a,b){ return Math.round((new Date(b+'T12:00')-new Date(a+'T12:00'))/864e5); }
+function addDiasIso(iso,d){ const x=new Date(iso+'T12:00'); x.setDate(x.getDate()+d); return x.toISOString().slice(0,10); }
+function fmtMeses(dias){ if(dias>=730)return `${(dias/365).toLocaleString('pt-BR',{maximumFractionDigits:1})} anos`; const m=dias/30.4; return m>=1?`${m.toLocaleString('pt-BR',{maximumFractionDigits:1})} meses`:`${dias} dias`; }
+function historicoMpEntrada(mp){
+  if(!mp)return [];
+  return S.lotes.filter(l=>lotePertenceMp(l,mp.id)).sort((a,b)=>(dataPrecoLote(b)||'').localeCompare(dataPrecoLote(a)||'')||String(b.id).localeCompare(String(a.id)));
+}
+function vidaUtilTipicaMP(mp){
+  const v=historicoMpEntrada(mp).filter(l=>l.dataEntrega&&l.validade&&l.validade>l.dataEntrega).map(l=>diffDias(l.dataEntrega,l.validade)).filter(d=>d>=VALIDADE_MIN_DIAS);
+  return v.length?mediana(v):null;
+}
+function validarDatasEntrada(dataEntrega,validade,mp){
+  const erros=[],avisos=[],h=hoje();
+  if(!dataEntrega)erros.push('Informe a Data Efetiva de Entrega (dia em que o material chegou).');
+  else if(dataEntrega>h)erros.push(`A data de entrega (${fmtBR(dataEntrega)}) está no FUTURO. Use o dia em que o material chegou.`);
+  else if(diffDias(dataEntrega,h)>ENTREGA_ANTIGA_DIAS)avisos.push(`A data de entrega é de ${diffDias(dataEntrega,h)} dias atrás (${fmtBR(dataEntrega)}). Confirme se o material chegou mesmo nesse dia.`);
+  if(!validade){erros.push('Informe a Validade impressa na embalagem.');return {erros,avisos};}
+  if(dataEntrega&&validade===dataEntrega)erros.push('A VALIDADE está IGUAL à data de entrega. Você provavelmente digitou a data de hoje no campo Validade. Copie a data de validade impressa na embalagem.');
+  else if(dataEntrega&&validade<dataEntrega)erros.push(`A validade (${fmtBR(validade)}) é ANTERIOR à data de entrega (${fmtBR(dataEntrega)}). Isso é impossível — confira a embalagem.`);
+  else if(validade<h)erros.push(`A validade (${fmtBR(validade)}) já passou. O material estaria VENCIDO. Confira a data na embalagem; se estiver mesmo vencido, não receba.`);
+  else if(dataEntrega&&diffDias(dataEntrega,validade)<VALIDADE_MIN_DIAS)erros.push(`A validade dá só ${diffDias(dataEntrega,validade)} dias depois da entrega. Nenhuma matéria-prima tem validade menor que 2 meses — confira se o dia, o mês e o ano foram digitados certos.`);
+  if(!erros.length&&dataEntrega){
+    const dias=diffDias(dataEntrega,validade);
+    if(dias>5*365)avisos.push(`A validade está para daqui a ${fmtMeses(dias)} (${fmtBR(validade)}). Confira se o ANO foi digitado certo.`);
+    const tipica=vidaUtilTipicaMP(mp);
+    if(tipica&&dias<tipica*0.5)avisos.push(`Os lotes anteriores de ${mp.nome} chegaram com cerca de ${fmtMeses(tipica)} de validade; este tem só ${fmtMeses(dias)}. Confira a data ou se a matéria-prima está certa.`);
+  }
+  return {erros,avisos};
+}
+function validarValidadeEntrada(){
+  const vEl=document.getElementById('ent-validade'),eEl=document.getElementById('ent-data-entrega'),hint=document.getElementById('ent-validade-hint');
+  if(!vEl||!eEl||!hint)return;
+  const ent=eEl.value;
+  eEl.max=hoje();
+  vEl.min=ent?addDiasIso(ent,VALIDADE_MIN_DIAS):'';
+  vEl.classList.remove('data-errada');eEl.classList.remove('data-errada');
+  hint.className='valor-ref-hint';
+  if(!vEl.value){hint.textContent='Copie a data de validade impressa na embalagem (mínimo 2 meses após a entrega).';return;}
+  const {erros,avisos}=validarDatasEntrada(ent,vEl.value,resolverMpEntrada());
+  if(erros.length){
+    hint.classList.add('danger');hint.textContent='✕ '+erros[0];
+    vEl.classList.add('data-errada');
+    if(ent&&ent>hoje())eEl.classList.add('data-errada');
+  }else if(avisos.length){
+    hint.classList.add('warn');hint.textContent='⚠ '+avisos[0];
+  }else{
+    hint.classList.add('ok');hint.textContent=`✓ Validade de ${fmtMeses(diffDias(ent,vEl.value))} a partir da entrega.`;
+  }
+}
+function renderCardMpEntrada(mp){
+  const card=document.getElementById('ent-mp-card'),hint=document.getElementById('ent-mp-hint');
+  const txt=document.getElementById('ent-mp-busca')?.value.trim()||'';
+  if(hint){
+    hint.className='valor-ref-hint';
+    if(mp){hint.classList.add('ok');hint.textContent='✓ Matéria-prima encontrada.';}
+    else if(txt){hint.classList.add('danger');hint.textContent='✕ Não encontrada. Escolha uma opção da lista que aparece ao digitar.';}
+    else hint.textContent='Digite parte do nome e escolha na lista.';
+  }
+  if(!card)return;
+  if(!mp){card.style.display='none';card.innerHTML='';return;}
+  const hist=historicoMpEntrada(mp),ult=hist[0];
+  const forns=fornecedoresMP(mp).filter(fornValido);
+  const tipica=vidaUtilTipicaMP(mp);
+  card.innerHTML=`<div style="font-size:11px;color:var(--text2);text-transform:uppercase;font-weight:700;letter-spacing:.4px">Você está lançando entrada de:</div>
+    <div class="mp-nome">${escHtml(mp.nome)}</div>
+    <div class="mp-linha"><b>Categoria:</b> ${escHtml(mp.cat||'—')} · <b>Unidade de contagem:</b> ${escHtml(mp.un)} · <b>Fornecedor(es) habitual(is):</b> ${escHtml(forns.join(', ')||'nenhum registrado')}</div>
+    <div class="mp-linha">${ult?`<b>Última entrada:</b> lote ${escHtml(ult.lote||'—')} · ${escHtml(ult.forn||'—')} · ${Number(ult.qtyEntrada||0).toLocaleString('pt-BR')} ${escHtml(mp.un)} em ${fmtBR(ult.dataEntrega)}${ult.validade?' · validade '+fmtBR(ult.validade):''}`:'<b>Primeira entrada desta matéria-prima.</b>'}${tipica?` · <b>Validade típica:</b> ~${fmtMeses(tipica)}`:''}</div>
+    <div class="mp-linha" style="color:var(--warn-text);font-weight:600">Confira se o nome acima é o mesmo da embalagem.</div>`;
+  card.style.display='block';
+}
+function checagensEntrada(d){
+  const {erros,avisos}=validarDatasEntrada(d.dataEntrega,d.validade,d.mp);
+  const hist=historicoMpEntrada(d.mp);
+  // Fornecedor nunca visto para esta MP → forte indício de MP errada
+  const forns=fornecedoresMP(d.mp).filter(fornValido);
+  if(forns.length&&!forns.some(f=>normTxt(f)===normTxt(d.forn)))
+    avisos.push(`O fornecedor "${d.forn}" nunca entregou ${d.mp.nome}. Fornecedores habituais: ${forns.join(', ')}. Confira se escolheu a matéria-prima certa.`);
+  // Número de lote repetido
+  S.lotes.filter(l=>l.lote&&normTxt(l.lote)===normTxt(d.lote)).forEach(l=>{
+    const mpL=mpDoLote(l);
+    if(mpL&&!mesmoId(mpL.id,d.mp.id))avisos.push(`O lote ${d.lote} já está cadastrado em OUTRA matéria-prima: ${mpL.nome} (${fmtBR(l.dataEntrega)}). Pode ser que você escolheu a matéria-prima errada.`);
+    else avisos.push(`O lote ${d.lote} desta matéria-prima já foi registrado em ${fmtBR(l.dataEntrega)} (${l.qtyEntrada} ${d.mp.un}). Não é entrada duplicada?`);
+  });
+  // Quantidade fora do padrão
+  const qtds=hist.slice(0,8).map(l=>Number(l.qtyEntrada)).filter(v=>v>0);
+  if(qtds.length>=2){
+    const base=mediana(qtds),r=d.qty/base;
+    if(r>=3||r<=1/3)avisos.push(`Quantidade ${d.qty.toLocaleString('pt-BR')} ${d.mp.un} está muito ${r>1?'acima':'abaixo'} do normal (entradas costumam ter ~${base.toLocaleString('pt-BR')} ${d.mp.un}). Confira a quantidade e a unidade.`);
+  }
+  // Valor fora do padrão
+  const av=avaliacaoValorEntrada(d.valorUnit,d.mp);
+  if(av&&av.abs>=25)avisos.push(`Valor ${fmtMoeda(d.valorUnit)}/${av.padrao.unidade} está ${av.abs.toFixed(0)}% ${av.variacao>0?'acima':'abaixo'} da média recente (${fmtMoeda(av.padrao.media)}/${av.padrao.unidade}). Confira se é o preço por ${av.padrao.unidade}.`);
+  return {erros,avisos};
+}
+function totalEntradaPrevisto(d){
+  const fator=fatorUnSiMP(d.mp),preco=Number(d.valorUnit)||0;
+  return (fator>=1000&&preco>=100?preco:preco*fator)*(Number(d.qty)||0);
+}
+function registrarLote(){
   const mpSel=resolverMpEntrada();
-  const mpId=mpSel?parseInt(mpSel.id):0;
   const qty=parseFloat(document.getElementById('ent-qty').value);
   const forn=document.getElementById('ent-forn').value.trim();
   const lote=document.getElementById('ent-lote').value.trim().toUpperCase();
   const valorUnit=parseFloat(document.getElementById('ent-valor').value);
   const validade=document.getElementById('ent-validade').value;
   const dataEntrega=document.getElementById('ent-data-entrega').value;
-  if(!mpId){notify('Selecione uma matéria-prima válida na lista.','warn');return;}
-  if(!qty||!forn||!lote||!validade||!dataEntrega||!valorUnit||valorUnit<=0){notify('Preencha os campos obrigatórios: Quantidade, Fornecedor, Lote, Validade, Data Efetiva de Entrega e Valor de referência.','warn');return;}
-  const avValor=avaliacaoValorEntrada(valorUnit,mpSel);
-  if(avValor&&avValor.abs>=50&&!confirm(`O valor ${fmtMoeda(valorUnit)}/${avValor.padrao.unidade} está ${avValor.abs.toFixed(1)}% diferente da média recente de ${fmtMoeda(avValor.padrao.media)}/${avValor.padrao.unidade}.\n\nConfira se foi informado o preço por ${avValor.padrao.unidade}. Deseja registrar mesmo assim?`))return;
+  const obs=document.getElementById('ent-obs').value;
+  const nf=document.getElementById('ent-nf').value.trim();
+  if(!mpSel){notify('Escolha a matéria-prima na lista (digite e clique na opção).','warn');document.getElementById('ent-mp-busca').focus();return;}
+  if(!qty||qty<=0||!forn||!lote||!valorUnit||valorUnit<=0){notify('Preencha os campos obrigatórios: Quantidade, Fornecedor, Lote, Validade, Data de Entrega e Valor.','warn');return;}
+  const d={mp:mpSel,qty,forn,lote,nf,valorUnit,validade,dataEntrega,obs};
+  const chk=checagensEntrada(d);
+  ENTRADA_PENDENTE={...d,chk};
+  abrirModalConfEntrada();
+}
+function abrirModalConfEntrada(){
+  const d=ENTRADA_PENDENTE;if(!d)return;
+  const {erros,avisos}=d.chk,master=isMaster();
+  const diasVal=d.dataEntrega&&d.validade?diffDias(d.dataEntrega,d.validade):null;
+  const total=totalEntradaPrevisto(d);
+  let html=`<div class="ent-mp-card" style="margin-top:0"><div style="font-size:11px;color:var(--text2);text-transform:uppercase;font-weight:700">Matéria-prima</div><div class="mp-nome" style="font-size:20px">${escHtml(d.mp.nome)}</div><div class="mp-linha">${escHtml(d.mp.cat||'—')} · contado em ${escHtml(d.mp.un)}</div></div>
+  <table class="conf-tab">
+    <tr><td>Quantidade recebida</td><td><b>${d.qty.toLocaleString('pt-BR')} ${escHtml(d.mp.un)}</b></td></tr>
+    <tr><td>Fornecedor</td><td>${escHtml(d.forn)}</td></tr>
+    <tr><td>Número do lote</td><td><span class="badge b-lote">${escHtml(d.lote)}</span></td></tr>
+    <tr><td>Nota fiscal</td><td>${d.nf?escHtml(d.nf):'<span style="color:var(--text3)">não informada</span>'}</td></tr>
+    <tr><td>Data de entrega</td><td>${fmtBR(d.dataEntrega)}</td></tr>
+    <tr><td>Validade</td><td><b>${fmtBR(d.validade)}</b>${diasVal!=null&&diasVal>0?` <span style="color:var(--text3)">(${fmtMeses(diasVal)} após a entrega)</span>`:''}</td></tr>
+    <tr><td>Valor ref. (${unidadeReferenciaEntrada(d.mp)})</td><td>${fmtMoeda(d.valorUnit)}</td></tr>
+    <tr><td>Valor total estimado</td><td>${total?fmtMoeda(total):'—'}</td></tr>
+  </table>`;
+  if(erros.length)html+=`<div style="font-size:12px;font-weight:700;color:var(--danger);margin-top:6px">ERROS — precisam ser corrigidos:</div>`+erros.map(e=>`<div class="conf-msg erro">✕ ${escHtml(e)}</div>`).join('');
+  if(avisos.length)html+=`<div style="font-size:12px;font-weight:700;color:var(--warn-text);margin-top:10px">ATENÇÃO — confira antes de seguir:</div>`+avisos.map(a=>`<div class="conf-msg aviso">⚠ ${escHtml(a)}</div>`).join('');
+  if(erros.length&&!master){
+    html+=`<p style="margin-top:12px;font-size:13px;font-weight:600;color:var(--danger)">Não é possível registrar com erros. Volte, corrija e tente de novo. Se a embalagem estiver mesmo assim, chame o responsável.</p>`;
+  }else{
+    html+=`<label style="display:flex;gap:8px;align-items:flex-start;margin-top:14px;font-size:13px;cursor:pointer"><input type="checkbox" id="conf-chk-embalagem" onchange="atualizarBotaoConfEntrada()" style="width:18px;height:18px;accent-color:var(--accent);margin-top:1px"> <span>Conferi na embalagem: o <b>nome da matéria-prima</b>, o <b>número do lote</b> e a <b>validade</b> estão iguais aos de cima.</span></label>`;
+    if(avisos.length)html+=`<label style="display:flex;gap:8px;align-items:flex-start;margin-top:8px;font-size:13px;cursor:pointer"><input type="checkbox" id="conf-chk-avisos" onchange="atualizarBotaoConfEntrada()" style="width:18px;height:18px;accent-color:#c07000;margin-top:1px"> <span>Li os avisos em amarelo e os dados estão corretos.</span></label>`;
+    if(erros.length)html+=`<label style="display:flex;gap:8px;align-items:flex-start;margin-top:8px;font-size:13px;cursor:pointer;color:var(--danger)"><input type="checkbox" id="conf-chk-forcar" onchange="atualizarBotaoConfEntrada()" style="width:18px;height:18px;accent-color:var(--danger);margin-top:1px"> <span><b>Usuário master:</b> registrar mesmo com os erros acima (fica no log).</span></label>`;
+  }
+  document.getElementById('conf-entrada-corpo').innerHTML=html;
+  const btn=document.getElementById('btn-conf-entrada');
+  btn.style.display=erros.length&&!master?'none':'';
+  btn.disabled=true;btn.textContent='Confirmar e registrar';
+  document.getElementById('modal-conf-entrada').style.display='flex';
+}
+function atualizarBotaoConfEntrada(){
+  const ok=id=>{const el=document.getElementById(id);return !el||el.checked;};
+  document.getElementById('btn-conf-entrada').disabled=!(ok('conf-chk-embalagem')&&ok('conf-chk-avisos')&&ok('conf-chk-forcar'));
+}
+function fecharModalConfEntrada(){ document.getElementById('modal-conf-entrada').style.display='none'; }
+async function confirmarRegistroLote(){
+  const d=ENTRADA_PENDENTE;if(!d)return;
+  const {erros,avisos}=d.chk;
+  if(erros.length&&!isMaster()){notify('Corrija os erros antes de registrar.','warn');return;}
+  const mpId=parseInt(d.mp.id);
   const pedidoAntes=pedidoAberto(mpId);
-  const btn=document.getElementById('btn-ent');btn.disabled=true;btn.textContent='Salvando...';
+  const btnC=document.getElementById('btn-conf-entrada'),btn=document.getElementById('btn-ent');
+  btnC.disabled=true;btnC.textContent='Salvando...';btn.disabled=true;
   try {
-    const r=await gsCall({action:'saveLote',data:{mpId,qtyEntrada:qty,forn,lote,dataCompra:'',dataEntrega,valorUnit,validade,obs:document.getElementById('ent-obs').value}});
+    const r=await gsCall({action:'saveLote',data:{mpId,qtyEntrada:d.qty,forn:d.forn,lote:d.lote,nf:d.nf,dataCompra:'',dataEntrega:d.dataEntrega,valorUnit:d.valorUnit,validade:d.validade,obs:d.obs,forcarValidade:erros.length>0}});
     if(r&&r.ok){
+      fecharModalConfEntrada();
       let pedidoCancelado=Number(r.result&&r.result.pedidosCancelados)||0;
       if(pedidoAntes&&!pedidoCancelado){
         const rc=await gsCall({action:'savePedido',data:{id:pedidoAntes.id,status:'cancelado'}});
@@ -1828,12 +1994,16 @@ async function registrarLote(){
       }
       await sincronizar(true);
       notify(pedidoCancelado?'Lote registrado com sucesso! Pedido aberto cancelado automaticamente.':'Lote registrado com sucesso!');
-      registrarLog('entrada_registrada',`${mpSel.nome} · lote ${lote} · ${qty}`);
+      let det=`${d.mp.nome} · lote ${d.lote}${d.nf?' · NF '+d.nf:''} · ${d.qty} · val. ${fmtBR(d.validade)}`;
+      if(avisos.length)det+=` · ${avisos.length} aviso(s) confirmado(s)`;
+      if(erros.length)det+=` · FORÇADO PELO MASTER com ${erros.length} erro(s)`;
+      registrarLog('entrada_registrada',det);
+      ENTRADA_PENDENTE=null;
       limparEnt();renderEntradas();
     }
     else if(r) notify(r.error||'Erro ao salvar lote.','error');
     else notify('Sem resposta do servidor.','error');
-  } finally { btn.disabled=false;btn.textContent='Registrar Lote'; }
+  } finally { btn.disabled=false;btnC.textContent='Confirmar e registrar';atualizarBotaoConfEntrada(); }
 }
 async function encerrarLote(id){
   if(!confirm('Confirma o encerramento deste lote? O saldo restante será zerado.'))return;
@@ -1841,7 +2011,7 @@ async function encerrarLote(id){
   if(r&&r.ok){await sincronizar(true);notify('Lote encerrado.');renderEntradas();}
   else if(r) notify(r.error||'Erro','error');
 }
-function limparEnt(){['ent-mp','ent-mp-busca','ent-forn','ent-obs','ent-qty','ent-valor','ent-lote','ent-validade'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});document.getElementById('ent-data-entrega').value=hoje();atualizarReferenciaValorEntrada(null);}
+function limparEnt(){['ent-mp','ent-mp-busca','ent-forn','ent-obs','ent-qty','ent-valor','ent-lote','ent-nf','ent-validade'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});document.getElementById('ent-data-entrega').value=hoje();atualizarReferenciaValorEntrada(null);renderCardMpEntrada(null);validarValidadeEntrada();}
 
 // ═══ CONTAGEM ═════════════════════════════════════════════════
 function popularFiltrosCnt(){
@@ -2605,7 +2775,7 @@ function obterLotesRastreabilidadeFiltrados(){
   const f=document.getElementById('filtro-rastr').value;
   return S.lotes.filter(l=>{
     const mp=mpDoLote(l);
-    if(b&&!`${l.lote} ${l.forn} ${mp?mp.nome:''}`.toLowerCase().includes(b))return false;
+    if(b&&!`${l.lote} ${l.nf||''} ${l.forn} ${mp?mp.nome:''}`.toLowerCase().includes(b))return false;
     if(f==='ativo')return l.ativo;
     if(f==='encerrado')return !l.ativo;
     if(f==='vencido')return vencido(l.validade);
@@ -2633,6 +2803,7 @@ function filtrarRastreabilidade(){
       <td style="font-weight:600">${mp?mp.nome:'—'}</td>
       <td><span class="badge b-lote">${l.lote||'—'}</span></td>
       <td>${l.forn||'—'}</td>
+      <td>${l.nf?escHtml(l.nf):'—'}</td>
       <td>${fmtBR(l.dataEntrega)||'—'}</td>
       <td>${l.qtyEntrada}</td>
       <td><strong>${l.saldoLote.toFixed(1)}</strong></td>
@@ -2644,7 +2815,7 @@ function filtrarRastreabilidade(){
       <td style="font-size:11px;color:var(--text2);max-width:200px">${l.obs||'—'}</td>
       <td>${l.ativo?`<button class="btn btn-sm btn-danger" onclick="encerrarLote(${l.id})">Encerrar</button>`:'—'}</td>
     </tr>`;
-  }).join(''):'<tr><td colspan="13" style="text-align:center;padding:20px;color:var(--text3)">Nenhum lote encontrado.</td></tr>';
+  }).join(''):'<tr><td colspan="14" style="text-align:center;padding:20px;color:var(--text3)">Nenhum lote encontrado.</td></tr>';
 }
 
 // ═══ CONFIG ═══════════════════════════════════════════════════
@@ -2659,7 +2830,7 @@ function imprimirRastreabilidade(){
     const mp=mpDoLote(l);
     const total=valorTotalLote(l);
     return `<tr class="${i%2?'alt':''}">
-      <td>${escHtml(mp?mp.nome:'-')}</td><td>${escHtml(l.lote||'-')}</td><td>${escHtml(l.forn||'-')}</td>
+      <td>${escHtml(mp?mp.nome:'-')}</td><td>${escHtml(l.lote||'-')}</td><td>${escHtml(l.forn||'-')}</td><td>${escHtml(l.nf||'-')}</td>
       <td>${escHtml(fmtBR(l.dataEntrega)||'-')}</td><td class="num">${Number(l.qtyEntrada||0).toFixed(1)}</td>
       <td class="num">${Number(l.saldoLote||0).toFixed(1)}</td><td>${escHtml(mp?mp.un:'')}</td>
       <td>${escHtml(l.validade?fmtBR(l.validade):'-')}</td><td class="num">${l.valorUnit?fmtMoeda(precoExibidoLote(l)):'-'}</td>
@@ -2671,7 +2842,7 @@ function imprimirRastreabilidade(){
 </head><body><div class="header"><div class="brand"><img class="print-logo" src="${LOGO_URL}" alt="Explosão Alimentos"><div><h1>WMS Explosão</h1><p>Relatório de Rastreabilidade por Lote</p></div></div><div style="text-align:right"><strong>Data: ${dataHoje}</strong><p>Gerado: ${new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</p></div></div>
 <div class="meta"><span><b>Filtro:</b> ${escHtml(filtro.options[filtro.selectedIndex]?.text||'Todos')}</span><span><b>Busca:</b> ${escHtml(busca||'Nenhuma')}</span><span><b>Lotes:</b> ${lista.length}</span></div>
 <div class="total">Valor Total filtrado: ${fmtMoeda(totalValor)}</div>
-<table><thead><tr><th>Matéria-Prima</th><th>Lote</th><th>Fornecedor</th><th>Entrada</th><th>Qtd Entrada</th><th>Saldo Atual</th><th>Un</th><th>Validade</th><th>Valor ref.</th><th>Valor Total</th><th>Status</th><th>Observação</th></tr></thead><tbody>${rows}</tbody></table>
+<table><thead><tr><th>Matéria-Prima</th><th>Lote</th><th>Fornecedor</th><th>NF</th><th>Entrada</th><th>Qtd Entrada</th><th>Saldo Atual</th><th>Un</th><th>Validade</th><th>Valor ref.</th><th>Valor Total</th><th>Status</th><th>Observação</th></tr></thead><tbody>${rows}</tbody></table>
 <div class="no-print"><button onclick="window.print()" style="padding:10px 28px;background:#1a472a;color:#fff;border:none;border-radius:6px;font-size:14px;cursor:pointer;font-weight:600">Imprimir</button><button onclick="window.close()" style="margin-left:12px;padding:10px 20px;background:#eee;color:#333;border:none;border-radius:6px;font-size:14px;cursor:pointer">Fechar</button></div></body></html>`;
   const win=window.open('','_blank','width=1100,height=760');
   win.document.write(html);
@@ -3055,7 +3226,7 @@ function renderIntelDivergencias(){
     });
   });
   const rows=Object.entries(resumo).filter(([,r])=>r.divs>0).map(([id,r])=>{
-    const mp=S.materiais.find(m=>m.id===String(parseInt)(id));
+    const mp=S.materiais.find(m=>mesmoId(m.id,id));
     const taxa=Math.round(r.divs/r.total*100);
     const ultimas=r.diffs.slice(-3);
     const mediaUlt=ultimas.length?ultimas.reduce((a,b)=>a+b,0)/ultimas.length:0;
@@ -3257,6 +3428,19 @@ tr.cat-row td{background:#d4edda;color:#1a472a;font-weight:700;font-size:10.5px;
     </div>
     <div style="display:flex;justify-content:flex-end;margin-top:18px">
       <button class="btn btn-primary" onclick="fecharModalAjudaEntrada()">Entendi</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRMAÇÃO DE ENTRADA -->
+<div id="modal-conf-entrada" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:10001;align-items:center;justify-content:center;padding:16px">
+  <div style="background:var(--surface);border-radius:12px;padding:22px;max-width:620px;width:96%;max-height:92vh;overflow:auto;box-shadow:0 10px 34px rgba(0,0,0,.25)">
+    <h3 style="margin:0 0 4px;font-size:17px">Confira antes de registrar</h3>
+    <p style="font-size:12px;color:var(--text2);margin:0 0 10px">Pegue a embalagem na mão e compare com o que está abaixo.</p>
+    <div id="conf-entrada-corpo"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap">
+      <button class="btn" onclick="fecharModalConfEntrada()">← Voltar e corrigir</button>
+      <button class="btn btn-primary" id="btn-conf-entrada" onclick="confirmarRegistroLote()" disabled>Confirmar e registrar</button>
     </div>
   </div>
 </div>
