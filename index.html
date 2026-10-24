@@ -186,6 +186,7 @@ tbody tr:hover td{background:var(--bg)}
 /* Inner tabs */
 .inner-tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:14px;border-bottom:1px solid var(--border);padding-bottom:8px}
 .inner-tab{padding:4px 12px;border-radius:20px;font-size:12px;border:1px solid var(--border2);cursor:pointer;background:none;color:var(--text2);font-family:inherit;font-weight:500;transition:all .15s}
+.inner-tab[hidden]{display:none}
 .inner-tab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
 .chart-box{position:relative;width:100%;height:220px;margin-top:8px}
 /* Lote row expandida */
@@ -556,7 +557,11 @@ table.modo-cartao tbody tr:hover td{background:transparent}
 <div class="page" id="page-consumo">
   <div class="card">
     <div class="card-title">Análise de Consumo — Visão Consolidada por Matéria-Prima</div>
-    <div class="inner-tabs" id="consumo-tabs"></div>
+    <div class="toolbar" style="margin-bottom:8px;align-items:center;gap:10px">
+      <input type="search" id="consumo-busca" placeholder="Digite para filtrar a matéria-prima..." autocomplete="off" oninput="filtrarConsumoTabs()" onkeydown="if(event.key==='Enter'){const b=document.querySelector('#consumo-tabs .inner-tab:not([hidden])');if(b)b.click();}" style="width:min(380px,100%)">
+      <span id="consumo-busca-info" style="font-size:12px;color:var(--text3)"></span>
+    </div>
+    <div class="inner-tabs" id="consumo-tabs" style="max-height:190px;overflow-y:auto"></div>
     <div id="consumo-detalhe"></div>
     <div class="chart-box"><canvas id="chart-consumo-det" role="img" aria-label="Histórico de saldo">Histórico.</canvas></div>
   </div>
@@ -1094,7 +1099,7 @@ table.modo-cartao tbody tr:hover td{background:transparent}
 
 </div><!-- /main -->
 <div class="toast" id="toast"></div>
-<div id="app-version">Rev 16.8</div>
+<div id="app-version">Rev 16.10</div>
 
 <script>
 // ═══ CONFIG ═══════════════════════════════════════════════════
@@ -1481,9 +1486,10 @@ function renderUsuariosConfig(){
 function sincronizarUsuariosSheets(){}
 
 // ═══ GOOGLE SHEETS ════════════════════════════════════════════
-async function gsCall(payload) {
-  if (!SCRIPT_URL) { notify('Configure a URL do Apps Script.','warn'); return null; }
-  mostrarLoading(true);
+async function gsCall(payload, opts) {
+  const silencioso = !!(opts && opts.silencioso);
+  if (!SCRIPT_URL) { if(!silencioso)notify('Configure a URL do Apps Script.','warn'); return null; }
+  if(!silencioso)mostrarLoading(true);
   try {
     // Tenta POST primeiro; se falhar por redirect/CORS, cai no GET
     let text = null;
@@ -1501,21 +1507,51 @@ async function gsCall(payload) {
       const rGet = await fetch(url, { method: 'GET', redirect: 'follow' });
       text = await rGet.text();
     }
-    if (!text || !text.trim()) { notify('Servidor nao retornou resposta.','error'); return null; }
+    if (!text || !text.trim()) { if(!silencioso)notify('Servidor nao retornou resposta.','error'); return null; }
     try { return JSON.parse(text); }
     catch(e2) {
       // Mostra os primeiros 200 chars da resposta para debug
-      notify('Resposta inesperada: ' + text.substring(0,120), 'error');
+      if(!silencioso)notify('Resposta inesperada: ' + text.substring(0,120), 'error');
       return null;
     }
   } catch(e) {
-    notify('Erro de conexao: ' + (e.message||e), 'error');
+    if(!silencioso)notify('Erro de conexao: ' + (e.message||e), 'error');
     return null;
-  } finally { mostrarLoading(false); }
+  } finally { if(!silencioso)mostrarLoading(false); }
 }
+
+// ═══ GRAVAÇÃO EM SEGUNDO PLANO ════════════════════════════════
+// A tela muda na hora; a gravação no Sheets vai para uma fila que roda sem travar nada.
+// Uma tentativa extra em caso de falha de rede. Se não der certo, a alteração é desfeita na tela e avisa.
+let FILA_SYNC=Promise.resolve(), PENDENTES_SYNC=0;
+function atualizarIndicadorFila(){
+  if(PENDENTES_SYNC>0)setSyncStatus('loading',`Salvando ${PENDENTES_SYNC} alteração(ões)...`);
+  else setSyncStatus('online','Salvo '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}));
+}
+function enviarSegundoPlano(payloadOuFn,{ok,falha,descricao}={}){
+  PENDENTES_SYNC++;atualizarIndicadorFila();
+  FILA_SYNC=FILA_SYNC.then(async()=>{
+    try{
+      const payload=typeof payloadOuFn==='function'?payloadOuFn():payloadOuFn;
+      if(!payload)return;
+      let r=null,err='';
+      for(let t=0;t<2;t++){
+        r=await gsCall(payload,{silencioso:true});
+        err=!r?'sem conexão com o Sheets':(r.error||(r.result&&r.result.error)||'');
+        if(!err||r)break; // só repete quando foi falha de conexão
+      }
+      if(err){ if(falha)falha(err); notify(`Não foi possível salvar ${descricao||'a alteração'} (${err}). A alteração foi desfeita.`,'error'); }
+      else if(ok)ok(r.result||{});
+    }catch(e){ console.error('[fila]',e); }
+    finally{ PENDENTES_SYNC--;atualizarIndicadorFila(); }
+  });
+  return FILA_SYNC;
+}
+window.addEventListener('beforeunload',e=>{ if(PENDENTES_SYNC>0){e.preventDefault();e.returnValue='Ainda há alterações sendo salvas.';} });
 
 async function sincronizar(silencioso) {
   if (!SCRIPT_URL) return;
+  await FILA_SYNC; // termina de gravar o que está na fila antes de recarregar
   setSyncStatus('loading','Sincronizando...');
   const data = await gsCall({ action:'getAll' });
   if (!data) { setSyncStatus('offline','Erro de conexão'); return; }
@@ -1538,6 +1574,7 @@ async function sincronizar(silencioso) {
       localStorage.setItem('exp_logs_usuario',JSON.stringify(S.logs));
     }
     rebuildIndices();
+    setTimeout(()=>sincronizarConsumoSemMateriais(payloadConsumoSemMateriais()),1500); // em segundo plano
 
     const hr = new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
     setSyncStatus('online','Sincronizado '+hr);
@@ -1791,23 +1828,24 @@ function consumoSem(mpId){
   }
   return cacheRet(Math.round(semanal*10)/10);
 }
+// Só envia as MPs cujo consumo calculado é diferente do que já está na planilha
 function payloadConsumoSemMateriais(){
   return S.materiais.map(m=>{
-    const cs = consumoSem(m.id);
-    return { id: m.id, consumoSem: cs==null ? '' : cs };
-  });
+    const cs=consumoSem(m.id),v=cs==null?'':cs;
+    const atual=m.consumoSem==null?'':m.consumoSem;
+    return String(v)===String(atual)?null:{id:m.id,consumoSem:v};
+  }).filter(Boolean);
 }
 function sincronizarConsumoSemMateriais(payload){
   if(!SCRIPT_URL || !payload || !payload.length) return;
   const key = JSON.stringify(payload);
   if(key === consumoSemSyncKey) return;
   consumoSemSyncKey = key;
-  if(consumoSemSyncTimer) clearTimeout(consumoSemSyncTimer);
-  consumoSemSyncTimer = setTimeout(async ()=>{
-    const r = await gsCall({ action:'saveConsumoSem', data:{ items:payload } });
-    if(r && r.ok && r.result && r.result.error) notify(r.result.error,'error');
-    if(!r || !r.ok || (r.result && r.result.error)) consumoSemSyncKey = '';
-  }, 250);
+  enviarSegundoPlano({action:'saveConsumoSem',data:{items:payload}},{
+    descricao:'o consumo semanal na planilha',
+    ok:()=>payload.forEach(it=>{const m=S.materiais.find(x=>mesmoId(x.id,it.id));if(m)m.consumoSem=it.consumoSem===''?null:it.consumoSem;}),
+    falha:()=>{consumoSemSyncKey='';}
+  });
 }
 function pedidoAberto(mpId){
   return S.pedidos
@@ -2978,13 +3016,29 @@ async function salvarContagem(){
 }
 
 // ═══ CONSUMO ══════════════════════════════════════════════════
+let CONSUMO_SEL=null;
 function renderConsumo(){
   const tabs=document.getElementById('consumo-tabs');
-  tabs.innerHTML=S.materiais.map((m,i)=>`<button class="inner-tab ${i===0?'active':''}" onclick="selConsumo(${m.id},this)">${m.nome}</button>`).join('');
-  if(S.materiais.length)selConsumo(S.materiais[0].id,tabs.firstChild);
+  const lista=materiaisOrdenados();
+  tabs.innerHTML=lista.map(m=>`<button class="inner-tab" data-id="${m.id}" data-busca="${escHtml(normTxt(m.nome+' '+(m.cat||'')))}" onclick="selConsumo('${m.id}',this)">${escHtml(m.nome)}</button>`).join('');
+  const sel=lista.find(m=>mesmoId(m.id,CONSUMO_SEL))||lista[0];
+  filtrarConsumoTabs(true);
+  if(sel)selConsumo(sel.id,tabs.querySelector(`[data-id="${sel.id}"]`));
+}
+// Filtro por digitação: aceita parte do nome, sem acento e palavras em qualquer ordem ("queijo aroma")
+function filtrarConsumoTabs(semAutoSelecao){
+  const q=normTxt(document.getElementById('consumo-busca')?.value||'');
+  const termos=q.split(/\s+/).filter(Boolean);
+  const tabs=[...document.querySelectorAll('#consumo-tabs .inner-tab')];
+  let vis=0;
+  tabs.forEach(b=>{const ok=termos.every(t=>b.dataset.busca.includes(t));b.hidden=!ok;if(ok)vis++;});
+  const info=document.getElementById('consumo-busca-info');
+  if(info)info.textContent=termos.length?(vis?`${vis} de ${tabs.length}`:'Nenhuma matéria-prima encontrada'):`${tabs.length} matérias-primas`;
+  if(!semAutoSelecao&&vis===1){const b=tabs.find(x=>!x.hidden);if(b&&!b.classList.contains('active'))b.click();}
 }
 function selConsumo(mpId,btn){
-  document.querySelectorAll('.inner-tab').forEach(b=>b.classList.remove('active'));if(btn)btn.classList.add('active');
+  CONSUMO_SEL=String(mpId);
+  document.querySelectorAll('#consumo-tabs .inner-tab').forEach(b=>b.classList.remove('active'));if(btn)btn.classList.add('active');
   const mp=S.materiais.find(m=>m.id===String(mpId));if(!mp)return;
   const cs=consumoSem(mpId),csMes=cs?Math.round(cs*4.33):null,dc=diasCob(mp),st=stMP(mp);
   const s=saldoMP(mpId),la=lotesAtivos(mpId);
@@ -3118,28 +3172,45 @@ function calcularMilheiroPopup(){
   out.textContent=fmtMoeda(valorMilheiro);
   detalhe.textContent=`Valor por unidade: ${fmtMoeda(valorUn)} · Fórmula: ${valorKg.toLocaleString('pt-BR')} x ${kgPacote.toLocaleString('pt-BR')} / ${unPacote.toLocaleString('pt-BR')} x 1000`;
 }
-async function salvarPedidoReposicao(){
+function rerenderSeVisivel(){ const pg=pgAtual(); if(['reposicao','dashboard','intel','estoque'].includes(pg))renderPage(pg); }
+function salvarPedidoReposicao(){
   const mpId=document.getElementById('pedido-mp-id').value;
   const dataPedido=document.getElementById('pedido-data').value;
   const prevEntrega=document.getElementById('pedido-prev').value;
+  const qty=document.getElementById('pedido-qty').value;
   if(!mpId||!dataPedido||!prevEntrega){notify('Informe data do pedido e previsao de entrega.','warn');return;}
-  const payload={
-    id:document.getElementById('pedido-id').value||undefined,
-    mpId,
-    dataPedido,
-    prevEntrega,
-    qty:document.getElementById('pedido-qty').value,
-    obs:document.getElementById('pedido-obs').value,
-    status:'aberto'
-  };
-  const r=await gsCall({action:'savePedido',data:payload});
-  if(r&&r.ok){registrarLog('pedido_salvo',`MP ${mpId} · previsão ${prevEntrega}`);fecharModalPedido();await sincronizar(true);notify('Pedido salvo.');renderPage(pgAtual());}
+  if(qty!==''&&!(Number(qty)>0)){notify('Quantidade do pedido deve ser maior que zero.','warn');return;}
+  const mp=S.materiais.find(m=>mesmoId(m.id,mpId));
+  const idForm=document.getElementById('pedido-id').value;
+  const dados={mpId,dataPedido,prevEntrega,qty,obs:document.getElementById('pedido-obs').value,status:'aberto'};
+  // mesma regra do servidor: um pedido em aberto por MP (atualiza o existente)
+  const existente=(idForm&&S.pedidos.find(x=>String(x.id)===String(idForm)))||pedidoAberto(mpId);
+  const backup=existente?{...existente}:null;
+  let novo=null;
+  if(existente)Object.assign(existente,normPedido({...existente,...dados,id:existente.id}));
+  else{novo=normPedido({...dados,id:'tmp-'+Date.now()});S.pedidos.push(novo);}
+  const alvo=existente||novo;
+  fecharModalPedido();rerenderSeVisivel();
+  notify(existente?'Pedido atualizado.':'Pedido registrado.');
+  registrarLog('pedido_salvo',`${mp?mp.nome:mpId} · previsão ${prevEntrega}`);
+  enviarSegundoPlano(()=>({action:'savePedido',data:{...dados,id:String(alvo.id).startsWith('tmp-')?undefined:alvo.id}}),{
+    descricao:'o pedido de '+(mp?mp.nome:'MP'),
+    ok:res=>{const id=res.inserted||res.updated;if(id)alvo.id=safeId(id);},
+    falha:()=>{ if(novo)S.pedidos=S.pedidos.filter(x=>x!==novo); else Object.assign(existente,backup); rerenderSeVisivel(); }
+  });
 }
-async function alterarStatusPedido(id,status){
+function alterarStatusPedido(id,status){
   const texto=status==='recebido'?'marcar este pedido como recebido':'cancelar este pedido';
   if(!confirm('Deseja '+texto+'?'))return;
-  const r=await gsCall({action:'savePedido',data:{id,status}});
-  if(r&&r.ok){registrarLog('pedido_status',`Pedido ${id} -> ${status}`);await sincronizar(true);notify(status==='recebido'?'Pedido marcado como recebido.':'Pedido cancelado.');renderPage(pgAtual());}
+  const ped=S.pedidos.find(x=>String(x.id)===String(id));if(!ped)return;
+  const antes=ped.status;
+  ped.status=status;rerenderSeVisivel();
+  notify(status==='recebido'?'Pedido marcado como recebido.':'Pedido cancelado.');
+  registrarLog('pedido_status',`Pedido ${id} -> ${status}`);
+  enviarSegundoPlano(()=>String(ped.id).startsWith('tmp-')?null:{action:'savePedido',data:{id:ped.id,status}},{
+    descricao:'a alteração do pedido',
+    falha:()=>{ped.status=antes;rerenderSeVisivel();}
+  });
 }
 function textoPedidoPrint(p,m){
   if(!p)return '--';
@@ -3169,7 +3240,6 @@ function renderReposicao(){
       <td class="col-status"><span class="badge ${st==='ok'?'b-ok':st==='warn'?'b-warn':'b-danger'}">${st==='ok'?'Normal':st==='warn'?'Atenção':'Crítico'}</span></td>
     </tr>`;
   }).join('')||'<tr><td colspan="10" style="text-align:center;padding:20px;color:var(--text3)">Nenhuma matéria-prima encontrada com os filtros selecionados.</td></tr>';
-  sincronizarConsumoSemMateriais(payloadConsumoSemMateriais());
   aplicarDicasTabelas();
 }
 
