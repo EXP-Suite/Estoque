@@ -281,7 +281,6 @@ tbody tr:hover td{background:var(--bg)}
       <span style="font-size:11px;color:var(--text3)">A sessão encerra ao fechar o navegador.</span>
       <button class="btn btn-primary" onclick="fazerLogin()">Entrar</button>
     </div>
-    <button class="btn btn-sm" onclick="carregarUsuariosRemotosLogin(true)" style="margin-top:10px;width:100%;background:var(--surface2)">Recarregar usuários do Sheets</button>
     <div class="login-error" id="login-erro"></div>
   </div>
 </div>
@@ -404,7 +403,7 @@ tbody tr:hover td{background:var(--bg)}
       <div class="form-group"><label>Número do Lote *</label><input type="text" id="ent-lote" placeholder="Ex: 16SD6F1A5D1" style="text-transform:uppercase"></div>
       <div class="form-group"><label>Nº Nota Fiscal <span style="font-weight:400;color:var(--text3)">(opcional)</span></label><input type="text" id="ent-nf" placeholder="Ex: 123456" inputmode="numeric" autocomplete="off"></div>
       <div class="form-group"><label>Data Efetiva de Entrega * <span class="info-btn" data-tip="Dia em que o material CHEGOU na fábrica. Normalmente é hoje.">ⓘ</span></label><input type="date" id="ent-data-entrega" title="Dia em que o material chegou" required oninput="validarValidadeEntrada()"></div>
-      <div class="form-group"><label>Validade (da embalagem) * <span class="info-btn" data-tip="Data de VALIDADE impressa na embalagem do fornecedor. NÃO é a data de hoje nem a data de entrega. Nenhuma matéria-prima tem validade menor que 2 meses.">ⓘ</span></label><input type="date" id="ent-validade" required oninput="validarValidadeEntrada()"><span id="ent-validade-hint" class="valor-ref-hint">Copie a data de validade impressa na embalagem.</span></div>
+      <div class="form-group"><label>Validade (da embalagem) * <span class="info-btn" data-tip="Data de VALIDADE impressa na embalagem do fornecedor. NÃO é a data de hoje nem a data de entrega. Cada matéria-prima tem uma validade mínima no cadastro (padrão: 60 dias).">ⓘ</span></label><input type="date" id="ent-validade" required oninput="validarValidadeEntrada()"><span id="ent-validade-hint" class="valor-ref-hint">Copie a data de validade impressa na embalagem.</span></div>
       <div class="form-group"><label>Valor ref. (kg/milheiro) R$ * <span class="info-btn" onclick="abrirModalAjudaEntrada()" style="cursor:pointer" data-tip="Clique para ver como lançar quantidade e valor corretamente.">ⓘ</span></label><input type="number" id="ent-valor" step="0.01" min="0.01" placeholder="0,00" required oninput="validarValorEntrada()"><span id="ent-valor-referencia" class="valor-ref-hint">Selecione a matéria-prima para consultar o histórico.</span></div>
       <div class="form-group"><label>Observações</label><input type="text" id="ent-obs" placeholder="Opcional"></div>
     </div>
@@ -748,6 +747,8 @@ tbody tr:hover td{background:var(--bg)}
           <option value="bobina">
         </datalist>
       </div>
+      <div class="form-group"><label>Kg por unidade (unSi) <span class="info-btn" data-tip="Quantos kg tem cada saco/rolo/caixa. Ex.: saco de 25 kg = 25. Para itens em milheiro use 1000. Sem isso o valor em estoque sai errado.">ⓘ</span></label><input type="number" id="cfg-unsi" placeholder="Ex: 25" step="0.001" min="0"></div>
+      <div class="form-group"><label>Validade mínima (dias) <span class="info-btn" data-tip="Menor prazo de validade aceito na entrada, contado a partir da data de entrega. Em branco = 60 dias. Ex.: fubá que chega com 40 dias de validade → coloque 30.">ⓘ</span></label><input type="number" id="cfg-valmin" placeholder="60" step="1" min="1"></div>
       <div class="form-group"><label>Estoque Mínimo <span class="info-btn" data-tip="Quantidade física mínima que você quer manter. Se o saldo cair abaixo disso, vira CRÍTICO (vermelho).">ⓘ</span></label><input type="number" id="cfg-min" placeholder="0" step="0.1" min="0"></div>
       <div class="form-group"><label>Seg. (dias) <span class="info-btn" data-tip="Dias de buffer para imprevistos. O sistema vai sugerir repor antes de chegar nesse limite. Ex: 3 = alerta com 3 dias de antecedência.">ⓘ</span></label><input type="number" id="cfg-seg" placeholder="0" step="0.1" min="0"></div>
       <div class="form-group"><label>Lead Time (dias) <span class="info-btn" data-tip="Dias entre o pedido e a entrega para este fornecedor. Usado para calcular a data ideal do pedido.">ⓘ</span></label><input type="number" id="cfg-lead" placeholder="7" min="1"></div>
@@ -767,7 +768,7 @@ tbody tr:hover td{background:var(--bg)}
     <div class="section-header"><h3>Matérias-Primas Cadastradas</h3><button class="btn btn-sm" onclick="sincronizar()">↻ Sincronizar</button></div>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>Nome</th><th>Categoria</th><th>Un</th><th>Saldo</th><th>Mínimo</th><th>Segurança (dias)</th><th>Lead</th><th>Fornecedor(es)</th><th></th></tr></thead>
+        <thead><tr><th>Nome</th><th>Categoria</th><th>Un</th><th>Kg/un</th><th>Val. mín. (dias)</th><th>Saldo</th><th>Mínimo</th><th>Segurança (dias)</th><th>Lead</th><th>Fornecedor(es)</th><th></th></tr></thead>
         <tbody id="tbody-config"></tbody>
       </table>
     </div>
@@ -847,7 +848,7 @@ tbody tr:hover td{background:var(--bg)}
     <div class="form-grid">
       <div class="form-group"><label>Nome *</label><input type="text" id="usr-nome" placeholder="Nome do colaborador"></div>
       <div class="form-group"><label>Login *</label><input type="text" id="usr-login" placeholder="Ex: joao"></div>
-      <div class="form-group"><label>Senha *</label><input type="text" id="usr-senha" placeholder="Senha provisória"></div>
+      <div class="form-group"><label>Senha</label><input type="password" id="usr-senha" autocomplete="new-password" placeholder="Em branco = manter a senha atual"></div>
       <div class="form-group"><label>Perfil</label><select id="usr-perfil" onchange="renderMenusUsuario()"><option value="comum">comum</option><option value="master">master</option></select></div>
     </div>
     <div class="user-menu-checks" id="usr-menus"></div>
@@ -861,13 +862,13 @@ tbody tr:hover td{background:var(--bg)}
         <tbody id="tbody-usuarios"></tbody>
       </table>
     </div>
-    <p class="form-note">Usuários ficam em localStorage na chave exp_usuarios. Quando o Apps Script estiver atualizado, também podem ser sincronizados com a planilha.</p>
+    <p class="form-note">Usuários e senhas ficam na aba Usuarios do Sheets. As senhas são gravadas criptografadas (hash) e conferidas no servidor.</p>
   </div>
 </div>
 
 </div><!-- /main -->
 <div class="toast" id="toast"></div>
-<div id="app-version">Rev 15.2</div>
+<div id="app-version">Rev 16.2</div>
 
 <script>
 // ═══ CONFIG ═══════════════════════════════════════════════════
@@ -880,7 +881,7 @@ const MENUS_SISTEMA = [
   ['rastreabilidade','Rastreabilidade'],['intel','Inteligência'],['relatorios','Relatórios Gerenciais'],['auditoria','Auditoria'],
   ['precos','Histórico de Preços'],['materiais','Matérias-Primas'],['config','Configurações']
 ];
-const LOGIN_PADRAO = {id:'master',nome:'Administrador',login:'admin',senha:'admin',perfil:'master',menus:MENUS_SISTEMA.map(m=>m[0])};
+const LOGIN_PADRAO = {id:'master',nome:'Administrador',login:'admin',perfil:'master',menus:MENUS_SISTEMA.map(m=>m[0])};
 
 // ═══ TOOLTIP GLOBAL ══════════════════════════════════════════════
 (function(){
@@ -974,7 +975,8 @@ const TABLE_TIPS = {
   'mínimo':'Quantidade mínima física que você quer manter em estoque.',
   'minimo':'Quantidade mínima física que você quer manter em estoque.',
   'segurança (dias)':'Dias extras de segurança para cobrir atrasos ou imprevistos.',
-  'lead':'Lead time em dias para esta matéria-prima.'
+  'lead':'Lead time em dias para esta matéria-prima.',
+  'val. mín. (dias)':'Menor validade aceita na entrada desta matéria-prima, em dias após a entrega. Em branco = 60. Abaixo aparece a menor validade que já chegou.'
 };
 function normTipKey(txt){
   return String(txt||'').replace(/ⓘ/g,'').replace(/\s+/g,' ').trim().toLowerCase();
@@ -1007,6 +1009,14 @@ function carregarParams(){
   document.getElementById('param-warn').value = P.warn;
   document.getElementById('param-anom').value = P.anom;
 }
+// AUDITORIA A09: MP sem lead/segurança cadastrados usa os parâmetros globais (antes: lead fixo 7 e segurança 0)
+function aplicarParamsMateriais(){
+  S.materiais.forEach(m=>{
+    m.lead=safeNum(m._leadRaw)||P.lead;
+    m.seg=(m._segRaw===''||m._segRaw==null)?P.seg:safeNum(m._segRaw);
+  });
+  consumoSemCache=new Map();
+}
 function salvarParams(){
   P.lead = parseInt(document.getElementById('param-lead').value)||7;
   P.seg  = parseInt(document.getElementById('param-seg').value)||3;
@@ -1016,6 +1026,7 @@ function salvarParams(){
   P.anom = parseInt(document.getElementById('param-anom').value)||50;
   if(P.warn<=P.crit){ notify('Limite Atenção deve ser maior que Limite Crítico.','warn'); return; }
   localStorage.setItem('wms_params', JSON.stringify(P));
+  aplicarParamsMateriais();
   notify('Parâmetros salvos! Recalculando...');
   renderPage(pgAtual());
 }
@@ -1023,6 +1034,7 @@ function resetParams(){
   P = {...PARAMS_DEFAULT};
   localStorage.removeItem('wms_params');
   carregarParams();
+  aplicarParamsMateriais();
   notify('Parâmetros restaurados para os valores padrão.');
   renderPage(pgAtual());
 }
@@ -1053,7 +1065,6 @@ window.onload = () => {
     iniciarSistema();
   }else{
     mostrarLogin();
-    carregarUsuariosRemotosLogin();
   }
 };
 function iniciarSistema(){
@@ -1074,7 +1085,7 @@ function hoje(){ const d=new Date(); d.setMinutes(d.getMinutes()-d.getTimezoneOf
 function inicializarUsuarios(){
   let usuarios=[];
   try{ usuarios=JSON.parse(localStorage.getItem('exp_usuarios')||'[]'); }catch(e){ usuarios=[]; }
-  usuarios=garantirUsuarioAdmin(usuarios);
+  usuarios=garantirUsuarioAdmin(usuarios).map(({senha,...u})=>u);
   localStorage.setItem('exp_usuarios',JSON.stringify(usuarios));
   S.usuarios=usuarios;
   try{ S.logs=JSON.parse(localStorage.getItem('exp_logs_usuario')||'[]')||[]; }catch(e){ S.logs=[]; }
@@ -1085,7 +1096,7 @@ function garantirUsuarioAdmin(usuarios){
   return existe?usuarios:[LOGIN_PADRAO,...usuarios];
 }
 function salvarUsuariosLocal(){
-  S.usuarios=garantirUsuarioAdmin(S.usuarios);
+  S.usuarios=garantirUsuarioAdmin(S.usuarios).map(({senha,...u})=>u); // AUDITORIA A12: senha não fica no navegador
   localStorage.setItem('exp_usuarios',JSON.stringify(S.usuarios));
 }
 function usuarioLogado(){
@@ -1124,24 +1135,24 @@ async function carregarUsuariosRemotosLogin(force){
   })();
   return usuariosRemotosPromise;
 }
+// AUDITORIA A12: a senha é conferida no Apps Script (antes todas as senhas eram baixadas para o navegador)
 async function fazerLogin(){
-  inicializarUsuarios();
   const erro=document.getElementById('login-erro');
   const btn=document.querySelector('#login-screen .btn-primary');
-  if(btn){btn.disabled=true;btn.textContent='Entrando...';}
-  await carregarUsuariosRemotosLogin(true);
-  const login=normLoginCred(document.getElementById('login-usuario').value);
+  const login=document.getElementById('login-usuario').value.trim();
   const senha=normSenhaCred(document.getElementById('login-senha').value);
-  const usuarioEncontrado=S.usuarios.find(x=>normLoginCred(x.login)===login);
-  const u=usuarioEncontrado&&normSenhaCred(usuarioEncontrado.senha)===senha?usuarioEncontrado:null;
-  if(!u){
-    erro.textContent=usuarioEncontrado
-      ? `Usuário encontrado, mas a senha não confere. Usuários carregados: ${S.usuarios.length}.`
-      : `Usuário não encontrado. Usuários carregados: ${S.usuarios.length}.`;
-    erro.style.display='block';
-    if(btn){btn.disabled=false;btn.textContent='Entrar';}
-    return;
-  }
+  if(!login||!senha){erro.textContent='Informe usuário e senha.';erro.style.display='block';return;}
+  if(!SCRIPT_URL){erro.textContent='Sistema sem conexão configurada com o Sheets.';erro.style.display='block';return;}
+  if(btn){btn.disabled=true;btn.textContent='Entrando...';}
+  let u=null,msg='Usuário ou senha inválidos.';
+  try{
+    const r=await fetch(SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'login',data:{login,senha}}),redirect:'follow'});
+    const data=await r.json();
+    if(data&&data.ok&&data.result&&data.result.usuario)u=normUsuario(data.result.usuario);
+    else msg=(data&&data.result&&data.result.error)||(data&&data.error)||msg;
+  }catch(e){msg='Não foi possível conectar ao servidor. Verifique a internet e tente de novo.';}
+  if(!u){erro.textContent=msg;erro.style.display='block';if(btn){btn.disabled=false;btn.textContent='Entrar';}return;}
+  erro.style.display='none';
   const sess={id:u.id,nome:u.nome,login:u.login,perfil:u.perfil,menus:u.menus||[]};
   sessionStorage.setItem('usuario_logado',JSON.stringify(sess));
   registrarLog('login','Usuário entrou no sistema',u.login);
@@ -1190,23 +1201,27 @@ function limparUsuarioForm(){
   const perfil=document.getElementById('usr-perfil');if(perfil)perfil.value='comum';
   renderMenusUsuario();
 }
-function salvarUsuario(){
+// AUDITORIA A12/A13: grava um usuário por vez no servidor (antes regravava a aba inteira e podia apagar usuários)
+async function salvarUsuario(){
   if(!isMaster()){notify('Apenas usuário master pode gerenciar usuários.','warn');return;}
-  const id=document.getElementById('usr-id').value||String(Date.now());
+  const idForm=document.getElementById('usr-id').value;
+  const id=idForm||String(Date.now());
   const nome=document.getElementById('usr-nome').value.trim();
   const login=document.getElementById('usr-login').value.trim();
   const senha=document.getElementById('usr-senha').value;
   const perfil=document.getElementById('usr-perfil').value;
   const menus=perfil==='master'?MENUS_SISTEMA.map(m=>m[0]):[...document.querySelectorAll('#usr-menus input:checked')].map(i=>i.value);
-  if(!nome||!login||!senha){notify('Informe nome, login e senha.','warn');return;}
-  const duplicado=S.usuarios.some(u=>u.login===login&&String(u.id)!==String(id));
-  if(duplicado){notify('Já existe usuário com este login.','warn');return;}
-  const usr={id,nome,login,senha,perfil,menus};
+  if(!nome||!login){notify('Informe nome e login.','warn');return;}
+  if(!idForm&&!senha){notify('Informe a senha do novo usuário.','warn');return;}
+  if(S.usuarios.some(u=>normLoginCred(u.login)===normLoginCred(login)&&String(u.id)!==String(id))){notify('Já existe usuário com este login.','warn');return;}
+  const r=await gsCall({action:'saveUsuario',data:{id,nome,login,senha,perfil,menus}});
+  const errSrv=r&&(r.error||(r.result&&r.result.error));
+  if(!r||!r.ok||errSrv){notify(errSrv||'Erro ao salvar usuário no Sheets.','error');return;}
+  const usr={id,nome,login,perfil,menus};
   const idx=S.usuarios.findIndex(u=>String(u.id)===String(id));
   if(idx>=0)S.usuarios[idx]=usr; else S.usuarios.push(usr);
   salvarUsuariosLocal();
   registrarLog('usuario_salvo',`Usuário ${login} salvo`);
-  sincronizarUsuariosSheets();
   limparUsuarioForm();renderUsuariosConfig();aplicarPermissoes();notify('Usuário salvo.');
 }
 function editarUsuario(id){
@@ -1214,29 +1229,30 @@ function editarUsuario(id){
   document.getElementById('usr-id').value=u.id;
   document.getElementById('usr-nome').value=u.nome;
   document.getElementById('usr-login').value=u.login;
-  document.getElementById('usr-senha').value=u.senha;
+  document.getElementById('usr-senha').value='';
   document.getElementById('usr-perfil').value=u.perfil||'comum';
   renderMenusUsuario();
   document.querySelectorAll('#usr-menus input').forEach(i=>i.checked=(u.menus||[]).includes(i.value)||u.perfil==='master');
 }
-function removerUsuario(id){
+async function removerUsuario(id){
   if(!isMaster())return;
   const u=S.usuarios.find(x=>String(x.id)===String(id));
   if(!u||u.login==='admin'){notify('O usuário admin padrão não pode ser removido.','warn');return;}
   if(!confirm('Remover usuário '+u.login+'?'))return;
+  const r=await gsCall({action:'removeUsuario',data:{id}});
+  const errSrv=r&&(r.error||(r.result&&r.result.error));
+  if(!r||!r.ok||errSrv){notify(errSrv||'Erro ao remover usuário.','error');return;}
   S.usuarios=S.usuarios.filter(x=>String(x.id)!==String(id));
   salvarUsuariosLocal();registrarLog('usuario_removido',`Usuário ${u.login} removido`);
-  sincronizarUsuariosSheets();renderUsuariosConfig();notify('Usuário removido.');
+  renderUsuariosConfig();notify('Usuário removido.');
 }
 function renderUsuariosConfig(){
   renderMenusUsuario();
   const tbody=document.getElementById('tbody-usuarios');if(!tbody)return;
   tbody.innerHTML=S.usuarios.map(u=>`<tr><td>${escHtml(u.nome)}</td><td>${escHtml(u.login)}</td><td>${escHtml(u.perfil)}</td><td style="font-size:11px">${(u.perfil==='master'?MENUS_SISTEMA.map(m=>m[0]):(u.menus||[])).join(', ')}</td><td><button class="btn btn-sm" onclick="editarUsuario('${u.id}')">Editar</button> <button class="btn btn-sm btn-danger" onclick="removerUsuario('${u.id}')">Remover</button></td></tr>`).join('');
 }
-function sincronizarUsuariosSheets(){
-  if(!SCRIPT_URL)return;
-  gsCall({action:'saveUsuarios',data:{usuarios:S.usuarios}}).catch(()=>{});
-}
+// AUDITORIA A13: desativada. Regravar a lista inteira apagava usuários criados em outro computador.
+function sincronizarUsuariosSheets(){}
 
 // ═══ GOOGLE SHEETS ════════════════════════════════════════════
 async function gsCall(payload) {
@@ -1335,14 +1351,14 @@ function normM(m){
   const forn = (fornRaw === true || fornRaw === false || String(fornRaw).toUpperCase() === 'TRUE' || String(fornRaw).toUpperCase() === 'FALSE') ? '' : String(fornRaw||'');
   const obs = String(m.obs||'');
   const consumoSemPlanilha = m.consumoSem !== undefined ? m.consumoSem : m['Consumo/sem'];
-  return {id:safeId(m.id),nome:String(m.nome||''),cat:String(m.cat||''),un:String(m.un||'un'),unSi:safeNum(m.unSi||m.unsi||m.unSI||m.UNSI)||1,saldo:safeNum(m.saldo),min:safeNum(m.min),seg:safeNum(m.seg),lead:safeNum(m.lead)||7,forn,obs,consumoSem:consumoSemPlanilha===''||consumoSemPlanilha==null?null:safeNum(consumoSemPlanilha)};
+  return {id:safeId(m.id),nome:String(m.nome||''),cat:String(m.cat||''),un:String(m.un||'un'),unSi:safeNum(m.unSi||m.unsi||m.unSI||m.UNSI)||1,unSiCad:safeNum(m.unSi||m.unsi||m.unSI||m.UNSI)||0,valMinCad:safeNum(m.valMinDias)||0,saldo:safeNum(m.saldo),min:safeNum(m.min),_segRaw:m.seg,_leadRaw:m.lead,seg:(m.seg===''||m.seg==null)?P.seg:safeNum(m.seg),lead:safeNum(m.lead)||P.lead,forn,obs,consumoSem:consumoSemPlanilha===''||consumoSemPlanilha==null?null:safeNum(consumoSemPlanilha)};
 }
 function normL(l){
   const mpRaw=getCampo(l,['mpId','mpid','matéria-prima','materia prima','materia-prima','mp','material','nomeMP','nome mp']);
   const mpRawTxt=String(mpRaw||'').trim();
   const mpNomeRaw=getCampo(l,['mpNome','nomeMP','nome mp','matéria-prima','materia prima','materia-prima','material']);
   const valorRaw=getCampo(l,['valorUnit','valor unit','valor unitario','valor unitário','Valor Unit.','Valor/kg','valor kg','valorKg','precoKg','preço kg','preco kg','R$/kg']);
-  return {id:safeId(getCampo(l,['id'])),mpId:safeId(mpRaw),mpNome:String(mpNomeRaw||(/^\d+([,.]0+)?$/.test(mpRawTxt)?'':mpRawTxt)),rawText:normTxt(Object.values(l||{}).join(' ')),forn:String(getCampo(l,['forn','fornecedor'])||''),lote:String(getCampo(l,['lote'])||''),nf:String(getCampo(l,['nf','nota fiscal','notaFiscal','numero nf','nfe'])||''),dataCompra:fmtD(getCampo(l,['dataCompra','data compra'])),prevEntrega:fmtD(getCampo(l,['prevEntrega','prev entrega','previsao entrega','previsão entrega'])),dataEntrega:fmtD(getCampo(l,['dataEntrega','data entrega','entrada'])),criadoEm:fmtD(getCampo(l,['criadoEm','criado em'])),qtyEntrada:safeNum(getCampo(l,['qtyEntrada','qtd entrada','quantidade','quantidade recebida'])),saldoLote:safeNum(getCampo(l,['saldoLote','saldo lote','saldo'])),valorUnit:valorRaw?safeNum(valorRaw):null,validade:fmtD(getCampo(l,['validade'])),obs:String(getCampo(l,['obs','observação','observacao'])||''),ativo:getCampo(l,['ativo'])!==false&&String(getCampo(l,['ativo'])).toLowerCase()!=='false'};
+  return {id:safeId(getCampo(l,['id'])),mpId:safeId(mpRaw),mpNome:String(mpNomeRaw||(/^\d+([,.]0+)?$/.test(mpRawTxt)?'':mpRawTxt)),rawText:normTxt(Object.values(l||{}).join(' ')),forn:String(getCampo(l,['forn','fornecedor'])||''),lote:String(getCampo(l,['lote'])||''),nf:String(getCampo(l,['nf','nota fiscal','notaFiscal','numero nf','nfe'])||''),dataCompra:fmtD(getCampo(l,['dataCompra','data compra'])),prevEntrega:fmtD(getCampo(l,['prevEntrega','prev entrega','previsao entrega','previsão entrega'])),dataEntrega:fmtD(getCampo(l,['dataEntrega','data entrega','entrada'])),criadoEm:fmtD(getCampo(l,['criadoEm','criado em'])),criadoTs:Number(l.criadoTs)||null,qtyEntrada:safeNum(getCampo(l,['qtyEntrada','qtd entrada','quantidade','quantidade recebida'])),saldoLote:safeNum(getCampo(l,['saldoLote','saldo lote','saldo'])),valorUnit:valorRaw?safeNum(valorRaw):null,validade:fmtD(getCampo(l,['validade'])),obs:String(getCampo(l,['obs','observação','observacao'])||''),ativo:getCampo(l,['ativo'])!==false&&String(getCampo(l,['ativo'])).toLowerCase()!=='false'};
 }
 function normPedido(p){ return {id:safeId(p.id),mpId:safeId(p.mpId),dataPedido:fmtD(p.dataPedido),prevEntrega:fmtD(p.prevEntrega),qty:safeNum(p.qty),status:String(p.status||'aberto').toLowerCase(),obs:String(p.obs||'')}; }
 function normUsuario(u){
@@ -1380,7 +1396,7 @@ function getCampo(obj,nomes){
   if(primeiro!==''&&primeiro!==null&&primeiro!==undefined)return primeiro;
   return '';
 }
-function normCnt(c){ return {id:safeId(c.id),data:fmtD(c.data),obs:String(c.obs||''),items:(c.items||[]).map(i=>({contagemId:safeId(i.contagemId),loteId:safeId(i.loteId),mpId:safeId(i.mpId),teorico:safeNum(i.teorico),fisico:safeNum(i.fisico),div:safeNum(i.div)}))}; }
+function normCnt(c){ return {id:safeId(c.id),data:fmtD(c.data),ts:Number(c.ts)||Date.parse(c.criadoEm)||null,obs:String(c.obs||''),items:(c.items||[]).map(i=>({contagemId:safeId(i.contagemId),loteId:safeId(i.loteId),mpId:safeId(i.mpId),teorico:safeNum(i.teorico),fisico:safeNum(i.fisico),div:safeNum(i.div)}))}; }
 function fmtD(v){ if(!v)return''; if(typeof v==='string'&&v.includes('-'))return v.slice(0,10); const d=new Date(v); return isNaN(d)?'':d.toISOString().split('T')[0]; }
 function fmtBR(s,curto){ if(!s)return'—'; const d=new Date(s+'T12:00'); return isNaN(d)?s:curto?d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}):d.toLocaleDateString('pt-BR'); }
 
@@ -1399,7 +1415,7 @@ function rebuildIndices(){
     matByName.set(normTxt(m.nome),m);
   });
   S.lotes.forEach(l=>{
-    const mp=matById.get(normId(l.mpId))||matByName.get(normTxt(l.mpId))||matByName.get(normTxt(l.mpNome))||S.materiais.find(m=>l.rawText&&l.rawText.includes(normTxt(m.nome)));
+    const mp=matById.get(normId(l.mpId))||matByName.get(normTxt(l.mpId))||matByName.get(normTxt(l.mpNome))||matchMpPorTexto(l); // AUDITORIA A01: fallback por texto só pega o nome mais longo (>=4 letras)
     if(!mp)return;
     mpByLoteId.set(normId(l.id),mp);
     if(!loteDisponivel(l))return;
@@ -1409,13 +1425,17 @@ function rebuildIndices(){
   });
   IDX={matById,matByName,lotesByMp,mpByLoteId};
 }
+// AUDITORIA A01: usa o mesmo vínculo lote→MP do índice (id primeiro, depois nome exato).
+// Antes, qualquer lote cujo texto contivesse o nome da MP era somado a ela (ex.: lotes "Calesi" caíam em "Cal").
+function matchMpPorTexto(l){
+  if(!l.rawText)return null;
+  let melhor=null,tam=0;
+  S.materiais.forEach(m=>{const n=normTxt(m.nome);if(n.length>=4&&n.length>tam&&l.rawText.includes(n)){melhor=m;tam=n.length;}});
+  return melhor;
+}
 function lotePertenceMp(l,mpId){
-  const mp=IDX.matById.get(normId(mpId))||S.materiais.find(m=>mesmoId(m.id,mpId));
-  if(mesmoId(l.mpId,mpId))return true;
-  if(mp&&normTxt(l.mpId)===normTxt(mp.nome))return true;
-  if(mp&&normTxt(l.mpNome)===normTxt(mp.nome))return true;
-  if(mp&&l.rawText&&l.rawText.includes(normTxt(mp.nome)))return true;
-  return false;
+  const mp=mpDoLote(l);
+  return !!mp&&mesmoId(mp.id,mpId);
 }
 // Lotes disponíveis de uma MP: ativo TRUE e saldo positivo. Data de entrega não entra neste cálculo.
 function lotesAtivos(mpId){ return IDX.lotesByMp.get(normId(mpId))||[]; }
@@ -1454,13 +1474,29 @@ function diasEntreDatas(a,b){
   const d1=new Date(a+'T12:00'),d2=new Date(b+'T12:00');
   return (d2-d1)/864e5;
 }
+// AUDITORIA A02: consumo de cada intervalo entre contagens = saldo anterior + entradas do período − saldo atual.
+// Antes as entradas eram ignoradas quando o saldo não subia o suficiente, subestimando o consumo.
+// A entrada é posicionada pelo MOMENTO EM QUE FOI LANÇADA no sistema (criadoEm com hora), porque só a partir
+// daí o lote aparece nas contagens. Nos dados reais muitas entradas são lançadas dias depois da entrega.
+// Sem horário disponível, usa a data de entrega (entrada no mesmo dia da contagem = já incluída nela).
+function entradasMPEntre(mpId,cA,cB){
+  return S.lotes.filter(l=>{
+    if(!lotePertenceMp(l,mpId))return false;
+    if(l.criadoTs&&cA.ts&&cB.ts)return l.criadoTs>cA.ts&&l.criadoTs<=cB.ts;
+    return l.dataEntrega&&l.dataEntrega>cA.data&&l.dataEntrega<=cB.data;
+  }).reduce((a,l)=>a+(Number(l.qtyEntrada)||0),0);
+}
+// AUDITORIA A02 (revisada com os dados reais): mantém o método de ciclos da Rev 15.2, que no backtest
+// previu tão bem quanto qualquer alternativa, e corrige só o defeito: entrada lançada entre duas contagens
+// SEM o saldo subir (consumo maior que a entrada) ficava escondida e o consumo saía menor que o real.
+// Agora qualquer entrada lançada entre duas contagens também fecha o ciclo.
 function ciclosConsumoMP(mpId){
   const cnts=contagensConsolidadasMP(mpId);
   if(cnts.length<2)return [];
   const ciclos=[];
   let ini=0;
   for(let i=1;i<cnts.length;i++){
-    if(aumentoRelevanteSaldo(cnts[i-1].totalMP,cnts[i].totalMP)){
+    if(aumentoRelevanteSaldo(cnts[i-1].totalMP,cnts[i].totalMP)||entradasMPEntre(mpId,cnts[i-1],cnts[i])>0){
       ciclos.push({inicio:cnts[ini],fim:cnts[i-1]});
       ini=i;
     }
@@ -1585,7 +1621,7 @@ function renderDashboard(){
   const ok=analises.filter(a=>a.st==='ok').length;
   const w=analises.filter(a=>a.st==='warn').length;
   const d=analises.filter(a=>a.st==='danger').length;
-  const vencidos=S.lotes.filter(l=>l.ativo&&vencido(l.validade)).length;
+  const vencidos=S.lotes.filter(l=>loteDisponivel(l)&&vencido(l.validade)).length;
   document.getElementById('dash-metrics').innerHTML=`
     <div class="stat-card"><div class="stat-label">Matérias-Primas</div><div class="stat-value">${mats.length}</div><div class="stat-sub">cadastradas</div></div>
     <div class="stat-card ok"><div class="stat-label">Estoque OK</div><div class="stat-value">${ok}</div><div class="stat-sub">MPs normais</div></div>
@@ -1610,7 +1646,7 @@ function renderDashboard(){
   }).join(''):'<div class="empty">Nenhum lote recebido.</div>';
 
   // Validades
-  const lotesBad=S.lotes.filter(l=>l.ativo&&l.validade&&(vencido(l.validade)||urgente(l.validade)||proxVencer(l.validade))).sort((a,b)=>a.validade>b.validade?1:-1);
+  const lotesBad=S.lotes.filter(l=>loteDisponivel(l)&&l.validade&&(vencido(l.validade)||urgente(l.validade)||proxVencer(l.validade))).sort((a,b)=>a.validade>b.validade?1:-1);
   document.getElementById('validades-alert').innerHTML=lotesBad.length?lotesBad.map(l=>{
     const mp=mpDoLote(l);
     const isV=vencido(l.validade),isU=urgente(l.validade);
@@ -1621,14 +1657,25 @@ function renderDashboard(){
   }).join(''):'<div class="empty">Nenhum lote com validade crítica.</div>';
 
   // Chart consumo
-  const lbs=mats.slice(0,7).map(m=>m.nome.length>13?m.nome.slice(0,13)+'…':m.nome);
-  const dt=analises.slice(0,7).map(a=>a.cs?Math.round(a.cs*4.33):0);
+  // AUDITORIA A07: antes mostrava as 7 primeiras MPs do cadastro, não as de maior consumo
+  const top=analises.filter(a=>a.cs>0).sort((a,b)=>b.cs-a.cs).slice(0,7);
+  const lbs=top.map(a=>a.m.nome.length>13?a.m.nome.slice(0,13)+'…':a.m.nome);
+  const dt=top.map(a=>Math.round(a.cs*4.33));
   if(chartC)chartC.destroy();
   chartC=new Chart(document.getElementById('chart-consumo'),{type:'bar',data:{labels:lbs,datasets:[{label:'Consumo mensal est.',data:dt,backgroundColor:'#1a5c38',borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:11}}},y:{ticks:{font:{size:11}}}}}});
 }
 
 // ═══ ESTOQUE POR LOTE ═════════════════════════════════════════
-function renderEstoque(){ populateSelects(); filtrarEstoque(); }
+// AUDITORIA A14: categorias do filtro vêm do cadastro real (antes eram fixas e "Bobina Terceirização",
+// "Caixas de papelão" e "Produto Acabado Terceirizado" não podiam ser filtradas)
+function popularFiltroCatEstoque(){
+  const sel=document.getElementById('filtro-cat');if(!sel)return;
+  const atual=sel.value;
+  const cats=[...new Set(S.materiais.map(m=>m.cat).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
+  sel.innerHTML='<option value="">Todas as categorias</option>'+cats.map(c=>`<option value="${escHtml(c)}">${escHtml(c)}</option>`).join('');
+  sel.value=cats.includes(atual)?atual:'';
+}
+function renderEstoque(){ populateSelects(); popularFiltroCatEstoque(); filtrarEstoque(); }
 function filtrarEstoque(){
   const b=document.getElementById('busca-mp').value.toLowerCase();
   const c=document.getElementById('filtro-cat').value;
@@ -1799,7 +1846,7 @@ function renderEntradas(){
   const tbody=document.getElementById('tbody-entradas');
   const todos=[...S.lotes].sort((a,b)=>(b.dataEntrega||b.dataCompra)>(a.dataEntrega||a.dataCompra)?1:-1);
   tbody.innerHTML=todos.length?todos.map(l=>{
-    const mp=S.materiais.find(m=>m.id===String(l.mpId));
+    const mp=mpDoLote(l);
     const badgeV=badgeValidade(l.validade);
     const stL=l.ativo?'<span class="badge b-ok">Ativo</span>':'<span class="badge b-cat">Encerrado</span>';
     return`<tr>
@@ -1821,7 +1868,14 @@ function renderEntradas(){
   }).join(''):'<tr><td colspan="14" style="text-align:center;padding:20px;color:var(--text3)">Nenhum lote registrado.</td></tr>';
 }
 // ═══ VALIDAÇÕES DE ENTRADA (anti-erro de digitação) ══════════
-const VALIDADE_MIN_DIAS = 60;   // nenhuma MP tem validade menor que 2 meses
+const VALIDADE_MIN_DIAS = 60;   // padrão quando a MP não tem validade mínima própria no cadastro
+// Validade mínima da matéria-prima (dias entre entrega e validade). Campo "valMinDias" na aba Materiais.
+function valMinMP(mp){ return mp&&mp.valMinCad>0?mp.valMinCad:VALIDADE_MIN_DIAS; }
+// Menor validade já recebida (ignora < 10 dias, que são quase sempre erro de digitação)
+function menorValidadeHistMP(mp){
+  const v=S.lotes.filter(l=>lotePertenceMp(l,mp.id)&&l.dataEntrega&&l.validade).map(l=>diffDias(l.dataEntrega,l.validade)).filter(d=>d>=10);
+  return v.length?Math.min(...v):null;
+}
 const ENTREGA_ANTIGA_DIAS = 7;  // entrega com mais de 7 dias atrás gera aviso
 let ENTRADA_PENDENTE = null;
 function diffDias(a,b){ return Math.round((new Date(b+'T12:00')-new Date(a+'T12:00'))/864e5); }
@@ -1832,7 +1886,7 @@ function historicoMpEntrada(mp){
   return S.lotes.filter(l=>lotePertenceMp(l,mp.id)).sort((a,b)=>(dataPrecoLote(b)||'').localeCompare(dataPrecoLote(a)||'')||String(b.id).localeCompare(String(a.id)));
 }
 function vidaUtilTipicaMP(mp){
-  const v=historicoMpEntrada(mp).filter(l=>l.dataEntrega&&l.validade&&l.validade>l.dataEntrega).map(l=>diffDias(l.dataEntrega,l.validade)).filter(d=>d>=VALIDADE_MIN_DIAS);
+  const v=historicoMpEntrada(mp).filter(l=>l.dataEntrega&&l.validade&&l.validade>l.dataEntrega).map(l=>diffDias(l.dataEntrega,l.validade)).filter(d=>d>=valMinMP(mp));
   return v.length?mediana(v):null;
 }
 function validarDatasEntrada(dataEntrega,validade,mp){
@@ -1844,7 +1898,7 @@ function validarDatasEntrada(dataEntrega,validade,mp){
   if(dataEntrega&&validade===dataEntrega)erros.push('A VALIDADE está IGUAL à data de entrega. Você provavelmente digitou a data de hoje no campo Validade. Copie a data de validade impressa na embalagem.');
   else if(dataEntrega&&validade<dataEntrega)erros.push(`A validade (${fmtBR(validade)}) é ANTERIOR à data de entrega (${fmtBR(dataEntrega)}). Isso é impossível — confira a embalagem.`);
   else if(validade<h)erros.push(`A validade (${fmtBR(validade)}) já passou. O material estaria VENCIDO. Confira a data na embalagem; se estiver mesmo vencido, não receba.`);
-  else if(dataEntrega&&diffDias(dataEntrega,validade)<VALIDADE_MIN_DIAS)erros.push(`A validade dá só ${diffDias(dataEntrega,validade)} dias depois da entrega. Nenhuma matéria-prima tem validade menor que 2 meses — confira se o dia, o mês e o ano foram digitados certos.`);
+  else if(dataEntrega&&diffDias(dataEntrega,validade)<valMinMP(mp))erros.push(`A validade dá só ${diffDias(dataEntrega,validade)} dias depois da entrega. A validade mínima de ${mp?mp.nome:'uma matéria-prima'} é ${valMinMP(mp)} dias — confira se o dia, o mês e o ano foram digitados certos.`);
   if(!erros.length&&dataEntrega){
     const dias=diffDias(dataEntrega,validade);
     if(dias>5*365)avisos.push(`A validade está para daqui a ${fmtMeses(dias)} (${fmtBR(validade)}). Confira se o ANO foi digitado certo.`);
@@ -1858,10 +1912,11 @@ function validarValidadeEntrada(){
   if(!vEl||!eEl||!hint)return;
   const ent=eEl.value;
   eEl.max=hoje();
-  vEl.min=ent?addDiasIso(ent,VALIDADE_MIN_DIAS):'';
+  const mpSel=resolverMpEntrada();
+  vEl.min=ent?addDiasIso(ent,valMinMP(mpSel)):'';
   vEl.classList.remove('data-errada');eEl.classList.remove('data-errada');
   hint.className='valor-ref-hint';
-  if(!vEl.value){hint.textContent='Copie a data de validade impressa na embalagem (mínimo 2 meses após a entrega).';return;}
+  if(!vEl.value){hint.textContent=`Copie a data de validade impressa na embalagem (mínimo ${valMinMP(mpSel)} dias após a entrega${mpSel?' para '+mpSel.nome:''}).`;return;}
   const {erros,avisos}=validarDatasEntrada(ent,vEl.value,resolverMpEntrada());
   if(erros.length){
     hint.classList.add('danger');hint.textContent='✕ '+erros[0];
@@ -1890,7 +1945,7 @@ function renderCardMpEntrada(mp){
   card.innerHTML=`<div style="font-size:11px;color:var(--text2);text-transform:uppercase;font-weight:700;letter-spacing:.4px">Você está lançando entrada de:</div>
     <div class="mp-nome">${escHtml(mp.nome)}</div>
     <div class="mp-linha"><b>Categoria:</b> ${escHtml(mp.cat||'—')} · <b>Unidade de contagem:</b> ${escHtml(mp.un)} · <b>Fornecedor(es) habitual(is):</b> ${escHtml(forns.join(', ')||'nenhum registrado')}</div>
-    <div class="mp-linha">${ult?`<b>Última entrada:</b> lote ${escHtml(ult.lote||'—')} · ${escHtml(ult.forn||'—')} · ${Number(ult.qtyEntrada||0).toLocaleString('pt-BR')} ${escHtml(mp.un)} em ${fmtBR(ult.dataEntrega)}${ult.validade?' · validade '+fmtBR(ult.validade):''}`:'<b>Primeira entrada desta matéria-prima.</b>'}${tipica?` · <b>Validade típica:</b> ~${fmtMeses(tipica)}`:''}</div>
+    <div class="mp-linha">${ult?`<b>Última entrada:</b> lote ${escHtml(ult.lote||'—')} · ${escHtml(ult.forn||'—')} · ${Number(ult.qtyEntrada||0).toLocaleString('pt-BR')} ${escHtml(mp.un)} em ${fmtBR(ult.dataEntrega)}${ult.validade?' · validade '+fmtBR(ult.validade):''}`:'<b>Primeira entrada desta matéria-prima.</b>'}${tipica?` · <b>Validade típica:</b> ~${fmtMeses(tipica)}`:''} · <b>Validade mínima aceita:</b> ${valMinMP(mp)} dias</div>
     <div class="mp-linha" style="color:var(--warn-text);font-weight:600">Confira se o nome acima é o mesmo da embalagem.</div>`;
   card.style.display='block';
 }
@@ -2019,7 +2074,7 @@ function popularFiltrosCnt(){
 
   // Categorias
   const cats=[...new Set(S.lotes.filter(l=>l.ativo).map(l=>{
-    const mp=S.materiais.find(m=>m.id===String(l.mpId));
+    const mp=mpDoLote(l);
     return mp?mp.cat:'';
   }).filter(Boolean))].sort();
   const selCat=document.getElementById('cnt-filtro-cat');
@@ -2034,7 +2089,7 @@ function popularFiltrosCnt(){
 
   // Matérias-primas
   const mps=[...new Map(S.lotes.filter(l=>l.ativo).map(l=>{
-    const mp=S.materiais.find(m=>m.id===String(l.mpId));
+    const mp=mpDoLote(l);
     return mp?[mp.id,mp.nome]:null;
   }).filter(Boolean)).entries()].sort((a,b)=>a[1].localeCompare(b[1]));
   const selMp=document.getElementById('cnt-filtro-mp');
@@ -2060,17 +2115,17 @@ function renderContagem(){
   const mostrarInativos = document.getElementById('cnt-mostrar-inativos')?.checked;
   let lotesAtivos = S.lotes.filter(l=>{
     if(!l.ativo && !mostrarInativos) return false;
-    const mp=S.materiais.find(m=>m.id===String(l.mpId));
+    const mp=mpDoLote(l);
     if(filtCat  && (!mp||mp.cat!==filtCat))   return false;
     if(filtForn && l.forn!==filtForn)          return false;
-    if(filtMp   && l.mpId!==filtMp)           return false;
+    if(filtMp   && (!mp||String(mp.id)!==String(filtMp))) return false;
     return true;
   });
 
   // Ordena por categoria → nome da MP → código do lote
   lotesAtivos.sort((a,b)=>{
-    const mpa=S.materiais.find(m=>m.id===String(a.mpId));
-    const mpb=S.materiais.find(m=>m.id===String(b.mpId));
+    const mpa=mpDoLote(a);
+    const mpb=mpDoLote(b);
     const catA=(mpa?.cat||'').toLowerCase();
     const catB=(mpb?.cat||'').toLowerCase();
     if(catA!==catB) return catA.localeCompare(catB);
@@ -2091,14 +2146,14 @@ function renderContagem(){
   let catAtual='';
   if(lotesAtivos.length){
     lotesAtivos.forEach(l=>{
-      const mp=S.materiais.find(m=>m.id===String(l.mpId));
+      const mp=mpDoLote(l);
       const cat=mp?.cat||'Sem Categoria';
       if(cat!==catAtual){
         catAtual=cat;
         html+=`<tr style="background:var(--surface2)">
           <td colspan="8" style="font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:var(--accent);padding:8px 12px;border-bottom:2px solid var(--border)">
             📦 ${cat}
-            <span style="font-weight:400;color:var(--text3);margin-left:8px;text-transform:none;letter-spacing:0">${lotesAtivos.filter(x=>{const m=S.materiais.find(m=>m.id===String(x.mpId));return(m?.cat||'Sem Categoria')===cat;}).length} lotes</span>
+            <span style="font-weight:400;color:var(--text3);margin-left:8px;text-transform:none;letter-spacing:0">${lotesAtivos.filter(x=>{const m=mpDoLote(x);return(m?.cat||'Sem Categoria')===cat;}).length} lotes</span>
           </td>
         </tr>`;
       }
@@ -2158,19 +2213,25 @@ async function salvarContagem(){
   const filtMp   = document.getElementById('cnt-filtro-mp').value;
   const lotesFiltrados=S.lotes.filter(l=>{
     if(!l.ativo) return false;
-    const mp=S.materiais.find(m=>m.id===String(l.mpId));
+    const mp=mpDoLote(l);
     if(filtCat  && (!mp||mp.cat!==filtCat))   return false;
     if(filtForn && l.forn!==filtForn)          return false;
-    if(filtMp   && l.mpId!==filtMp)           return false;
+    if(filtMp   && (!mp||String(mp.id)!==String(filtMp))) return false;
     return true;
   });
 
-  const items=lotesFiltrados.map(l=>{
-    const el=document.getElementById('cnt-'+l.id);
+  // AUDITORIA A03: inclui também os lotes ativos das MESMAS MPs escondidos pelo filtro (ex.: outro fornecedor),
+  // com físico = teórico. Antes o total da MP na contagem ficava incompleto e virava "consumo" falso.
+  const mpsNaTela=new Set(lotesFiltrados.map(l=>{const mp=mpDoLote(l);return mp?normId(mp.id):null;}).filter(Boolean));
+  const visiveis=new Set(lotesFiltrados);
+  const lotesSalvar=S.lotes.filter(l=>l.ativo&&(visiveis.has(l)||(()=>{const mp=mpDoLote(l);return !!mp&&mpsNaTela.has(normId(mp.id));})()));
+  const items=lotesSalvar.map(l=>{
+    const mpL=mpDoLote(l);
+    const el=visiveis.has(l)?document.getElementById('cnt-'+l.id):null;
     const val=el?el.value.trim():'';
     // Campo vazio = não contado = mantém saldo teórico (evita zerar acidentalmente)
     const fisico=val!==''?Math.max(0,parseFloat(val)||0):l.saldoLote;
-    return{loteId:l.id,mpId:l.mpId,teorico:l.saldoLote,fisico,div:Math.round((fisico-l.saldoLote)*10)/10};
+    return{loteId:l.id,mpId:mpL?mpL.id:l.mpId,teorico:l.saldoLote,fisico,div:Math.round((fisico-l.saldoLote)*10)/10};
   });
 
   if(!items.length){notify('Nenhum lote para salvar.','warn');return;}
@@ -2250,7 +2311,7 @@ function selConsumo(mpId,btn){
 // ═══ REPOSIÇÃO ════════════════════════════════════════════════
 function fornecedoresMP(m){
   const vals=String(m.forn||'').split('/').map(x=>x.trim()).filter(Boolean);
-  S.lotes.filter(l=>String(l.mpId)===String(m.id)&&l.forn).forEach(l=>vals.push(String(l.forn).trim()));
+  S.lotes.filter(l=>l.forn&&lotePertenceMp(l,m.id)).forEach(l=>vals.push(String(l.forn).trim()));
   return [...new Set(vals)];
 }
 function popularFiltrosPedido(prefix){
@@ -2406,7 +2467,7 @@ function renderReposicao(){
       <td>${cs?cs.toFixed(1)+' '+m.un:'—'}</td>
       <td>${m.lead}d</td><td>${pto} ${m.un}</td>
       <td style="font-weight:600;color:${dPed<=0?'var(--danger)':dPed<=3?'#c07000':'inherit'}">${dPed>=999?'—':dPed<=0?'AGORA':dPedDt.toLocaleDateString('pt-BR')}</td>
-      <td style="color:${dRup<14?'var(--danger)':dRup<21?'#c07000':'inherit'}">${dRup>=999?'—':dRupDt.toLocaleDateString('pt-BR')}</td>
+      <td style="color:${dRup<=P.crit?'var(--danger)':dRup<=P.warn?'#c07000':'inherit'}">${dRup>=999?'—':dRupDt.toLocaleDateString('pt-BR')}</td>
       <td class="col-pedido">${htmlPedidoResumo(a)}</td>
       <td class="col-status"><span class="badge ${st==='ok'?'b-ok':st==='warn'?'b-warn':'b-danger'}">${st==='ok'?'Normal':st==='warn'?'Atenção':'Crítico'}</span></td>
     </tr>`;
@@ -2607,6 +2668,8 @@ function itensAuditoria(){
   const itens=[];
   S.materiais.forEach(m=>{
     const lotesMp=S.lotes.filter(l=>lotePertenceMp(l,m.id)).sort((a,b)=>ordemLoteAuditoria(a).localeCompare(ordemLoteAuditoria(b)));
+    // AUDITORIA A11: sem kg por unidade o valor em estoque sai como se cada unidade tivesse 1 kg
+    if(!m.unSiCad&&normTxt(m.un)!=='milheiro'&&lotesMp.some(l=>Number(l.valorUnit)>0))itens.push({tipo:'cadastro',nivel:'danger',titulo:m.nome,desc:`Cadastro sem "kg por unidade" (unSi). O valor em estoque está sendo calculado como se cada ${m.un} tivesse 1 kg. Preencha a coluna unSi na aba Materiais.`});
 
     const lotesPreco=lotesMp.filter(l=>Number(l.valorUnit)>0);
     if(lotesPreco.length>=2){
@@ -2755,7 +2818,8 @@ function precoPorUnidadeOperacional(l){
   const fator=fatorUnSiLote(l);
   return fator>=1000&&preco>=100?preco:preco*fator;
 }
-function valorTotalSaldoLote(l){ return l.valorUnit&&l.saldoLote?precoPorUnidadeOperacional(l)*(Number(l.saldoLote)||0):0; }
+// AUDITORIA A05: lote encerrado não compõe valor em estoque (antes inflava a Rastreabilidade)
+function valorTotalSaldoLote(l){ return l.ativo&&l.valorUnit&&l.saldoLote?precoPorUnidadeOperacional(l)*(Number(l.saldoLote)||0):0; }
 function valorTotalEntradaLote(l){ return l.valorUnit&&l.qtyEntrada?precoPorUnidadeOperacional(l)*(Number(l.qtyEntrada)||0):0; }
 function valorTotalLote(l){ return valorTotalSaldoLote(l); }
 function abrirRastreabilidadeInsumo(mpId){
@@ -2999,9 +3063,28 @@ function renderConfig(){
 function renderMateriais(){
   populateSelects();
   document.getElementById('tbody-config').innerHTML=S.materiais.length
-    ?S.materiais.map(m=>`<tr><td style="font-weight:600">${m.nome}${m.obs?'<br><span style="font-size:10px;color:var(--warn-text);font-weight:400">⚠ '+m.obs+'</span>':''}</td><td>${m.cat}</td><td>${m.un}</td><td>${saldoMP(m.id).toFixed(1)}</td><td>${m.min}</td><td>${m.seg}</td><td>${m.lead}d</td><td>${m.forn||'—'}</td><td><button class="btn btn-sm btn-danger" onclick="remMP(${m.id})">Remover</button></td></tr>`).join('')
-    :'<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--text3)">Nenhuma matéria-prima.</td></tr>';
+    ?S.materiais.map(m=>`<tr><td style="font-weight:600">${m.nome}${m.obs?'<br><span style="font-size:10px;color:var(--warn-text);font-weight:400">⚠ '+m.obs+'</span>':''}</td><td>${m.cat}</td><td>${m.un}</td><td>${m.unSiCad||'<span style="color:var(--danger);font-weight:700" title="Kg por unidade não cadastrado">falta</span>'}</td><td>${htmlValMinMP(m)}</td><td>${saldoMP(m.id).toFixed(1)}</td><td>${m.min}</td><td>${m.seg}</td><td>${m.lead}d</td><td>${m.forn||'—'}</td><td><button class="btn btn-sm btn-danger" onclick="remMP(${m.id})">Remover</button></td></tr>`).join('')
+    :'<tr><td colspan="11" style="text-align:center;padding:20px;color:var(--text3)">Nenhuma matéria-prima.</td></tr>';
   aplicarDicasTabelas();
+}
+function htmlValMinMP(m){
+  const hist=menorValidadeHistMP(m),vm=valMinMP(m);
+  const conflito=hist!=null&&hist<vm;
+  const info=hist==null?'sem histórico':`menor recebida: ${hist} d`;
+  return `<input type="number" min="1" step="1" value="${m.valMinCad||''}" placeholder="60" title="Em branco = 60 dias" style="width:70px;padding:4px 6px${conflito?';border-color:var(--danger)':''}" onchange="salvarValMinMP('${m.id}',this)">
+    <div style="font-size:10px;margin-top:2px;color:${conflito?'var(--danger)':'var(--text3)'}" title="${conflito?'Já chegou lote com validade menor que o mínimo: a próxima entrada assim será bloqueada':''}">${conflito?'⚠ ':''}${info}</div>`;
+}
+async function salvarValMinMP(id,el){
+  const m=S.materiais.find(x=>mesmoId(x.id,id));if(!m)return;
+  const v=el.value===''?'':Math.max(1,Math.round(Number(el.value)||0));
+  if(v!==''&&v<10&&!confirm(`Validade mínima de apenas ${v} dias para ${m.nome}? Isso quase desliga a conferência de validade.`)){el.value=m.valMinCad||'';return;}
+  const r=await gsCall({action:'saveMaterial',data:{id:m.id,valMinDias:v}});
+  const err=r&&(r.error||(r.result&&r.result.error));
+  if(!r||!r.ok||err){notify(err||'Erro ao salvar a validade mínima.','error');el.value=m.valMinCad||'';return;}
+  m.valMinCad=v||0;
+  registrarLog('validade_minima',`${m.nome}: ${v===''?'padrão (60)':v+' dias'}`);
+  notify(`Validade mínima de ${m.nome}: ${v===''?'padrão 60':v} dias.`);
+  renderMateriais();
 }
 async function adicionarMP(){
   const nome=document.getElementById('cfg-nome').value.trim();
@@ -3009,7 +3092,7 @@ async function adicionarMP(){
   const btn=document.getElementById('btn-add-mp');btn.disabled=true;btn.textContent='Salvando...';
   try {
     const obsEl=document.getElementById('cfg-obs');
-    const r=await gsCall({action:'saveMaterial',data:{nome,cat:document.getElementById('cfg-cat').value,un:document.getElementById('cfg-un').value,min:Number(document.getElementById('cfg-min').value)||0,seg:Number(document.getElementById('cfg-seg').value)||0,lead:Number(document.getElementById('cfg-lead').value)||7,forn:document.getElementById('cfg-forn').value,obs:obsEl?obsEl.value:''}});
+    const r=await gsCall({action:'saveMaterial',data:{nome,cat:document.getElementById('cfg-cat').value,un:document.getElementById('cfg-un').value,min:Number(document.getElementById('cfg-min').value)||0,seg:document.getElementById('cfg-seg').value===''?'':Number(document.getElementById('cfg-seg').value),lead:Number(document.getElementById('cfg-lead').value)||'',unSi:Number(document.getElementById('cfg-unsi').value)||'',valMinDias:Number(document.getElementById('cfg-valmin').value)||'',forn:document.getElementById('cfg-forn').value,obs:obsEl?obsEl.value:''}});
     if(r&&r.ok){registrarLog('materia_prima_salva',nome);await sincronizar(true);notify('Cadastrado!');limparCfg();renderMateriais();}
     else if(r) notify(r.error||'Erro ao salvar. Verifique o Apps Script.','error');
     else notify('Sem resposta do servidor. Verifique a URL.','error');
@@ -3023,7 +3106,7 @@ async function remMP(id){
   if(r&&r.ok){registrarLog('materia_prima_removida',String(id));await sincronizar(true);notify('Removido.');renderMateriais();}
   else if(r) notify(r.error||'Erro','error');
 }
-function limparCfg(){['cfg-nome','cfg-min','cfg-seg','cfg-lead','cfg-forn'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';})}
+function limparCfg(){['cfg-nome','cfg-min','cfg-seg','cfg-lead','cfg-forn','cfg-unsi','cfg-valmin'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';})}
 
 // ═══ UTILITÁRIOS ══════════════════════════════════════════════
 function notify(msg,tipo){const t=document.getElementById('toast');t.textContent=msg;t.className='toast show'+(tipo==='error'?' error':tipo==='warn'?' warn-t':'');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),3200);}
@@ -3138,12 +3221,12 @@ function renderIntel(){
 
 function renderIntelCusto(){
   let totalGeral=0;const porCat={};
-  S.lotes.filter(l=>l.ativo&&l.dataEntrega&&l.valorUnit).forEach(l=>{
-    const mp=S.materiais.find(m=>m.id===String(l.mpId));
+  S.lotes.filter(l=>loteDisponivel(l)&&l.valorUnit).forEach(l=>{
+    const mp=mpDoLote(l);
     const val=valorTotalSaldoLote(l);totalGeral+=val;
     const cat=mp?mp.cat:'Outros';porCat[cat]=(porCat[cat]||0)+val;
   });
-  const semValor=S.lotes.filter(l=>l.ativo&&l.dataEntrega&&!l.valorUnit).length;
+  const semValor=S.lotes.filter(l=>loteDisponivel(l)&&!l.valorUnit).length;
   const topCat=Object.entries(porCat).sort((a,b)=>b[1]-a[1]).slice(0,3);
   const fmtR=v=>'R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
   const el=document.getElementById('intel-custo-cards');
@@ -3171,29 +3254,22 @@ function renderIntelReposicao(){
   aplicarDicasTabelas();
 }
 
+// AUDITORIA A08: usa os mesmos períodos do consumo semanal (antes somava entradas do dia da contagem duas vezes)
 function renderIntelAnomalias(){
   const anomalias=[];
   S.materiais.forEach(m=>{
-    const cnts=S.contagens.filter(c=>c.items.some(i=>i.mpId===String(m.id))).sort((a,b)=>a.data>b.data?1:-1);
-    if(cnts.length<2)return;
-    const consumos=[];
-    for(let i=1;i<cnts.length;i++){
-      const ant=cnts[i-1].items.filter(x=>x.mpId===String(m.id)).reduce((a,x)=>a+x.fisico,0);
-      const atual=cnts[i].items.filter(x=>x.mpId===String(m.id)).reduce((a,x)=>a+x.fisico,0);
-      const d1=cnts[i-1].data,d2=cnts[i].data;
-      const ent=S.lotes.filter(l=>l.mpId===String(m.id)&&l.dataEntrega>=d1&&l.dataEntrega<=d2).reduce((a,l)=>a+l.qtyEntrada,0);
-      const c=ant+ent-atual;if(c>0)consumos.push(c);
-    }
-    if(consumos.length<2)return;
-    const media=consumos.reduce((a,b)=>a+b,0)/consumos.length;
-    const ultimo=consumos[consumos.length-1];
-    const desvio=(ultimo-media)/Math.max(media,1)*100;
-    if(desvio>P.anom)anomalias.push({m,media,ultimo,desvio});
+    const ciclos=ciclosConsumoMP(m.id);
+    if(ciclos.length<2)return;
+    const atual=ciclos[ciclos.length-1],ant=ciclos.slice(0,-1);
+    const media=ant.reduce((a,c)=>a+c.sem,0)/ant.length;
+    if(!(media>0))return;
+    const desvio=(atual.sem-media)/media*100;
+    if(desvio>P.anom)anomalias.push({m,media,ultimo:atual.sem,desvio});
   });
   const el=document.getElementById('intel-anomalias');
   if(!el)return;
   if(!anomalias.length){el.innerHTML='<div class="empty">✅ Nenhuma anomalia detectada. Consumo dentro do padrão.</div>';return;}
-  el.innerHTML=anomalias.sort((a,b)=>b.desvio-a.desvio).map(({m,media,ultimo,desvio})=>`<div class="alert-item ${desvio>100?'danger':'warn'}" style="margin-bottom:8px"><div class="alert-icon ${desvio>100?'danger':'warn'}">⚠</div><div class="alert-body"><div class="alert-name">${m.nome}</div><div class="alert-desc">Último período: <strong>${ultimo.toFixed(1)} ${m.un}</strong> — Média: ${media.toFixed(1)} ${m.un} — <strong style="color:${desvio>100?'var(--danger)':'#c07000'}">+${desvio.toFixed(0)}% acima</strong></div></div><span class="alert-cta" onclick="showPage('contagem')">Ver →</span></div>`).join('');
+  el.innerHTML=anomalias.sort((a,b)=>b.desvio-a.desvio).map(({m,media,ultimo,desvio})=>`<div class="alert-item ${desvio>100?'danger':'warn'}" style="margin-bottom:8px"><div class="alert-icon ${desvio>100?'danger':'warn'}">⚠</div><div class="alert-body"><div class="alert-name">${m.nome}</div><div class="alert-desc">Período atual: <strong>${ultimo.toFixed(1)} ${m.un}/sem</strong> — Média anterior: ${media.toFixed(1)} ${m.un}/sem — <strong style="color:${desvio>100?'var(--danger)':'#c07000'}">+${desvio.toFixed(0)}% acima</strong></div></div><span class="alert-cta" onclick="showPage('contagem')">Ver →</span></div>`).join('');
 }
 
 function renderIntelGrafico(){
@@ -3204,11 +3280,11 @@ function renderIntelGrafico(){
   if(!mp){if(chartI){chartI.destroy();chartI=null;}return;}
   const cnts=S.contagens.filter(c=>c.items.some(i=>i.mpId===String(mpId))).sort((a,b)=>a.data>b.data?1:-1);
   const lbs=[],vals=[],entBars=[];
-  const primeira=S.lotes.filter(l=>l.mpId===String(mpId)&&l.dataEntrega).sort((a,b)=>a.dataEntrega>b.dataEntrega?1:-1)[0];
+  const primeira=S.lotes.filter(l=>lotePertenceMp(l,mpId)&&l.dataEntrega).sort((a,b)=>a.dataEntrega>b.dataEntrega?1:-1)[0];
   if(primeira){lbs.push(fmtBR(primeira.dataEntrega));vals.push(primeira.qtyEntrada);entBars.push(primeira.qtyEntrada);}
   cnts.forEach(c=>{
     const fisico=c.items.filter(i=>i.mpId===String(mpId)).reduce((a,i)=>a+i.fisico,0);
-    const ent=S.lotes.filter(l=>l.mpId===String(mpId)&&l.dataEntrega===c.data).reduce((a,l)=>a+l.qtyEntrada,0);
+    const ent=S.lotes.filter(l=>lotePertenceMp(l,mpId)&&l.dataEntrega===c.data).reduce((a,l)=>a+l.qtyEntrada,0);
     lbs.push(fmtBR(c.data));vals.push(fisico);entBars.push(ent||null);
   });
   lbs.push('Hoje');vals.push(saldoMP(mpId));entBars.push(null);
@@ -3274,7 +3350,7 @@ function gerarFichaImpressao(){
   const grupos={};
   catsSel.forEach(cat=>{
     const lotesCat=lotesAtivos.filter(l=>{
-      const mp=S.materiais.find(m=>m.id===String(l.mpId));
+      const mp=mpDoLote(l);
       return mp&&mp.cat===cat;
     }).sort((a,b)=>{
       const na=S.materiais.find(m=>m.id===String(a.mpId))?.nome||'';
@@ -3289,7 +3365,7 @@ function gerarFichaImpressao(){
   Object.entries(grupos).forEach(([cat,lotes])=>{
     rows+=`<tr class="cat-row"><td colspan="7">${cat}</td></tr>`;
     lotes.forEach((l,i)=>{
-      const mp=S.materiais.find(m=>m.id===String(l.mpId));
+      const mp=mpDoLote(l);
       const dataEntrada=l.dataEntrega?fmtBR(l.dataEntrega):(l.criadoEm?fmtBR(l.criadoEm):'—');
       rows+=`<tr class="${i%2===0?'':'alt'}">
         <td>${mp?mp.nome:'—'}</td>
