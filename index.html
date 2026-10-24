@@ -263,6 +263,90 @@ tbody tr:hover td{background:var(--bg)}
 .param-item label{display:flex;align-items:center;font-size:12px;font-weight:600;color:var(--text2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.4px}
 .param-item input{width:100%;padding:8px 10px;border:1px solid var(--border2);border-radius:var(--radius-sm);font-size:15px;font-weight:600;color:var(--text);background:var(--surface);text-align:center}
 .param-desc{font-size:11px;color:var(--text3);margin-top:6px;line-height:1.4}
+
+/* ═══════════════════════════════════════════════════════════════════
+   REGRA DE LAYOUT (não remover): nenhuma tela pode ter rolagem horizontal.
+   - Nada de larguras/min-width fixas em tabelas ou colunas.
+   - Tabelas se ajustam sozinhas (ajustarTabelas): normal → compacta → cartões.
+   - verificarLayout() avisa o master se algo novo estourar a largura.
+   ═══════════════════════════════════════════════════════════════════ */
+.page{min-width:0}
+.page img,.page canvas,.page svg,.page video{max-width:100%}
+.page canvas{height:auto}
+.toolbar{flex-wrap:wrap}
+.toolbar input,.toolbar select,.page input,.page select,.page textarea{max-width:100%}
+/* grades: nunca exigir mais que a largura disponível */
+.form-grid{grid-template-columns:repeat(auto-fit,minmax(min(190px,100%),1fr))}
+.dashboard-alert-list{grid-template-columns:repeat(auto-fit,minmax(min(340px,100%),1fr))}
+.audit-grid{grid-template-columns:repeat(auto-fit,minmax(min(280px,100%),1fr))}
+.rel-filtros{grid-template-columns:repeat(auto-fit,minmax(min(155px,100%),1fr))}
+.user-menu-checks{grid-template-columns:repeat(auto-fit,minmax(min(160px,100%),1fr))}
+.summary-grid>*,.grid2>*,.rel-graficos>*,.audit-grid>*{min-width:0}
+.stat-card{min-width:0}.stat-label,.stat-sub{overflow-wrap:anywhere}
+@media(max-width:900px){.summary-grid{grid-template-columns:repeat(auto-fit,minmax(min(140px,100%),1fr))!important}}
+/* tabelas: remove larguras forçadas das versões anteriores */
+th{white-space:normal}
+td{overflow-wrap:break-word}
+.tabela-reposicao,.tabela-intel{min-width:0}
+.tabela-reposicao th:nth-child(n),.tabela-reposicao td:nth-child(n),.tabela-intel th:nth-child(n),.tabela-intel td:nth-child(n){min-width:0}
+.tabela-pedidos{width:100%;min-width:0}
+.tabela-pedidos .col-pedido{min-width:0;width:auto;max-width:none}
+.tabela-pedidos .col-status{min-width:0;width:auto}
+/* modo compacto */
+table.modo-compacto th,table.modo-compacto td{padding:6px 7px;font-size:12px}
+table.modo-compacto th{font-size:10px;letter-spacing:0}
+table.modo-compacto .badge{padding:1px 6px;font-size:10px}
+table.modo-compacto .btn-sm{padding:4px 8px;font-size:11px}
+/* modo cartão: cada linha vira um cartão com rótulos */
+table.modo-cartao,table.modo-cartao tbody{display:block;width:100%}
+table.modo-cartao thead{display:none}
+table.modo-cartao tr{display:block;border:1px solid var(--border);border-radius:8px;margin:8px;padding:4px 12px;background:var(--surface)}
+table.modo-cartao tr[style*="table-row"]{display:block!important}
+table.modo-cartao td{display:grid;grid-template-columns:minmax(96px,38%) 1fr;gap:10px;align-items:center;padding:6px 0;border-bottom:1px dashed var(--border);text-align:left!important;min-width:0}
+table.modo-cartao td:last-child{border-bottom:none}
+table.modo-cartao td::before{content:attr(data-label);font-size:10.5px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.3px}
+table.modo-cartao td[data-label=""]{grid-template-columns:1fr}
+table.modo-cartao td[data-label=""]::before{display:none}
+table.modo-cartao td.linha-cheia{display:block}
+table.modo-cartao td.linha-cheia::before{display:none}
+table.modo-cartao tr:has(td.linha-cheia){background:var(--surface2)}
+table.modo-cartao tbody tr:hover td{background:transparent}
+/* ícone de ajuda (antes: círculo dentro de círculo) */
+.info-btn{font-size:0;width:15px;height:15px;background:transparent;border:1px solid var(--border2);color:var(--text3)}
+.info-btn::before{content:"i";font-size:10px;font-weight:700;font-style:italic;font-family:Georgia,'Times New Roman',serif;line-height:1}
+.info-btn:hover{border-color:var(--accent)}
+/* menu com ícones */
+.nav-btn{display:inline-flex;align-items:center;gap:7px}
+.nav-ico{width:16px;height:16px;flex-shrink:0;opacity:.7}
+.nav-btn:hover .nav-ico,.nav-btn.active .nav-ico{opacity:1}
+/* alerta de layout (só master) */
+#layout-alerta{position:fixed;right:76px;bottom:8px;z-index:9998;display:none;background:var(--danger);color:#fff;font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px;cursor:help}
+/* cabeçalho e menu em telas menores */
+@media(max-width:1100px){.topbar{height:auto;min-height:64px;flex-wrap:wrap;gap:8px;padding:8px 1rem}.topbar-right{flex-wrap:wrap;gap:6px}.nav{position:static}}
+@media(max-width:700px){.topbar{position:static}.topbar-sub,.topbar-title-en{display:none}.topbar-right .btn{padding:5px 9px;font-size:12px}
+  .summary-grid{grid-template-columns:repeat(2,1fr)}.nav{padding:6px .5rem}.nav-btn{padding:6px 8px}.main{padding:1rem .6rem}}
+
+/* ═══ MANUAL ═══ */
+.man-wrap{display:flex;flex-direction:column;gap:14px;max-width:1100px;width:100%;margin:0 auto}
+.man-wrap h2{font-size:18px;color:var(--accent);margin-bottom:4px}
+.man-wrap h3{font-size:15px;margin:2px 0 6px;color:var(--text)}
+.man-wrap p,.man-wrap li{line-height:1.6;font-size:13.5px;color:var(--text)}
+.man-wrap ul,.man-wrap ol{padding-left:20px;margin:6px 0}
+.man-wrap .muted{color:var(--text2);font-size:12.5px}
+.man-toc{display:flex;flex-wrap:wrap;gap:6px}
+.man-toc a{font-size:12px;padding:4px 10px;border:1px solid var(--border);border-radius:20px;color:var(--text2);text-decoration:none;background:var(--surface)}
+.man-toc a:hover{border-color:var(--accent);color:var(--accent)}
+.man-formula{background:var(--surface2);border-left:4px solid var(--accent);padding:9px 12px;border-radius:6px;font-family:ui-monospace,Consolas,monospace;font-size:13px;overflow-wrap:anywhere;margin:8px 0;line-height:1.6}
+.man-ex{background:var(--blue-bg);color:var(--blue-text);padding:10px 12px;border-radius:6px;font-size:13px;line-height:1.6;margin:8px 0;overflow-wrap:anywhere}
+.man-dica{background:var(--warn-bg);color:var(--warn-text);padding:9px 12px;border-radius:6px;font-size:13px;line-height:1.55;margin:8px 0}
+.man-fluxo{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(150px,100%),1fr));gap:8px;margin-top:8px}
+.man-step{border:1px solid var(--border);border-radius:8px;padding:10px;background:var(--surface2);font-size:12.5px;line-height:1.45}
+.man-step b{display:block;color:var(--accent);font-size:13px;margin-bottom:3px}
+.man-grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));gap:12px}
+.man-svg{width:100%;max-width:760px;height:auto;display:block;margin:6px auto}
+.man-sim-res{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+.man-sim-res .man-formula b{color:var(--accent)}
+.man-ok{color:var(--accent);font-weight:700}
 </style>
 </head>
 <body>
@@ -304,19 +388,20 @@ tbody tr:hover td{background:var(--bg)}
 </div>
 
 <div class="nav">
-  <button class="nav-btn active" data-page="dashboard" onclick="showPage('dashboard',this)">Dashboard<span class="info-btn" data-tip="Visão geral do estoque: totais, alertas críticos, validades vencendo e últimas entradas.">ⓘ</span></button>
-  <button class="nav-btn" data-page="estoque" onclick="showPage('estoque',this)">Estoque por Lote<span class="info-btn" data-tip="Saldo atual de cada MP com seus lotes ativos. Clique na seta ▶ para ver os lotes individuais com validade e rastreabilidade.">ⓘ</span></button>
-  <button class="nav-btn" data-page="entradas" onclick="showPage('entradas',this)">Registrar Entrada<span class="info-btn" data-tip="Use aqui quando chegar mercadoria. Cada entrada vira um lote independente com número, fornecedor e validade rastreáveis.">ⓘ</span></button>
-  <button class="nav-btn" data-page="contagem" onclick="showPage('contagem',this)">Contagem Física<span class="info-btn" data-tip="O operador conta o estoque físico e lança aqui (ou usa a ficha impressa). Ao salvar, os saldos são atualizados automaticamente.">ⓘ</span></button>
-  <button class="nav-btn" data-page="consumo" onclick="showPage('consumo',this)">Análise de Consumo<span class="info-btn" data-tip="Selecione uma MP e veja o gráfico de evolução de saldo, consumo semanal e mensal estimado com base nas contagens realizadas.">ⓘ</span></button>
-  <button class="nav-btn" data-page="reposicao" onclick="showPage('reposicao',this)">Reposição<span class="info-btn" data-tip="Tabela com todas as MPs mostrando quando e quanto pedir, com base no consumo histórico, lead time e dias de segurança cadastrados.">ⓘ</span></button>
-  <button class="nav-btn" data-page="rastreabilidade" onclick="showPage('rastreabilidade',this)">Rastreabilidade<span class="info-btn" data-tip="Busque qualquer lote por nome, fornecedor ou número. Veja todo o histórico: origem, data, saldo atual, validade e valor.">ⓘ</span></button>
-  <button class="nav-btn" data-page="intel" onclick="showPage('intel',this)">🧠 Inteligência<span class="info-btn" data-tip="Análises automáticas: valor do estoque em R$, sugestão de compra com quantidade ideal, detecção de consumo anormal e histórico de divergências.">ⓘ</span></button>
-  <button class="nav-btn" data-page="relatorios" onclick="showPage('relatorios',this)">Relatórios Gerenciais<span class="info-btn" data-tip="Gere relatórios consolidados ou detalhados com evolução de saldo, preços, Índice de Saúde e comentários automáticos.">ⓘ</span></button>
-  <button class="nav-btn" data-page="auditoria" onclick="showPage('auditoria',this)">Auditoria<span class="info-btn" data-tip="Aponta possíveis erros de digitação, valores fora do padrão, inconsistências cadastrais e mantém os logs de usuário.">ⓘ</span></button>
-  <button class="nav-btn" data-page="precos" onclick="showPage('precos',this)">Histórico de Preços<span class="info-btn" data-tip="Acompanhe a evolução do preço pago na referência de cada matéria-prima: kg, milheiro ou unidade cadastrada.">ⓘ</span></button>
-  <button class="nav-btn" data-page="materiais" onclick="showPage('materiais',this)">Matérias-Primas<span class="info-btn" data-tip="Cadastro e manutenção das matérias-primas, separado das configurações sensíveis do sistema.">ⓘ</span></button>
-  <button class="nav-btn" data-page="config" onclick="showPage('config',this)">Configurações<span class="info-btn" data-tip="Conexão com o Google Sheets, usuários, senhas e parâmetros globais de inteligência e reposição.">ⓘ</span></button>
+  <button class="nav-btn active" data-page="dashboard" onclick="showPage('dashboard',this)" title="Visão geral do estoque: totais, alertas críticos, validades vencendo e últimas entradas."><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg><span>Dashboard</span></button>
+  <button class="nav-btn" data-page="estoque" onclick="showPage('estoque',this)" title="Saldo atual de cada MP com seus lotes ativos. Clique na seta ▶ para ver os lotes individuais com validade e rastreabilidade."><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8 12 3 3 8l9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg><span>Estoque por Lote</span></button>
+  <button class="nav-btn" data-page="entradas" onclick="showPage('entradas',this)" title="Use aqui quando chegar mercadoria. Cada entrada vira um lote independente com número, fornecedor e validade rastreáveis."><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v10"/><path d="m8 9 4 4 4-4"/><path d="M4 14v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/></svg><span>Registrar Entrada</span></button>
+  <button class="nav-btn" data-page="contagem" onclick="showPage('contagem',this)" title="O operador conta o estoque físico e lança aqui (ou usa a ficha impressa). Ao salvar, os saldos são atualizados automaticamente."><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></svg><span>Contagem Física</span></button>
+  <button class="nav-btn" data-page="consumo" onclick="showPage('consumo',this)" title="Selecione uma MP e veja o gráfico de evolução de saldo, consumo semanal e mensal estimado com base nas contagens realizadas."><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 5-6"/></svg><span>Análise de Consumo</span></button>
+  <button class="nav-btn" data-page="reposicao" onclick="showPage('reposicao',this)" title="Tabela com todas as MPs mostrando quando e quanto pedir, com base no consumo histórico, lead time e dias de segurança cadastrados."><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M2 3h3l2.6 12.2a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.5L22 8H6"/></svg><span>Reposição</span></button>
+  <button class="nav-btn" data-page="rastreabilidade" onclick="showPage('rastreabilidade',this)" title="Busque qualquer lote por nome, fornecedor ou número. Veja todo o histórico: origem, data, saldo atual, validade e valor."><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg><span>Rastreabilidade</span></button>
+  <button class="nav-btn" data-page="intel" onclick="showPage('intel',this)" title="Análises automáticas: valor do estoque em R$, sugestão de compra com quantidade ideal, detecção de consumo anormal e histórico de divergências."><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.1V17h6v-.2c0-.8.4-1.6 1-2.1A7 7 0 0 0 12 2z"/></svg><span>Inteligência</span></button>
+  <button class="nav-btn" data-page="relatorios" onclick="showPage('relatorios',this)" title="Gere relatórios consolidados ou detalhados com evolução de saldo, preços, Índice de Saúde e comentários automáticos."><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 18v-3M12 18v-6M16 18v-4"/></svg><span>Relatórios Gerenciais</span></button>
+  <button class="nav-btn" data-page="auditoria" onclick="showPage('auditoria',this)" title="Aponta possíveis erros de digitação, valores fora do padrão, inconsistências cadastrais e mantém os logs de usuário."><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg><span>Auditoria</span></button>
+  <button class="nav-btn" data-page="precos" onclick="showPage('precos',this)" title="Acompanhe a evolução do preço pago na referência de cada matéria-prima: kg, milheiro ou unidade cadastrada."><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg><span>Histórico de Preços</span></button>
+  <button class="nav-btn" data-page="materiais" onclick="showPage('materiais',this)" title="Cadastro e manutenção das matérias-primas, separado das configurações sensíveis do sistema."><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2 22 7 12 12 2 7l10-5z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg><span>Matérias-Primas</span></button>
+  <button class="nav-btn" data-page="config" onclick="showPage('config',this)" title="Conexão com o Google Sheets, usuários, senhas e parâmetros globais de inteligência e reposição."><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3"/><path d="M1 14h6M9 8h6M17 16h6"/></svg><span>Configurações</span></button>
+  <button class="nav-btn" data-page="manual" onclick="showPage('manual',this)" title="Como o sistema calcula consumo, cobertura, ponto de pedido, status e índice de saúde — com exemplos e simulador."><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><path d="M9 7h7M9 11h5"/></svg><span>Manual</span></button>
 </div>
 
 <div id="config-banner">
@@ -537,6 +622,9 @@ tbody tr:hover td{background:var(--bg)}
       <tbody id="tbody-rastreabilidade"></tbody>
     </table>
   </div>
+  <div class="section-header" style="margin-top:22px"><h3>Descartes e Perdas</h3><span style="font-size:12px;color:var(--text3)">Baixas que não são consumo de produção</span></div>
+  <div id="resumo-descartes" class="summary-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:12px"></div>
+  <div id="lista-descartes"></div>
 </div>
 
 <!-- ═══ INTELIGÊNCIA ════════════════════════════════════════════ -->
@@ -772,10 +860,148 @@ tbody tr:hover td{background:var(--bg)}
         <tbody id="tbody-config"></tbody>
       </table>
     </div>
+    <div class="section-header" style="margin-top:22px"><h3>Matérias-Primas Descontinuadas</h3><span style="font-size:12px;color:var(--text3)">Não aparecem nas telas de operação. Histórico mantido.</span></div>
+    <div id="lista-mp-desc"></div>
   </div>
 </div>
 
 <!-- ═══ CONFIGURAÇÕES ════════════════════════════════════════════ -->
+<!-- ═══ MANUAL ═══════════════════════════════════════════════ -->
+<div class="page" id="page-manual">
+<div class="man-wrap">
+  <div class="card">
+    <h2>Manual do WMS — como o sistema calcula</h2>
+    <p class="muted">Os números de exemplo usam os parâmetros configurados agora no sistema. No fim da página, o <b>simulador</b> refaz todas as contas com uma matéria-prima real.</p>
+    <div class="man-toc" style="margin-top:10px">
+      <a href="#man-fluxo" onclick="return irManual(this)">Fluxo</a><a href="#man-saldo" onclick="return irManual(this)">Saldo</a><a href="#man-consumo" onclick="return irManual(this)">Consumo semanal</a>
+      <a href="#man-reposicao" onclick="return irManual(this)">Cobertura e ponto de pedido</a><a href="#man-grafico" onclick="return irManual(this)">Lead × segurança (gráfico)</a>
+      <a href="#man-status" onclick="return irManual(this)">Status e limites</a><a href="#man-valor" onclick="return irManual(this)">Valor em estoque</a><a href="#man-validade" onclick="return irManual(this)">Validade</a>
+      <a href="#man-descarte" onclick="return irManual(this)">Descarte</a><a href="#man-saude" onclick="return irManual(this)">Índice de saúde</a><a href="#man-sim" onclick="return irManual(this)">Simulador</a>
+    </div>
+  </div>
+
+  <div class="card" id="man-fluxo">
+    <h3>1. Fluxo dos dados</h3>
+    <div class="man-fluxo">
+      <div class="man-step"><b>1 · Entrada</b>Cada recebimento vira um <b>lote</b> com quantidade, validade, valor e NF.</div>
+      <div class="man-step"><b>2 · Contagem</b>A contagem física corrige o saldo de cada lote. É a "verdade" do estoque.</div>
+      <div class="man-step"><b>3 · Consumo</b>A queda do saldo entre contagens vira consumo por semana.</div>
+      <div class="man-step"><b>4 · Reposição</b>Consumo + lead + segurança dizem <b>quando</b> e <b>quanto</b> comprar.</div>
+      <div class="man-step"><b>5 · Gestão</b>Status, valor em estoque, perdas e índice de saúde.</div>
+    </div>
+  </div>
+
+  <div class="card" id="man-saldo">
+    <h3>2. Saldo da matéria-prima</h3>
+    <div class="man-formula">Saldo = soma do saldo de todos os lotes <b>ativos</b> com saldo maior que zero</div>
+    <p>Lotes encerrados e lotes de matérias-primas descontinuadas não entram. O saldo de cada lote muda em três situações: na <b>entrada</b> (nasce com a quantidade recebida), na <b>contagem física</b> (passa a ser o que foi contado) e no <b>descarte</b> (diminui a quantidade descartada).</p>
+  </div>
+
+  <div class="card" id="man-consumo">
+    <h3>3. Consumo semanal</h3>
+    <p>O sistema não usa ficha técnica. Ele mede o consumo pela <b>queda do saldo entre contagens físicas</b>:</p>
+    <ol>
+      <li><b>Uma contagem por dia:</b> se houver várias no mesmo dia, vale a última.</li>
+      <li><b>Ciclos:</b> um ciclo é uma sequência de contagens sem reabastecimento. O ciclo termina quando chega mercadoria, ou seja, quando há uma entrada lançada entre duas contagens ou o saldo sobe (1 unidade ou mais, ou 15% ou mais).</li>
+      <li><b>Consumo do ciclo:</b></li>
+    </ol>
+    <div class="man-formula">Consumo do ciclo = saldo no início − saldo no fim − descartes do período<br>Consumo por semana do ciclo = consumo do ciclo ÷ dias do ciclo × 7</div>
+    <ol start="4">
+      <li><b>Só valem ciclos com 7 dias ou mais</b> e consumo maior que zero, dos últimos 180 dias.</li>
+      <li><b>Média:</b> o ciclo mais recente pesa <b>70%</b>; os anteriores pesam 30%, numa média ponderada pelos dias de cada um.</li>
+    </ol>
+    <div class="man-formula">Consumo semanal = 70% × ciclo atual + 30% × média dos ciclos anteriores</div>
+    <div class="man-ex" id="man-ex-consumo"></div>
+    <div class="man-dica">Por que ciclos? Se o sistema simplesmente comparasse duas contagens com uma entrada no meio, o saldo poderia até subir e o consumo daria negativo. Separando em ciclos, só se mede a queda "limpa". Por isso é importante <b>lançar a entrada no dia em que o material chega</b> e <b>registrar os descartes</b>: descarte não registrado vira consumo falso e faz comprar a mais.</div>
+    <p class="muted">Sem pelo menos um ciclo válido, o consumo aparece como "—" e a reposição usa só o estoque mínimo.</p>
+    <p class="muted"><b>Recebimento lançado em partes:</b> se o mesmo número de lote for lançado de novo em até 7 dias, o sistema oferece <b>somar ao lote já lançado</b>. Cada soma fica gravada com data e hora, e o cálculo de consumo trata essa soma como uma entrada naquele momento. Lançar tudo antes da contagem física evita perder um ciclo de medição.</p>
+  </div>
+
+  <div class="card" id="man-reposicao">
+    <h3>4. Cobertura, ponto de pedido, datas e quantidade sugerida</h3>
+    <div class="man-formula">Consumo diário = consumo semanal ÷ 7</div>
+    <div class="man-grid2">
+      <div><b>Cobertura (dias)</b><div class="man-formula">Cobertura = saldo ÷ consumo diário</div><p class="muted">Quantos dias o estoque dura se nada chegar.</p></div>
+      <div><b>Ponto de pedido</b><div class="man-formula">Ponto = mínimo + (lead + segurança) × consumo diário</div><p class="muted">Saldo em que é preciso comprar para a mercadoria chegar antes de acabar.</p></div>
+      <div><b>Data ideal de compra</b><div class="man-formula">Hoje + (saldo − ponto) ÷ consumo diário</div><p class="muted">Se o resultado for zero ou negativo, aparece <b>AGORA</b>.</p></div>
+      <div><b>Previsão de ruptura</b><div class="man-formula">Hoje + cobertura</div><p class="muted">Dia em que o saldo zera se ninguém comprar.</p></div>
+      <div><b>Quantidade sugerida</b><div class="man-formula">Consumo diário × 60 dias (arredonda para cima)</div><p class="muted">Sem consumo calculado: 3 × estoque mínimo. Não desconta pedidos em aberto.</p></div>
+      <div><b>Lead e segurança</b><p class="muted">Vêm do cadastro da matéria-prima. Se estiverem em branco, usam o padrão de Configurações (hoje: lead <span class="m-p-lead"></span> dias, segurança <span class="m-p-seg"></span> dias).</p></div>
+    </div>
+    <div class="man-ex" id="man-ex-repos"></div>
+  </div>
+
+  <div class="card" id="man-grafico">
+    <h3>5. Como lead, segurança, mínimo e ponto de pedido se encaixam</h3>
+    <div id="man-svg"></div>
+    <ul>
+      <li><b>Lead time</b> = dias entre fazer o pedido e o material chegar. Durante esse tempo o estoque continua caindo.</li>
+      <li><b>Tempo de segurança</b> = dias extras de estoque para cobrir atraso do fornecedor ou um consumo acima do normal.</li>
+      <li><b>Estoque mínimo</b> = quantidade que nunca deveria faltar (reserva fixa, em unidades).</li>
+      <li>Se o fornecedor entregar no prazo, a mercadoria chega quando o saldo está em <b>mínimo + segurança</b>. A segurança e o mínimo só são "gastos" quando algo dá errado.</li>
+    </ul>
+    <div class="man-dica"><b>Aumentar o lead ou a segurança</b> sobe o ponto de pedido: o sistema manda comprar mais cedo (mais estoque parado, menos risco). <b>Diminuir</b> faz comprar mais tarde (menos capital parado, mais risco de faltar).</div>
+  </div>
+
+  <div class="card" id="man-status">
+    <h3>6. Status (OK / Atenção / Crítico) e limites</h3>
+    <p>O sistema testa nesta ordem e para na primeira regra que bater:</p>
+    <ol>
+      <li><b style="color:var(--danger)">Crítico</b> — saldo menor ou igual ao estoque mínimo (quando o mínimo é maior que zero).</li>
+      <li><b style="color:var(--danger)">Crítico</b> — cobertura menor ou igual ao <b>limite crítico</b> (hoje: <span class="m-p-crit"></span> dias).</li>
+      <li><b style="color:#c07000">Atenção</b> — saldo menor ou igual ao <b>ponto de pedido</b>.</li>
+      <li><b style="color:#c07000">Atenção</b> — cobertura menor ou igual ao <b>limite de atenção</b> (hoje: <span class="m-p-warn"></span> dias).</li>
+      <li><b class="man-ok">OK</b> — nenhuma das anteriores.</li>
+    </ol>
+    <div class="man-ex" id="man-ex-status"></div>
+    <div class="man-dica">Os limites crítico e de atenção são em <b>dias de cobertura</b> e valem igual para todas as matérias-primas. O ponto de pedido é individual, porque usa o lead e a segurança de cada uma. Para uma MP com lead de 30 dias, quando a cobertura chegar a <span class="m-p-crit"></span> dias já é tarde para pedir. Quem avisa a tempo é a regra 3 (ponto de pedido).</div>
+  </div>
+
+  <div class="card" id="man-valor">
+    <h3>7. Valor em estoque</h3>
+    <div class="man-formula">Valor do lote = saldo do lote × preço por unidade<br>Preço por unidade = valor ref. × kg por unidade (unSi)</div>
+    <p><b>Exceção (milheiro):</b> se o unSi é 1000 ou mais e o valor lançado é R$ 100 ou mais, entende-se que o valor já é do milheiro e não multiplica.</p>
+    <div class="man-ex">Exemplo: 20 sacos de 25 kg a R$ 1,90/kg → preço por saco = 1,90 × 25 = R$ 47,50 → valor = 20 × 47,50 = <b>R$ 950,00</b>.<br>Capa Fardo: 27 milheiros a R$ 1.050,00 (unSi 1000) → valor = 27 × 1.050 = <b>R$ 28.350,00</b>.</div>
+    <p class="muted">Sem unSi cadastrado, o sistema considera 1 kg por unidade e o valor sai errado. A Auditoria e a tela de Matérias-Primas avisam.</p>
+  </div>
+
+  <div class="card" id="man-validade">
+    <h3>8. Validade</h3>
+    <ul>
+      <li><b>Vencido</b>: validade anterior a hoje. <b>Urgente</b>: vence em menos de 7 dias. <b>Vence em breve</b>: de 7 a 30 dias.</li>
+      <li>Na entrada, a validade precisa estar pelo menos a <b>validade mínima</b> da matéria-prima depois da data de entrega (padrão 60 dias, ajustável por MP).</li>
+      <li>Validade igual à entrega, anterior à entrega ou já vencida é bloqueada. Só o master pode forçar, e fica no log.</li>
+    </ul>
+  </div>
+
+  <div class="card" id="man-descarte">
+    <h3>9. Descarte e matéria-prima descontinuada</h3>
+    <p><b>Descarte</b> é a baixa de saldo que não é produção (vencido, avariado, reprovado...). Fica na aba Descartes com valor e motivo, aparece em "Descartes e Perdas" na Rastreabilidade e <b>é descontado do cálculo de consumo</b>.</p>
+    <div class="man-ex">Exemplo: contagem de 01/10 = 100 sacos; em 08/10 foram descartados 30 vencidos; contagem de 15/10 = 60. Consumo real = 100 − 60 − 30 = <b>10 sacos em 14 dias = 5 por semana</b>. Sem registrar o descarte, o sistema veria 40 sacos de queda e calcularia 20 por semana — compraria 4 vezes mais.</div>
+    <p><b>Matéria-prima descontinuada</b> sai de todas as telas de operação, depois de descartar o saldo restante. O histórico fica na Rastreabilidade e ela pode ser reativada.</p>
+  </div>
+
+  <div class="card" id="man-saude">
+    <h3>10. Índice de saúde (Relatórios Gerenciais)</h3>
+    <p>Nota de 0 a 100 somando quatro partes:</p>
+    <ul>
+      <li><b>Abastecimento (40 pts)</b> — saldo no ponto de pedido ou acima = 40; entre o mínimo e o ponto = de 10 a 40, proporcional; abaixo do mínimo = até 10; sem saldo = 0.</li>
+      <li><b>Preço (25 pts)</b> e <b>Consumo (20 pts)</b> — quanto menor a variação, mais pontos: até 5% = 100% dos pontos; até 10% = 88%; até 25% = 62%; até 50% = 32%; acima de 50% = 0. No consumo, compara o ciclo atual com a mediana dos 6 anteriores.</li>
+      <li><b>Dados (15 pts)</b> — começa com 15 e perde: 3 por lote sem valor, 2 sem validade, 2 sem data de entrega, 4 com validade anterior à entrega.</li>
+    </ul>
+    <div class="man-formula">Nota = pontos obtidos ÷ pontos possíveis × 100</div>
+    <p>Partes sem dados (ex.: sem histórico de preço) ficam de fora da conta, e a <b>confiança</b> cai: Alta (90 pts possíveis ou mais), Média (70+), Baixa. Classes: <b>Saudável</b> 85+, <b>Estável</b> 70+, <b>Atenção</b> 50+, <b>Revisar</b> abaixo de 50.</p>
+    <p class="muted"><b>Anomalia de consumo</b> (Inteligência): o ciclo atual está mais de <span class="m-p-anom"></span>% acima da média dos ciclos anteriores.</p>
+  </div>
+
+  <div class="card" id="man-sim">
+    <h3>11. Simulador — veja as contas de uma matéria-prima real</h3>
+    <div class="toolbar"><select id="man-sim-mp" onchange="renderManualSim()" style="min-width:min(320px,100%)"></select></div>
+    <div id="man-sim-out" class="man-sim-res"></div>
+  </div>
+</div>
+</div>
+
 <div class="page" id="page-config">
   <!-- PARÂMETROS GLOBAIS DE INTELIGÊNCIA -->
   <div class="card">
@@ -868,7 +1094,7 @@ tbody tr:hover td{background:var(--bg)}
 
 </div><!-- /main -->
 <div class="toast" id="toast"></div>
-<div id="app-version">Rev 16.2</div>
+<div id="app-version">Rev 16.8</div>
 
 <script>
 // ═══ CONFIG ═══════════════════════════════════════════════════
@@ -879,7 +1105,7 @@ const MENUS_SISTEMA = [
   ['dashboard','Dashboard'],['estoque','Estoque por Lote'],['entradas','Registrar Entrada'],
   ['contagem','Contagem Física'],['consumo','Análise de Consumo'],['reposicao','Reposição'],
   ['rastreabilidade','Rastreabilidade'],['intel','Inteligência'],['relatorios','Relatórios Gerenciais'],['auditoria','Auditoria'],
-  ['precos','Histórico de Preços'],['materiais','Matérias-Primas'],['config','Configurações']
+  ['precos','Histórico de Preços'],['materiais','Matérias-Primas'],['config','Configurações'],['manual','Manual']
 ];
 const LOGIN_PADRAO = {id:'master',nome:'Administrador',login:'admin',perfil:'master',menus:MENUS_SISTEMA.map(m=>m[0])};
 
@@ -1040,7 +1266,7 @@ function resetParams(){
 }
 
 // ═══ STATE ════════════════════════════════════════════════════
-let S = { materiais: [], lotes: [], contagens: [], pedidos: [], usuarios: [], logs: [] };
+let S = { materiais: [], materiaisDesc: [], lotes: [], contagens: [], pedidos: [], descartes: [], usuarios: [], logs: [] };
 let IDX = { matById:new Map(), matByName:new Map(), lotesByMp:new Map(), mpByLoteId:new Map() };
 let consumoSemCache = new Map();
 let consumoSemSyncKey = '';
@@ -1106,7 +1332,7 @@ function isMaster(u=usuarioLogado()){ return !!u&&u.perfil==='master'; }
 function menusUsuario(u=usuarioLogado()){ return isMaster(u)?MENUS_SISTEMA.map(m=>m[0]):(u&&Array.isArray(u.menus)?u.menus:[]); }
 function podeAcessar(page){
   const u=usuarioLogado();
-  return !!u&&(isMaster(u)||menusUsuario(u).includes(page));
+  return !!u&&(page==='manual'||isMaster(u)||menusUsuario(u).includes(page)); // Manual: liberado para todos
 }
 function mostrarLogin(){
   document.getElementById('login-screen').style.display='flex';
@@ -1177,7 +1403,7 @@ function aplicarPermissoes(){
   const u=usuarioLogado();
   document.querySelectorAll('.nav-btn[data-page]').forEach(btn=>{
     const p=btn.dataset.page;
-    btn.style.display=u&&(isMaster(u)||menusUsuario(u).includes(p))?'':'none';
+    btn.style.display=u&&(p==='manual'||isMaster(u)||menusUsuario(u).includes(p))?'':'none';
   });
   document.querySelectorAll('.master-only').forEach(el=>el.style.display=isMaster(u)?'':'none');
   const atual=pgAtual();
@@ -1298,6 +1524,9 @@ async function sincronizar(silencioso) {
     S.lotes      = (data.result.lotes      || []).map(normL);
     S.contagens  = (data.result.contagens  || []).map(normCnt);
     S.pedidos    = (data.result.pedidos    || []).map(normPedido);
+    S.materiaisDesc = (data.result.materiaisDescontinuados || []).map(m=>({...normM(m),descontinuada:true,descontinuadoEm:fmtD(m.descontinuadoEm),motivoDesc:String(m.motivoDesc||'')}));
+    S.descartes  = (data.result.descartes  || []).map(normDescarte);
+    S.correcoes  = data.result.correcoes || [];
     if(Array.isArray(data.result.usuarios)&&data.result.usuarios.length){
       S.usuarios=garantirUsuarioAdmin(data.result.usuarios.map(normUsuario));
       salvarUsuariosLocal();
@@ -1358,7 +1587,11 @@ function normL(l){
   const mpRawTxt=String(mpRaw||'').trim();
   const mpNomeRaw=getCampo(l,['mpNome','nomeMP','nome mp','matéria-prima','materia prima','materia-prima','material']);
   const valorRaw=getCampo(l,['valorUnit','valor unit','valor unitario','valor unitário','Valor Unit.','Valor/kg','valor kg','valorKg','precoKg','preço kg','preco kg','R$/kg']);
-  return {id:safeId(getCampo(l,['id'])),mpId:safeId(mpRaw),mpNome:String(mpNomeRaw||(/^\d+([,.]0+)?$/.test(mpRawTxt)?'':mpRawTxt)),rawText:normTxt(Object.values(l||{}).join(' ')),forn:String(getCampo(l,['forn','fornecedor'])||''),lote:String(getCampo(l,['lote'])||''),nf:String(getCampo(l,['nf','nota fiscal','notaFiscal','numero nf','nfe'])||''),dataCompra:fmtD(getCampo(l,['dataCompra','data compra'])),prevEntrega:fmtD(getCampo(l,['prevEntrega','prev entrega','previsao entrega','previsão entrega'])),dataEntrega:fmtD(getCampo(l,['dataEntrega','data entrega','entrada'])),criadoEm:fmtD(getCampo(l,['criadoEm','criado em'])),criadoTs:Number(l.criadoTs)||null,qtyEntrada:safeNum(getCampo(l,['qtyEntrada','qtd entrada','quantidade','quantidade recebida'])),saldoLote:safeNum(getCampo(l,['saldoLote','saldo lote','saldo'])),valorUnit:valorRaw?safeNum(valorRaw):null,validade:fmtD(getCampo(l,['validade'])),obs:String(getCampo(l,['obs','observação','observacao'])||''),ativo:getCampo(l,['ativo'])!==false&&String(getCampo(l,['ativo'])).toLowerCase()!=='false'};
+  return {id:safeId(getCampo(l,['id'])),mpId:safeId(mpRaw),mpNome:String(mpNomeRaw||(/^\d+([,.]0+)?$/.test(mpRawTxt)?'':mpRawTxt)),rawText:normTxt(Object.values(l||{}).join(' ')),forn:String(getCampo(l,['forn','fornecedor'])||''),lote:String(getCampo(l,['lote'])||''),nf:String(getCampo(l,['nf','nota fiscal','notaFiscal','numero nf','nfe'])||''),dataCompra:fmtD(getCampo(l,['dataCompra','data compra'])),prevEntrega:fmtD(getCampo(l,['prevEntrega','prev entrega','previsao entrega','previsão entrega'])),dataEntrega:fmtD(getCampo(l,['dataEntrega','data entrega','entrada'])),criadoEm:fmtD(getCampo(l,['criadoEm','criado em'])),criadoTs:Number(l.criadoTs)||null,adicoes:parseAdicoes(getCampo(l,['adicoes'])),qtyEntrada:safeNum(getCampo(l,['qtyEntrada','qtd entrada','quantidade','quantidade recebida'])),saldoLote:safeNum(getCampo(l,['saldoLote','saldo lote','saldo'])),valorUnit:valorRaw?safeNum(valorRaw):null,validade:fmtD(getCampo(l,['validade'])),obs:String(getCampo(l,['obs','observação','observacao'])||''),ativo:getCampo(l,['ativo'])!==false&&String(getCampo(l,['ativo'])).toLowerCase()!=='false'};
+}
+function normDescarte(d){
+  const ts=Date.parse(d.dataHora)||null;
+  return {id:String(d.id||''),ts,dataHora:d.dataHora||'',data:fmtD(d.data)||(ts?new Date(ts).toISOString().slice(0,10):''),loteId:safeId(d.loteId),mpId:safeId(d.mpId),mpNome:String(d.mpNome||''),lote:String(d.lote||''),qtd:safeNum(d.qtd),valorUnit:safeNum(d.valorUnit),valorTotal:safeNum(d.valorTotal),motivo:String(d.motivo||''),obs:String(d.obs||''),usuario:String(d.usuario||'')};
 }
 function normPedido(p){ return {id:safeId(p.id),mpId:safeId(p.mpId),dataPedido:fmtD(p.dataPedido),prevEntrega:fmtD(p.prevEntrega),qty:safeNum(p.qty),status:String(p.status||'aberto').toLowerCase(),obs:String(p.obs||'')}; }
 function normUsuario(u){
@@ -1406,7 +1639,9 @@ function normId(v){
   return /^\d+([,.]0+)?$/.test(s)?String(parseInt(s.replace(',','.'),10)):s;
 }
 function mesmoId(a,b){ return normId(a)===normId(b); }
-function loteDisponivel(l){ return l.ativo&&Number(l.saldoLote)>0; }
+// Lote de matéria-prima descontinuada não conta como estoque disponível nem aparece na contagem.
+function loteDisponivel(l){ return l.ativo&&Number(l.saldoLote)>0&&!l.mpDesc; }
+function loteOperacional(l){ return l.ativo&&!l.mpDesc; }
 function rebuildIndices(){
   consumoSemCache = new Map();
   const matById=new Map(), matByName=new Map(), lotesByMp=new Map(), mpByLoteId=new Map();
@@ -1414,10 +1649,16 @@ function rebuildIndices(){
     matById.set(normId(m.id),m);
     matByName.set(normTxt(m.nome),m);
   });
+  (S.materiaisDesc||[]).forEach(m=>{
+    if(!matById.has(normId(m.id)))matById.set(normId(m.id),m);
+    if(!matByName.has(normTxt(m.nome)))matByName.set(normTxt(m.nome),m);
+  });
   S.lotes.forEach(l=>{
+    l.mpDesc=false;
     const mp=matById.get(normId(l.mpId))||matByName.get(normTxt(l.mpId))||matByName.get(normTxt(l.mpNome))||matchMpPorTexto(l); // AUDITORIA A01: fallback por texto só pega o nome mais longo (>=4 letras)
     if(!mp)return;
     mpByLoteId.set(normId(l.id),mp);
+    l.mpDesc=!!mp.descontinuada;
     if(!loteDisponivel(l))return;
     const key=normId(mp.id);
     if(!lotesByMp.has(key))lotesByMp.set(key,[]);
@@ -1479,17 +1720,39 @@ function diasEntreDatas(a,b){
 // A entrada é posicionada pelo MOMENTO EM QUE FOI LANÇADA no sistema (criadoEm com hora), porque só a partir
 // daí o lote aparece nas contagens. Nos dados reais muitas entradas são lançadas dias depois da entrega.
 // Sem horário disponível, usa a data de entrega (entrada no mesmo dia da contagem = já incluída nela).
+// Somas feitas depois num lote já lançado ("somar ao lote") ficam em l.adicoes com data/hora.
+function parseAdicoes(v){
+  return String(v||'').split(';').map(x=>x.trim()).filter(Boolean).map(x=>{const [ts,q]=x.split('@');return {ts:Number(ts)||null,qtd:safeNum(q)};}).filter(x=>x.ts&&x.qtd>0);
+}
+function dataLocalTs(ts){ const d=new Date(ts); d.setMinutes(d.getMinutes()-d.getTimezoneOffset()); return d.toISOString().slice(0,10); }
+// Cada lote gera um "evento de entrada" na criação e um para cada soma posterior.
+function eventosEntradaLote(l){
+  const ad=l.adicoes||[],somaAd=ad.reduce((a,x)=>a+x.qtd,0);
+  return [{ts:l.criadoTs,data:l.dataEntrega,qtd:Math.max(0,(Number(l.qtyEntrada)||0)-somaAd)}]
+    .concat(ad.map(x=>({ts:x.ts,data:dataLocalTs(x.ts),qtd:x.qtd})));
+}
 function entradasMPEntre(mpId,cA,cB){
-  return S.lotes.filter(l=>{
-    if(!lotePertenceMp(l,mpId))return false;
-    if(l.criadoTs&&cA.ts&&cB.ts)return l.criadoTs>cA.ts&&l.criadoTs<=cB.ts;
-    return l.dataEntrega&&l.dataEntrega>cA.data&&l.dataEntrega<=cB.data;
-  }).reduce((a,l)=>a+(Number(l.qtyEntrada)||0),0);
+  let tot=0;
+  S.lotes.forEach(l=>{
+    if(!lotePertenceMp(l,mpId))return;
+    eventosEntradaLote(l).forEach(e=>{
+      const dentro=(e.ts&&cA.ts&&cB.ts)?(e.ts>cA.ts&&e.ts<=cB.ts):(e.data&&e.data>cA.data&&e.data<=cB.data);
+      if(dentro)tot+=e.qtd;
+    });
+  });
+  return tot;
 }
 // AUDITORIA A02 (revisada com os dados reais): mantém o método de ciclos da Rev 15.2, que no backtest
 // previu tão bem quanto qualquer alternativa, e corrige só o defeito: entrada lançada entre duas contagens
 // SEM o saldo subir (consumo maior que a entrada) ficava escondida e o consumo saía menor que o real.
 // Agora qualquer entrada lançada entre duas contagens também fecha o ciclo.
+function descartesMPEntre(mpId,cA,cB){
+  return (S.descartes||[]).filter(d=>{
+    if(!mesmoId(d.mpId,mpId))return false;
+    if(d.ts&&cA.ts&&cB.ts)return d.ts>cA.ts&&d.ts<=cB.ts;
+    return d.data>cA.data&&d.data<=cB.data;
+  }).reduce((a,d)=>a+(Number(d.qtd)||0),0);
+}
 function ciclosConsumoMP(mpId){
   const cnts=contagensConsolidadasMP(mpId);
   if(cnts.length<2)return [];
@@ -1506,7 +1769,8 @@ function ciclosConsumoMP(mpId){
   limite.setDate(limite.getDate()-CONSUMO_HISTORICO_DIAS);
   return ciclos.map((c,idx)=> {
     const dias=diasEntreDatas(c.inicio.data,c.fim.data);
-    const consumo=Math.max(0,Number(c.inicio.totalMP)-Number(c.fim.totalMP));
+    // Descartes (vencido, avariado...) feitos no período não são consumo de produção
+    const consumo=Math.max(0,Number(c.inicio.totalMP)-Number(c.fim.totalMP)-descartesMPEntre(mpId,c.inicio,c.fim));
     return {...c,idx,dias,consumo,sem:dias>0?consumo/dias*7:0,atual:idx===ciclos.length-1};
   }).filter(c=>c.dias>=CONSUMO_CICLO_MIN_DIAS&&c.consumo>0&&new Date(c.fim.data+'T12:00')>=limite);
 }
@@ -1593,6 +1857,181 @@ function badgeValidade(val){
 // ═══ NAV ══════════════════════════════════════════════════════
 function pgAtual(){ const a=document.querySelector('.page.active'); return a?a.id.replace('page-',''):'dashboard'; }
 function navBtnPagina(p){ return [...document.querySelectorAll('.nav-btn')].find(b=>(b.getAttribute('onclick')||'').includes(`showPage('${p}'`)); }
+
+
+// ═══ MANUAL ═══════════════════════════════════════════════════
+function irManual(a){ const el=document.querySelector(a.getAttribute('href')); if(el)el.scrollIntoView({behavior:'smooth',block:'start'}); return false; }
+const nfm=(v,d=1)=>Number(v).toLocaleString('pt-BR',{maximumFractionDigits:d});
+function renderManual(){
+  document.querySelectorAll('.m-p-lead').forEach(e=>e.textContent=P.lead);
+  document.querySelectorAll('.m-p-seg').forEach(e=>e.textContent=P.seg);
+  document.querySelectorAll('.m-p-crit').forEach(e=>e.textContent=P.crit);
+  document.querySelectorAll('.m-p-warn').forEach(e=>e.textContent=P.warn);
+  document.querySelectorAll('.m-p-anom').forEach(e=>e.textContent=P.anom);
+  // Exemplo fixo — mesmas contas de analiseReposicao()
+  const cAnt=40/28*7, cAtu=30/14*7, sem=Math.round((0.7*cAtu+0.3*cAnt)*10)/10, d=sem/7;
+  const min=10,lead=30,seg=4,saldo=90;
+  const pto=Math.round(min+(lead+seg)*d), cob=Math.round(saldo/d), dPed=Math.round((saldo-pto)/d), q=Math.ceil(d*COBERTURA_COMPRA_DIAS);
+  document.getElementById('man-ex-consumo').innerHTML=`<b>Exemplo:</b> ciclo anterior de 01/09 a 29/09 (28 dias): saldo 100 → 60 = 40 sacos → 40 ÷ 28 × 7 = <b>${nfm(cAnt)} sacos/sem</b>.<br>
+    Ciclo atual de 06/10 a 20/10 (14 dias): saldo 120 → 90 = 30 sacos → 30 ÷ 14 × 7 = <b>${nfm(cAtu)} sacos/sem</b>.<br>
+    Consumo semanal = 0,70 × ${nfm(cAtu)} + 0,30 × ${nfm(cAnt)} = <b>${nfm(sem)} sacos/sem</b>.`;
+  document.getElementById('man-ex-repos').innerHTML=`<b>Continuando o exemplo</b> (saldo ${saldo}, mínimo ${min}, lead ${lead} dias, segurança ${seg} dias, consumo ${nfm(sem)}/sem):<br>
+    Consumo diário = ${nfm(sem)} ÷ 7 = <b>${nfm(d,2)}</b> · Cobertura = ${saldo} ÷ ${nfm(d,2)} = <b>${cob} dias</b><br>
+    Ponto de pedido = ${min} + (${lead} + ${seg}) × ${nfm(d,2)} = <b>${pto} sacos</b><br>
+    Data ideal = hoje + (${saldo} − ${pto}) ÷ ${nfm(d,2)} = <b>daqui a ${dPed} dias</b> · Ruptura = <b>daqui a ${cob} dias</b><br>
+    Quantidade sugerida = ${nfm(d,2)} × ${COBERTURA_COMPRA_DIAS} = <b>${q} sacos</b>`;
+  const st=s=>{const c=Math.round(s/d);if(min>0&&s<=min)return['Crítico',`saldo ${s} ≤ mínimo ${min}`];if(c<=P.crit)return['Crítico',`cobertura ${c} dias ≤ limite crítico ${P.crit}`];if(s<=pto)return['Atenção',`saldo ${s} ≤ ponto de pedido ${pto} (cobertura ${c} dias)`];if(c<=P.warn)return['Atenção',`cobertura ${c} dias ≤ limite de atenção ${P.warn}`];return['OK',`saldo acima do ponto (${pto}) e cobertura de ${c} dias`];};
+  const cor=x=>x==='Crítico'?'var(--danger)':x==='Atenção'?'#c07000':'var(--accent)';
+  document.getElementById('man-ex-status').innerHTML='<b>Mesma matéria-prima com saldos diferentes:</b><br>'+[8,12,50,saldo].map(sv=>{const[r,why]=st(sv);return `Saldo ${sv} → <b style="color:${cor(r)}">${r}</b> (${why})`;}).join('<br>');
+  document.getElementById('man-svg').innerHTML=svgManual(d,min,seg,pto,lead,q);
+  const sel=document.getElementById('man-sim-mp'),atual=sel.value;
+  sel.innerHTML='<option value="">Escolha uma matéria-prima...</option>'+materiaisOrdenados().map(m=>`<option value="${m.id}">${escHtml(m.nome)}</option>`).join('');
+  if(atual)sel.value=atual;
+  renderManualSim();
+}
+function svgManual(d,min,seg,pto,lead,q){
+  const X=dia=>50+dia*8.14, Y=u=>230-u*1.5, s0=120;
+  const dPed=(s0-pto)/d, dCheg=dPed+lead, sCheg=s0-dCheg*d, sDep=sCheg+q, sFim=sDep-(70-dCheg)*d;
+  const pts=[[0,s0],[dCheg,sCheg]].map(([a,b])=>`${X(a).toFixed(1)},${Y(b).toFixed(1)}`).join(' ');
+  const pts2=`${X(dCheg).toFixed(1)},${Y(sDep).toFixed(1)} ${X(70).toFixed(1)},${Y(sFim).toFixed(1)}`;
+  const ticks=[0,10,20,30,40,50,60,70].map(t=>`<line x1="${X(t)}" y1="230" x2="${X(t)}" y2="234" stroke="var(--border2)"/><text x="${X(t)}" y="246" text-anchor="middle" font-size="10" fill="var(--text3)">${t}</text>`).join('');
+  return `<svg class="man-svg" viewBox="0 0 640 300" role="img" aria-label="Gráfico do saldo caindo até o ponto de pedido, lead time e chegada da mercadoria">
+    <rect x="${X(0)}" y="${Y(min+seg*d)}" width="${X(70)-X(0)}" height="${Y(min)-Y(min+seg*d)}" fill="var(--warn-bg)"/>
+    <rect x="${X(0)}" y="${Y(min)}" width="${X(70)-X(0)}" height="${Y(0)-Y(min)}" fill="var(--danger-bg)"/>
+    <line x1="50" y1="230" x2="620" y2="230" stroke="var(--border2)"/><line x1="50" y1="20" x2="50" y2="230" stroke="var(--border2)"/>
+    ${ticks}<text x="620" y="262" text-anchor="end" font-size="10" fill="var(--text3)">dias</text>
+    <line x1="50" y1="${Y(pto)}" x2="620" y2="${Y(pto)}" stroke="#c07000" stroke-dasharray="5 4"/>
+    <text x="616" y="${Y(pto)-5}" text-anchor="end" font-size="11" fill="#c07000" font-weight="700">Ponto de pedido (${pto})</text>
+    <text x="56" y="${Y(min+seg*d)-4}" font-size="11" fill="var(--warn-text)" font-weight="600">Segurança (${seg} dias de consumo)</text>
+    <text x="56" y="${Y(min/2)+4}" font-size="11" fill="var(--danger)" font-weight="600">Estoque mínimo (${min})</text>
+    <polyline points="${pts}" fill="none" stroke="var(--accent)" stroke-width="2.5"/>
+    <line x1="${X(dCheg)}" y1="${Y(sCheg)}" x2="${X(dCheg)}" y2="${Y(sDep)}" stroke="var(--accent)" stroke-width="2.5" stroke-dasharray="2 3"/>
+    <polyline points="${pts2}" fill="none" stroke="var(--accent)" stroke-width="2.5"/>
+    <circle cx="${X(dPed)}" cy="${Y(pto)}" r="5" fill="#c07000"/><text x="${X(dPed)+8}" y="${Y(pto)-8}" font-size="11" fill="var(--text)" font-weight="700">Pedido feito</text>
+    <circle cx="${X(dCheg)}" cy="${Y(sDep)}" r="5" fill="var(--accent)"/><text x="${X(dCheg)-8}" y="${Y(sDep)-4}" text-anchor="end" font-size="11" fill="var(--text)" font-weight="700">Chegou +${q}</text>
+    <line x1="${X(dPed)}" y1="270" x2="${X(dCheg)}" y2="270" stroke="var(--text2)"/><line x1="${X(dPed)}" y1="264" x2="${X(dPed)}" y2="276" stroke="var(--text2)"/><line x1="${X(dCheg)}" y1="264" x2="${X(dCheg)}" y2="276" stroke="var(--text2)"/>
+    <text x="${(X(dPed)+X(dCheg))/2}" y="290" text-anchor="middle" font-size="11" fill="var(--text2)" font-weight="700">Lead time: ${lead} dias</text>
+    <text x="56" y="${Y(s0)-6}" font-size="10.5" fill="var(--text2)">Saldo</text>
+  </svg>`;
+}
+function renderManualSim(){
+  const out=document.getElementById('man-sim-out'),id=document.getElementById('man-sim-mp')?.value;
+  if(!out)return;
+  if(!id){out.innerHTML='<div class="muted">Escolha uma matéria-prima para ver as contas com os números reais dela.</div>';return;}
+  const m=S.materiais.find(x=>mesmoId(x.id,id));if(!m)return;
+  const a=analiseReposicao(m),un=escHtml(m.un),ciclos=ciclosConsumoMP(m.id),cnts=contagensConsolidadasMP(m.id);
+  const origem=(raw,pad)=>(raw===''||raw==null||(pad==='lead'&&!Number(raw)))?` <span class="muted">(padrão de Configurações)</span>`:' <span class="muted">(cadastro)</span>';
+  let h=`<div class="man-formula">Saldo atual = <b>${nfm(a.s,2)} ${un}</b> em ${a.la} lote(s) · Mínimo = <b>${m.min}</b> · Lead = <b>${m.lead} dias</b>${origem(m._leadRaw,'lead')} · Segurança = <b>${m.seg} dias</b>${origem(m._segRaw,'seg')}</div>`;
+  if(!ciclos.length){
+    h+=`<div class="man-dica">Ainda não há ciclo de consumo válido (${cnts.length} dia(s) com contagem). É preciso ter pelo menos duas contagens com 7 dias ou mais entre elas e queda de saldo sem reabastecimento no meio. Por isso o consumo aparece como "—" e a reposição usa só o mínimo.</div>`;
+  }else{
+    const atual=ciclos[ciclos.length-1],ant=ciclos.slice(0,-1),diasAnt=ant.reduce((x,c)=>x+c.dias,0);
+    h+=`<div class="table-wrap"><table><thead><tr><th>Ciclo</th><th>Início</th><th>Fim</th><th>Dias</th><th>Saldo início</th><th>Saldo fim</th><th>Descartes</th><th>Consumo</th><th>Por semana</th><th>Peso</th></tr></thead><tbody>${ciclos.map((c,i)=>{
+      const desc=descartesMPEntre(m.id,c.inicio,c.fim),peso=c===atual?'70%':(ant.length?(30*c.dias/diasAnt).toFixed(1)+'%':'—');
+      return `<tr${c===atual?' style="font-weight:700"':''}><td>${c===atual?'Atual':i+1}</td><td>${fmtBR(c.inicio.data)}</td><td>${fmtBR(c.fim.data)}</td><td>${nfm(c.dias,0)}</td><td>${nfm(c.inicio.totalMP,2)}</td><td>${nfm(c.fim.totalMP,2)}</td><td>${desc?nfm(desc,2):'—'}</td><td>${nfm(c.consumo,2)}</td><td>${nfm(c.sem,2)}</td><td>${peso}</td></tr>`;}).join('')}</tbody></table></div>`;
+    const hist=diasAnt?ant.reduce((x,c)=>x+c.sem*c.dias,0)/diasAnt:null;
+    h+=`<div class="man-formula">Consumo semanal = ${hist!=null?`0,70 × ${nfm(atual.sem,2)} + 0,30 × ${nfm(hist,2)}`:`ciclo atual ${nfm(atual.sem,2)} (sem ciclos anteriores)`} = <b>${nfm(a.cs)} ${un}/sem</b></div>`;
+  }
+  if(a.csd>0){
+    const ped=a.dPed<=0?'<b style="color:var(--danger)">AGORA</b>':`<b>${(()=>{const x=new Date();x.setDate(x.getDate()+a.dPed);return x.toLocaleDateString('pt-BR');})()}</b> (daqui a ${a.dPed} dias)`;
+    const rup=(()=>{const x=new Date();x.setDate(x.getDate()+a.dc);return x.toLocaleDateString('pt-BR');})();
+    h+=`<div class="man-formula">Consumo diário = ${nfm(a.cs)} ÷ 7 = <b>${nfm(a.csd,3)}</b></div>
+      <div class="man-formula">Cobertura = ${nfm(a.s,2)} ÷ ${nfm(a.csd,3)} = <b>${a.dc} dias</b> → ruptura prevista em <b>${rup}</b></div>
+      <div class="man-formula">Ponto de pedido = ${m.min} + (${m.lead} + ${m.seg}) × ${nfm(a.csd,3)} = <b>${a.pto} ${un}</b></div>
+      <div class="man-formula">Data ideal de compra = hoje + (${nfm(a.s,2)} − ${a.pto}) ÷ ${nfm(a.csd,3)} → ${ped}</div>
+      <div class="man-formula">Quantidade sugerida = ${nfm(a.csd,3)} × ${COBERTURA_COMPRA_DIAS} = <b>${a.qSug} ${un}</b></div>`;
+  }else{
+    h+=`<div class="man-formula">Sem consumo calculado: ponto de pedido = mínimo = <b>${a.pto}</b> · quantidade sugerida = 3 × mínimo = <b>${a.qSug} ${un}</b></div>`;
+  }
+  const regra=m.min>0&&a.s<=m.min?`saldo ${nfm(a.s,2)} ≤ mínimo ${m.min}`:a.dc<=P.crit?`cobertura ${a.dc} dias ≤ limite crítico ${P.crit}`:a.s<=a.pto?`saldo ${nfm(a.s,2)} ≤ ponto de pedido ${a.pto}`:a.dc<=P.warn?`cobertura ${a.dc} dias ≤ limite de atenção ${P.warn}`:`saldo acima do ponto de pedido e cobertura ${a.dc>=999?'sem limite (sem consumo)':a.dc+' dias'}`;
+  const nome={ok:'OK',warn:'Atenção',danger:'Crítico'}[a.st],cor={ok:'var(--accent)',warn:'#c07000',danger:'var(--danger)'}[a.st];
+  h+=`<div class="man-formula">Status = <b style="color:${cor}">${nome}</b> — ${regra}</div>
+    <p class="muted">Esses são exatamente os números que aparecem na Reposição e no Estoque para ${escHtml(m.nome)}.</p>`;
+  out.innerHTML=h;
+}
+// ═══ SEM NÚMEROS NEGATIVOS ═══════════════════════════════════
+// Todo campo numérico com min >= 0 (quantidade, valor, contagem, descarte...) recusa o sinal de menos,
+// inclusive colado. Vale também para campos criados em versões futuras.
+document.addEventListener('keydown',e=>{
+  const t=e.target;
+  if(t&&t.tagName==='INPUT'&&t.type==='number'&&t.min!==''&&Number(t.min)>=0&&(e.key==='-'||e.key==='e'||e.key==='E'))e.preventDefault();
+});
+document.addEventListener('input',e=>{
+  const t=e.target;
+  if(t&&t.tagName==='INPUT'&&t.type==='number'&&t.min!==''&&Number(t.min)>=0&&t.value!==''&&Number(t.value)<0){
+    t.value='';t.style.borderColor='var(--danger)';
+    notify('Valor negativo não é permitido.','warn');
+  }
+},true);
+
+// ═══ LAYOUT SEM ROLAGEM HORIZONTAL ════════════════════════════
+// Toda tabela visível é ajustada: normal → compacta → cartões (uma linha = um cartão com rótulos).
+// Vale para tabelas criadas em versões futuras sem precisar de código novo.
+function rotulosTabela(t){
+  const linhaCab=t.tHead&&t.tHead.rows[t.tHead.rows.length-1];
+  if(!linhaCab)return [];
+  const rot=[];
+  [...linhaCab.cells].forEach(th=>{
+    const c=th.cloneNode(true);c.querySelectorAll('.info-btn').forEach(x=>x.remove());
+    const txt=c.textContent.replace(/\s+/g,' ').trim();
+    for(let k=0;k<(th.colSpan||1);k++)rot.push(txt);
+  });
+  return rot;
+}
+function rotularTabela(t){
+  const rot=rotulosTabela(t);if(!rot.length)return;
+  [...t.tBodies].forEach(tb=>[...tb.rows].forEach(tr=>{
+    let col=0;const cells=[...tr.cells];
+    cells.forEach(td=>{
+      const span=td.colSpan||1;
+      td.classList.toggle('linha-cheia',cells.length===1&&span>1);
+      td.setAttribute('data-label',span>1?'':(rot[col]||''));
+      col+=span;
+    });
+  }));
+}
+// Cabe quando nem a tabela nem algum conteúdo de célula passa da largura do quadro que a contém
+function cabeNaLargura(t){ const c=t.parentElement; return !c||(t.offsetWidth<=c.clientWidth+1&&c.scrollWidth<=c.clientWidth+1); }
+function ajustarTabelas(raiz){
+  (raiz||document).querySelectorAll('table').forEach(t=>{
+    if(!t.offsetParent)return;
+    t.classList.remove('modo-compacto','modo-cartao');
+    if(cabeNaLargura(t))return;
+    t.classList.add('modo-compacto');
+    if(cabeNaLargura(t))return;
+    t.classList.remove('modo-compacto');
+    rotularTabela(t);
+    t.classList.add('modo-cartao');
+  });
+}
+function verificarLayout(){
+  const vw=document.documentElement.clientWidth,problemas=[];
+  if(document.documentElement.scrollWidth>vw+1)problemas.push('página +'+(document.documentElement.scrollWidth-vw)+'px');
+  const pg=document.querySelector('.page.active');
+  if(pg)pg.querySelectorAll('*').forEach(el=>{
+    if(!el.offsetParent)return;
+    const ox=getComputedStyle(el).overflowX;
+    if((ox==='auto'||ox==='scroll')&&el.scrollWidth>el.clientWidth+2)problemas.push((el.id?'#'+el.id:el.className||el.tagName)+' +'+(el.scrollWidth-el.clientWidth)+'px');
+  });
+  let b=document.getElementById('layout-alerta');
+  if(!b){b=document.createElement('div');b.id='layout-alerta';b.textContent='⚠ Largura';document.body.appendChild(b);}
+  if(problemas.length){
+    console.warn('[LAYOUT] Rolagem horizontal detectada em "'+(pg?pg.id:'?')+'":',problemas);
+    b.title='Rolagem horizontal detectada nesta tela (corrigir na próxima versão):\n'+problemas.slice(0,8).join('\n');
+    b.style.display=isMaster()?'block':'none';
+  }else b.style.display='none';
+  return problemas;
+}
+let _layoutTimer=null;
+function agendarAjusteLayout(){ clearTimeout(_layoutTimer); _layoutTimer=setTimeout(()=>{ajustarTabelas();verificarLayout();},120); }
+window.addEventListener('resize',agendarAjusteLayout);
+document.addEventListener('DOMContentLoaded',()=>{
+  const alvo=document.querySelector('.main')||document.body;
+  new MutationObserver(agendarAjusteLayout).observe(alvo,{childList:true,subtree:true});
+  ['modal-conf-entrada','modal-descarte','modal-desc-mp','modal-corrigir','modal-pedido','modal-impressao','modal-ajuda-entrada'].forEach(id=>{
+    const m=document.getElementById(id);if(m)new MutationObserver(agendarAjusteLayout).observe(m,{childList:true,subtree:true,attributes:true,attributeFilter:['style']});
+  });
+});
 function showPage(p,btn){
   if(usuarioLogado()&&!podeAcessar(p)){
     p=primeiraPaginaPermitida();
@@ -1605,11 +2044,12 @@ function showPage(p,btn){
   document.getElementById('page-'+p).classList.add('active');
   if(btn)btn.classList.add('active');
   renderPage(p);
+  agendarAjusteLayout();
   registrarLog('navegacao','Acessou menu '+p);
   if(p==='entradas'&&cliqueDireto)setTimeout(abrirModalAjudaEntrada,80);
 }
 function renderPage(p){
-  const m={dashboard:renderDashboard,estoque:renderEstoque,entradas:renderEntradas,contagem:renderContagem,consumo:renderConsumo,reposicao:renderReposicao,rastreabilidade:renderRastreabilidade,intel:renderIntel,relatorios:renderRelatorios,auditoria:renderAuditoria,precos:renderHistoricoPrecos,materiais:renderMateriais,config:renderConfig};
+  const m={dashboard:renderDashboard,estoque:renderEstoque,entradas:renderEntradas,contagem:renderContagem,consumo:renderConsumo,reposicao:renderReposicao,rastreabilidade:renderRastreabilidade,intel:renderIntel,relatorios:renderRelatorios,auditoria:renderAuditoria,precos:renderHistoricoPrecos,materiais:renderMateriais,config:renderConfig,manual:renderManual};
   if(m[p])m[p]();
   aplicarDicasTabelas();
 }
@@ -1653,7 +2093,7 @@ function renderDashboard(){
     const cls=isV?'danger':isU?'warn':'warn';
     const icon=isV?'✕':isU?'⚠':'!';
     const label=isV?'— <strong>VENCIDO</strong>':isU?'— <strong>URGENTE (≤7 dias)</strong>':'— Vence em breve (≤30 dias)';
-    return`<div class="alert-item ${cls}"><div class="alert-icon ${cls}">${icon}</div><div class="alert-body"><div class="alert-name">${mp?mp.nome:'—'} — Lote <span class="badge b-lote">${l.lote||'—'}</span></div><div class="alert-desc">${l.forn||'—'} · Saldo: ${l.saldoLote} ${mp?mp.un:''} · Validade: ${fmtBR(l.validade)} ${label}</div></div><span class="alert-cta" onclick="${mp?`abrirRastreabilidadeInsumo('${mp.id}')`:`showPage('rastreabilidade')`}">Ver lote →</span></div>`;
+    return`<div class="alert-item ${cls}"><div class="alert-icon ${cls}">${icon}</div><div class="alert-body"><div class="alert-name">${mp?mp.nome:'—'} — Lote <span class="badge b-lote">${l.lote||'—'}</span></div><div class="alert-desc">${l.forn||'—'} · Saldo: ${l.saldoLote} ${mp?mp.un:''} · Validade: ${fmtBR(l.validade)} ${label}</div></div><span class="alert-cta" onclick="${mp?`abrirRastreabilidadeInsumo('${mp.id}')`:`showPage('rastreabilidade')`}">Ver lote →</span>${isV?`<span class="alert-cta" style="color:var(--danger);margin-left:8px" onclick="abrirDescarteLote('${l.id}','Vencido')">Descartar →</span>`:''}</div>`;
   }).join(''):'<div class="empty">Nenhum lote com validade crítica.</div>';
 
   // Chart consumo
@@ -1863,7 +2303,7 @@ function renderEntradas(){
       <td>${valorTotalLote(l)?fmtMoeda(valorTotalLote(l)):'—'}</td>
       <td>${stL}</td>
       <td style="font-size:11px;color:var(--text2);max-width:200px">${l.obs||'—'}</td>
-      <td>${l.ativo?`<button class="btn btn-sm btn-danger" onclick="encerrarLote(${l.id})">Encerrar</button>`:'—'}</td>
+      <td style="white-space:nowrap">${l.ativo?`<button class="btn btn-sm btn-danger" onclick="encerrarLote('${l.id}')">${Number(l.saldoLote)>0?'Descartar':'Encerrar'}</button>`:''}${isMaster()?` <button class="btn btn-sm" onclick="abrirCorrecaoLote('${l.id}')" title="Corrigir dados deste lançamento (somente master)">Corrigir</button>`:''}${!l.ativo&&!isMaster()?'—':''}</td>
     </tr>`;
   }).join(''):'<tr><td colspan="14" style="text-align:center;padding:20px;color:var(--text3)">Nenhum lote registrado.</td></tr>';
 }
@@ -1956,8 +2396,9 @@ function checagensEntrada(d){
   const forns=fornecedoresMP(d.mp).filter(fornValido);
   if(forns.length&&!forns.some(f=>normTxt(f)===normTxt(d.forn)))
     avisos.push(`O fornecedor "${d.forn}" nunca entregou ${d.mp.nome}. Fornecedores habituais: ${forns.join(', ')}. Confira se escolheu a matéria-prima certa.`);
-  // Número de lote repetido
-  S.lotes.filter(l=>l.lote&&normTxt(l.lote)===normTxt(d.lote)).forEach(l=>{
+  // Número de lote repetido (se for o mesmo lote lançado há poucos dias, oferece somar em vez de avisar)
+  const cand=loteParaSomar(d);
+  S.lotes.filter(l=>l.lote&&normTxt(l.lote)===normTxt(d.lote)&&l!==cand).forEach(l=>{
     const mpL=mpDoLote(l);
     if(mpL&&!mesmoId(mpL.id,d.mp.id))avisos.push(`O lote ${d.lote} já está cadastrado em OUTRA matéria-prima: ${mpL.nome} (${fmtBR(l.dataEntrega)}). Pode ser que você escolheu a matéria-prima errada.`);
     else avisos.push(`O lote ${d.lote} desta matéria-prima já foi registrado em ${fmtBR(l.dataEntrega)} (${l.qtyEntrada} ${d.mp.un}). Não é entrada duplicada?`);
@@ -1971,7 +2412,32 @@ function checagensEntrada(d){
   // Valor fora do padrão
   const av=avaliacaoValorEntrada(d.valorUnit,d.mp);
   if(av&&av.abs>=25)avisos.push(`Valor ${fmtMoeda(d.valorUnit)}/${av.padrao.unidade} está ${av.abs.toFixed(0)}% ${av.variacao>0?'acima':'abaixo'} da média recente (${fmtMoeda(av.padrao.media)}/${av.padrao.unidade}). Confira se é o preço por ${av.padrao.unidade}.`);
-  return {erros,avisos};
+  return {erros,avisos,cand};
+}
+// Lote ativo da mesma MP, com o mesmo número, lançado nos últimos 7 dias
+const SOMAR_LOTE_DIAS = 7;
+function loteParaSomar(d){
+  if(!d.mp||!d.lote)return null;
+  const limite=Date.now()-SOMAR_LOTE_DIAS*864e5;
+  return S.lotes.filter(l=>l.ativo&&lotePertenceMp(l,d.mp.id)&&normTxt(l.lote)===normTxt(d.lote)&&
+      ((l.criadoTs&&l.criadoTs>=limite)||(!l.criadoTs&&l.dataEntrega&&l.dataEntrega>=addDiasIso(hoje(),-SOMAR_LOTE_DIAS))))
+    .sort((a,b)=>(b.criadoTs||0)-(a.criadoTs||0))[0]||null;
+}
+function htmlSomarLote(d){
+  const c=d.chk.cand;if(!c)return '';
+  const un=escHtml(d.mp.un),q0=Number(c.qtyEntrada)||0,tot=q0+d.qty;
+  const v0=Number(c.valorUnit)||0,vm=v0>0&&d.valorUnit>0?(q0*v0+d.qty*d.valorUnit)/tot:0;
+  const notas=[];
+  if(vm&&Math.abs(d.valorUnit-v0)>1e-9)notas.push(`O valor ref. passa a ser a <b>média ponderada</b>: ${fmtMoeda(v0)} e ${fmtMoeda(d.valorUnit)} → <b>${fmtMoeda(vm)}</b>.`);
+  if(c.validade&&d.validade&&c.validade!==d.validade)notas.push(`⚠ A validade digitada (${fmtBR(d.validade)}) é <b>diferente</b> da do lote já lançado (${fmtBR(c.validade)}). Mesmo lote costuma ter a mesma validade — confira a embalagem. Se somar, fica a mais próxima: <b>${fmtBR(d.validade<c.validade?d.validade:c.validade)}</b>.`);
+  if(d.nf&&c.nf&&normTxt(d.nf)!==normTxt(c.nf))notas.push(`As duas NFs ficam registradas no lote (${escHtml(c.nf)} / ${escHtml(d.nf)}).`);
+  return `<div class="conf-msg" style="background:var(--blue-bg);color:var(--blue-text);border:1px solid #b8cff0;margin-top:10px">
+    <b>O lote ${escHtml(c.lote)} desta matéria-prima já foi lançado ${c.criadoTs?'em '+new Date(c.criadoTs).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):fmtBR(c.dataEntrega)} com ${q0.toLocaleString('pt-BR')} ${un}.</b>
+    Como é o mesmo lote, o recomendado é <b>somar</b>: assim ele aparece uma vez só na contagem.
+    <label style="display:flex;gap:8px;align-items:flex-start;margin-top:8px;cursor:pointer"><input type="radio" name="conf-modo" value="somar" checked style="width:17px;height:17px;margin-top:1px"> <span><b>Somar ao lote já lançado</b> → fica com ${tot.toLocaleString('pt-BR')} ${un} (recomendado)</span></label>
+    <label style="display:flex;gap:8px;align-items:flex-start;margin-top:4px;cursor:pointer"><input type="radio" name="conf-modo" value="novo" style="width:17px;height:17px;margin-top:1px"> <span>Criar lançamento separado (só se for outra entrega)</span></label>
+    ${notas.map(n=>`<div style="margin-top:6px;font-size:12px">${n}</div>`).join('')}
+  </div>`;
 }
 function totalEntradaPrevisto(d){
   const fator=fatorUnSiMP(d.mp),preco=Number(d.valorUnit)||0;
@@ -1988,6 +2454,7 @@ function registrarLote(){
   const obs=document.getElementById('ent-obs').value;
   const nf=document.getElementById('ent-nf').value.trim();
   if(!mpSel){notify('Escolha a matéria-prima na lista (digite e clique na opção).','warn');document.getElementById('ent-mp-busca').focus();return;}
+  if(qty<0||valorUnit<0){notify('Valor negativo não é permitido. Se lançou quantidade a mais, o saldo é corrigido na Contagem Física (ou peça ao responsável).','error');return;}
   if(!qty||qty<=0||!forn||!lote||!valorUnit||valorUnit<=0){notify('Preencha os campos obrigatórios: Quantidade, Fornecedor, Lote, Validade, Data de Entrega e Valor.','warn');return;}
   const d={mp:mpSel,qty,forn,lote,nf,valorUnit,validade,dataEntrega,obs};
   const chk=checagensEntrada(d);
@@ -2010,6 +2477,7 @@ function abrirModalConfEntrada(){
     <tr><td>Valor ref. (${unidadeReferenciaEntrada(d.mp)})</td><td>${fmtMoeda(d.valorUnit)}</td></tr>
     <tr><td>Valor total estimado</td><td>${total?fmtMoeda(total):'—'}</td></tr>
   </table>`;
+  html+=htmlSomarLote(d);
   if(erros.length)html+=`<div style="font-size:12px;font-weight:700;color:var(--danger);margin-top:6px">ERROS — precisam ser corrigidos:</div>`+erros.map(e=>`<div class="conf-msg erro">✕ ${escHtml(e)}</div>`).join('');
   if(avisos.length)html+=`<div style="font-size:12px;font-weight:700;color:var(--warn-text);margin-top:10px">ATENÇÃO — confira antes de seguir:</div>`+avisos.map(a=>`<div class="conf-msg aviso">⚠ ${escHtml(a)}</div>`).join('');
   if(erros.length&&!master){
@@ -2039,7 +2507,12 @@ async function confirmarRegistroLote(){
   const btnC=document.getElementById('btn-conf-entrada'),btn=document.getElementById('btn-ent');
   btnC.disabled=true;btnC.textContent='Salvando...';btn.disabled=true;
   try {
-    const r=await gsCall({action:'saveLote',data:{mpId,qtyEntrada:d.qty,forn:d.forn,lote:d.lote,nf:d.nf,dataCompra:'',dataEntrega:d.dataEntrega,valorUnit:d.valorUnit,validade:d.validade,obs:d.obs,forcarValidade:erros.length>0}});
+    const somar=!!d.chk.cand&&(document.querySelector('input[name="conf-modo"]:checked')||{}).value==='somar';
+    const r=somar
+      ?await gsCall({action:'somarLote',data:{loteId:d.chk.cand.id,qty:d.qty,valorUnit:d.valorUnit,nf:d.nf,dataEntrega:d.dataEntrega,validade:d.validade,obs:d.obs,usuario:(usuarioLogado()||{}).login||'',forcarValidade:erros.length>0}})
+      :await gsCall({action:'saveLote',data:{mpId,qtyEntrada:d.qty,forn:d.forn,lote:d.lote,nf:d.nf,dataCompra:'',dataEntrega:d.dataEntrega,valorUnit:d.valorUnit,validade:d.validade,obs:d.obs,forcarValidade:erros.length>0}});
+    const errSom=r&&r.ok&&r.result&&r.result.error;
+    if(errSom){notify(errSom,'error');return;}
     if(r&&r.ok){
       fecharModalConfEntrada();
       let pedidoCancelado=Number(r.result&&r.result.pedidosCancelados)||0;
@@ -2048,8 +2521,8 @@ async function confirmarRegistroLote(){
         if(rc&&rc.ok)pedidoCancelado=1;
       }
       await sincronizar(true);
-      notify(pedidoCancelado?'Lote registrado com sucesso! Pedido aberto cancelado automaticamente.':'Lote registrado com sucesso!');
-      let det=`${d.mp.nome} · lote ${d.lote}${d.nf?' · NF '+d.nf:''} · ${d.qty} · val. ${fmtBR(d.validade)}`;
+      notify((somar?`Somado ao lote ${d.lote}: agora ${(Number(r.result.qtyEntrada)||0).toLocaleString('pt-BR')} ${d.mp.un}.`:'Lote registrado com sucesso!')+(pedidoCancelado?' Pedido aberto cancelado automaticamente.':''));
+      let det=`${somar?'SOMADO AO LOTE · ':''}${d.mp.nome} · lote ${d.lote}${d.nf?' · NF '+d.nf:''} · ${d.qty} · val. ${fmtBR(d.validade)}`;
       if(avisos.length)det+=` · ${avisos.length} aviso(s) confirmado(s)`;
       if(erros.length)det+=` · FORÇADO PELO MASTER com ${erros.length} erro(s)`;
       registrarLog('entrada_registrada',det);
@@ -2060,20 +2533,237 @@ async function confirmarRegistroLote(){
     else notify('Sem resposta do servidor.','error');
   } finally { btn.disabled=false;btnC.textContent='Confirmar e registrar';atualizarBotaoConfEntrada(); }
 }
+// Encerrar: sem saldo, só fecha o lote. Com saldo, abre o descarte (motivo obrigatório).
 async function encerrarLote(id){
-  if(!confirm('Confirma o encerramento deste lote? O saldo restante será zerado.'))return;
+  const l=S.lotes.find(x=>mesmoId(x.id,id));
+  if(l&&Number(l.saldoLote)>0){abrirDescarteLote(id);return;}
+  if(!confirm('Encerrar este lote? Ele está sem saldo.'))return;
   const r=await gsCall({action:'encerrarLote',data:{id}});
-  if(r&&r.ok){await sincronizar(true);notify('Lote encerrado.');renderEntradas();}
-  else if(r) notify(r.error||'Erro','error');
+  const err=erroResp(r);
+  if(err){notify(err,'error');return;}
+  await sincronizar(true);notify('Lote encerrado.');
+}
+function erroResp(r){ if(!r)return 'Sem resposta do servidor.'; return r.error||(r.result&&r.result.error)||(r.ok?'':'Erro ao salvar.'); }
+// ═══ DESCARTE DE LOTE ═════════════════════════════════════════
+const MOTIVOS_DESCARTE=['Vencido','Avariado / contaminado','Reprovado na qualidade','Matéria-prima descontinuada','Outro'];
+let DESCARTE_LOTE=null;
+function valorDescarte(l,qtd){ return l&&l.valorUnit?precoPorUnidadeOperacional(l)*(Number(qtd)||0):0; }
+function abrirDescarteLote(loteId,motivoPadrao){
+  const l=S.lotes.find(x=>mesmoId(x.id,loteId));if(!l){notify('Lote não encontrado.','error');return;}
+  const mp=mpDoLote(l),saldo=Number(l.saldoLote)||0;
+  if(saldo<=0){notify('Este lote não tem saldo para descartar.','warn');return;}
+  DESCARTE_LOTE=l;
+  const motivo=motivoPadrao||(l.validade&&vencido(l.validade)?'Vencido':(mp&&mp.descontinuada?'Matéria-prima descontinuada':''));
+  document.getElementById('desc-lote-info').innerHTML=`<div class="ent-mp-card" style="margin-top:0"><div class="mp-nome" style="font-size:17px">${escHtml(mp?mp.nome:'—')}</div>
+    <div class="mp-linha">Lote <span class="badge b-lote">${escHtml(l.lote||'—')}</span> · ${escHtml(l.forn||'—')} · Saldo: <b>${saldo.toLocaleString('pt-BR')} ${escHtml(mp?mp.un:'')}</b> · Validade: ${l.validade?fmtBR(l.validade)+' '+badgeValidade(l.validade):'—'}</div></div>`;
+  const q=document.getElementById('desc-qtd');q.value=saldo;q.max=saldo;
+  document.getElementById('desc-motivo').innerHTML='<option value="">Selecione...</option>'+MOTIVOS_DESCARTE.map(m=>`<option${m===motivo?' selected':''}>${m}</option>`).join('');
+  document.getElementById('desc-obs').value='';
+  atualizarPrevDescarte();
+  document.getElementById('modal-descarte').style.display='flex';
+}
+function atualizarPrevDescarte(){
+  const l=DESCARTE_LOTE;if(!l)return;
+  const mp=mpDoLote(l),saldo=Number(l.saldoLote)||0,qtd=parseFloat(document.getElementById('desc-qtd').value)||0;
+  const el=document.getElementById('desc-prev');
+  if(qtd<=0||qtd>saldo){el.className='conf-msg erro';el.textContent=`Quantidade deve ser entre 0 e ${saldo.toLocaleString('pt-BR')}.`;return;}
+  const v=valorDescarte(l,qtd);
+  el.className='conf-msg aviso';
+  el.innerHTML=`Perda de <b>${qtd.toLocaleString('pt-BR')} ${escHtml(mp?mp.un:'')}</b>${v?` ≈ <b>${fmtMoeda(v)}</b>`:''}. ${qtd>=saldo?'O lote será <b>encerrado</b>.':'O lote continua ativo com '+(saldo-qtd).toLocaleString('pt-BR')+' '+escHtml(mp?mp.un:'')+'.'} Isso <b>não</b> entra no consumo.`;
+}
+function fecharDescarte(){document.getElementById('modal-descarte').style.display='none';DESCARTE_LOTE=null;}
+async function confirmarDescarte(){
+  const l=DESCARTE_LOTE;if(!l)return;
+  const saldo=Number(l.saldoLote)||0,qtd=parseFloat(document.getElementById('desc-qtd').value)||0;
+  const motivo=document.getElementById('desc-motivo').value,obs=document.getElementById('desc-obs').value.trim();
+  if(qtd<=0||qtd>saldo){notify('Quantidade inválida.','warn');return;}
+  if(!motivo){notify('Escolha o motivo do descarte.','warn');return;}
+  if(motivo==='Outro'&&!obs){notify('Descreva o motivo na observação.','warn');return;}
+  const mp=mpDoLote(l),u=usuarioLogado()||{};
+  const btn=document.getElementById('btn-desc-conf');btn.disabled=true;btn.textContent='Salvando...';
+  try{
+    const r=await gsCall({action:'descartarLote',data:{loteId:l.id,qtd,motivo,obs,usuario:u.login||'',valorTotal:Math.round(valorDescarte(l,qtd)*100)/100}});
+    const err=erroResp(r);
+    if(err){notify(err,'error');return;}
+    registrarLog('lote_descartado',`${mp?mp.nome:'?'} · lote ${l.lote} · ${qtd} · ${motivo}${obs?' · '+obs:''}`);
+    fecharDescarte();await sincronizar(true);
+    notify(qtd>=saldo?'Lote descartado e encerrado.':'Descarte registrado.');
+  }finally{btn.disabled=false;btn.textContent='Confirmar descarte';}
+}
+// ═══ CORRIGIR LANÇAMENTO (somente master) ════════════════════
+let CORR_LOTE=null;
+const CORR_CAMPOS=[['mpId','corr-mp','Matéria-prima'],['forn','corr-forn','Fornecedor'],['lote','corr-lote','Lote'],['nf','corr-nf','NF'],['dataEntrega','corr-entrega','Data de entrega'],['validade','corr-validade','Validade'],['qtyEntrada','corr-qty','Quantidade recebida'],['valorUnit','corr-valor','Valor ref.'],['obs','corr-obs','Observação']];
+function ultimaContagemLote(l){
+  let ult=null;
+  (S.contagens||[]).forEach(c=>{ if(c.items.some(i=>mesmoId(i.loteId,l.id))&&(!l.criadoTs||!c.ts||c.ts>l.criadoTs)&&(!ult||c.data>ult.data))ult=c; });
+  return ult;
+}
+function valorOriginalCorr(l,k){
+  const mp=mpDoLote(l);
+  return {mpId:mp?String(mp.id):String(l.mpId),forn:l.forn||'',lote:l.lote||'',nf:l.nf||'',dataEntrega:l.dataEntrega||'',validade:l.validade||'',qtyEntrada:String(Number(l.qtyEntrada)||0),valorUnit:l.valorUnit!=null?String(Number(l.valorUnit)):'',obs:l.obs||''}[k];
+}
+function abrirCorrecaoLote(id){
+  if(!isMaster()){notify('Apenas usuário master pode corrigir lançamentos.','warn');return;}
+  const l=S.lotes.find(x=>mesmoId(x.id,id));if(!l)return;
+  CORR_LOTE=l;
+  const mp=mpDoLote(l);
+  const opts=materiaisOrdenados().map(m=>`<option value="${m.id}">${escHtml(m.nome)}</option>`).join('');
+  document.getElementById('corr-mp').innerHTML=(mp&&mp.descontinuada?`<option value="${mp.id}">${escHtml(mp.nome)} (descontinuada)</option>`:'')+opts;
+  CORR_CAMPOS.forEach(([k,elId])=>{document.getElementById(elId).value=valorOriginalCorr(l,k);});
+  document.getElementById('corr-motivo').value='';
+  document.getElementById('corr-info').innerHTML=`<div class="ent-mp-card" style="margin-top:0"><div class="mp-linha">Lote <span class="badge b-lote">${escHtml(l.lote||'—')}</span> · lançado ${l.criadoTs?new Date(l.criadoTs).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):fmtBR(l.dataEntrega)} · saldo atual <b>${Number(l.saldoLote).toLocaleString('pt-BR')} ${escHtml(mp?mp.un:'')}</b> · ${l.ativo?'ativo':'encerrado'}</div></div>`;
+  const hist=(S.correcoes||[]).filter(c=>mesmoId(c.loteId,l.id));
+  document.getElementById('corr-hist').innerHTML=hist.length?`<div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:4px">Correções anteriores deste lote</div><table class="conf-tab">${hist.map(c=>`<tr><td>${c.dataHora?new Date(c.dataHora).toLocaleDateString('pt-BR'):''} · ${escHtml(c.usuario)}</td><td>${escHtml(c.campo)}: ${escHtml(c.de)} → <b>${escHtml(c.para)}</b> <span class="muted">(${escHtml(c.motivo)})</span></td></tr>`).join('')}</table>`:'';
+  CORR_CAMPOS.forEach(([,elId])=>{const el=document.getElementById(elId);el.oninput=atualizarCorrecao;el.onchange=atualizarCorrecao;});
+  document.getElementById('corr-motivo').oninput=atualizarCorrecao;
+  atualizarCorrecao();
+  document.getElementById('modal-corrigir').style.display='flex';
+}
+function difsCorrecao(){
+  const l=CORR_LOTE;if(!l)return {};
+  const out={};
+  CORR_CAMPOS.forEach(([k,elId])=>{
+    let v=document.getElementById(elId).value;if(k==='lote')v=v.trim().toUpperCase();else if(k!=='obs')v=v.trim();
+    const o=valorOriginalCorr(l,k);
+    const igual=(k==='qtyEntrada'||k==='valorUnit')?Number(v)===Number(o):v===o;
+    if(!igual)out[k]=v;
+  });
+  return out;
+}
+function atualizarCorrecao(){
+  const l=CORR_LOTE;if(!l)return;
+  const dif=difsCorrecao(),mp=mpDoLote(l),un=escHtml(mp?mp.un:'');
+  const erros=[],avisos=[];
+  const ent=document.getElementById('corr-entrega').value,val=document.getElementById('corr-validade').value;
+  const q=document.getElementById('corr-qty').value,v=document.getElementById('corr-valor').value;
+  if(!(Number(q)>0))erros.push('Quantidade recebida deve ser maior que zero.');
+  if(!(Number(v)>0))erros.push('Valor ref. deve ser maior que zero.');
+  if(!document.getElementById('corr-lote').value.trim())erros.push('Número do lote não pode ficar vazio.');
+  if(!document.getElementById('corr-forn').value.trim())erros.push('Fornecedor não pode ficar vazio.');
+  if(!ent)erros.push('Informe a data de entrega.');else if(ent>hoje())erros.push('Data de entrega no futuro.');
+  if(!val)erros.push('Informe a validade.');else if(ent&&val<=ent)erros.push('A validade precisa ser posterior à data de entrega.');
+  const mpNovo=S.materiais.find(m=>mesmoId(m.id,document.getElementById('corr-mp').value))||mp;
+  if(!erros.length&&ent&&val&&diffDias(ent,val)<valMinMP(mpNovo))avisos.push(`Validade de ${diffDias(ent,val)} dias após a entrega — abaixo do mínimo de ${valMinMP(mpNovo)} dias de ${mpNovo.nome}.`);
+  if(dif.mpId)avisos.push(`As contagens e os descartes deste lote também passam para ${mpNovo.nome}.`);
+  // saldo
+  const box=document.getElementById('corr-saldo-box');
+  const deltaQ=dif.qtyEntrada!==undefined?Number(q)-Number(l.qtyEntrada):0;
+  if(deltaQ){
+    const cont=ultimaContagemLote(l),novo=Math.round((Number(l.saldoLote)+deltaQ)*1000)/1000;
+    const pode=l.ativo&&novo>=0;
+    box.innerHTML=`<div class="conf-msg aviso"><label style="display:flex;gap:8px;align-items:flex-start;cursor:${pode?'pointer':'default'}"><input type="checkbox" id="corr-ajusta" ${pode&&!cont?'checked':''} ${pode?'':'disabled'} onchange="atualizarCorrecao()" style="width:17px;height:17px;margin-top:1px">
+      <span><b>Ajustar o saldo junto</b>: ${Number(l.saldoLote).toLocaleString('pt-BR')} → <b>${novo.toLocaleString('pt-BR')} ${un}</b>.
+      ${!l.ativo?'Lote encerrado: só a quantidade recebida é corrigida.':novo<0?'Ficaria negativo: só a quantidade recebida é corrigida; ajuste o saldo pela contagem física.':cont?`<br><b>Este lote já foi contado em ${fmtBR(cont.data)}</b> — o saldo já reflete o estoque físico. Deixe desmarcado para não corrigir duas vezes.`:'O lote ainda não foi contado, então o saldo ainda carrega o erro do lançamento.'}</span></label></div>`;
+  }else box.innerHTML='';
+  const nomes=Object.fromEntries(CORR_CAMPOS.map(([k,,n])=>[k,n]));
+  const fmtV=(k,x)=>k==='mpId'?(((S.materiais.find(m=>mesmoId(m.id,x))||(S.materiaisDesc||[]).find(m=>mesmoId(m.id,x))||{}).nome)||x):(k==='dataEntrega'||k==='validade')?fmtBR(x):k==='valorUnit'?fmtMoeda(x):(x===''?'(vazio)':x);
+  const linhas=Object.keys(dif).map(k=>`<tr><td>${nomes[k]}</td><td>${escHtml(fmtV(k,valorOriginalCorr(l,k)))} → <b>${escHtml(fmtV(k,dif[k]))}</b></td></tr>`);
+  document.getElementById('corr-dif').innerHTML=(linhas.length?`<div style="font-size:12px;font-weight:700;color:var(--text2)">Alterações</div><table class="conf-tab">${linhas.join('')}</table>`:'<div class="muted">Nenhuma alteração ainda.</div>')
+    +erros.map(e=>`<div class="conf-msg erro">✕ ${escHtml(e)}</div>`).join('')+avisos.map(a=>`<div class="conf-msg aviso">⚠ ${escHtml(a)}</div>`).join('');
+  document.getElementById('btn-corr').disabled=!(linhas.length&&!erros.length&&document.getElementById('corr-motivo').value.trim());
+}
+function fecharCorrecao(){document.getElementById('modal-corrigir').style.display='none';CORR_LOTE=null;}
+async function confirmarCorrecao(){
+  const l=CORR_LOTE;if(!l)return;
+  const campos=difsCorrecao(),motivo=document.getElementById('corr-motivo').value.trim();
+  const aj=document.getElementById('corr-ajusta');
+  const btn=document.getElementById('btn-corr');btn.disabled=true;btn.textContent='Salvando...';
+  try{
+    const r=await gsCall({action:'corrigirLote',data:{loteId:l.id,campos,ajustarSaldo:!!(aj&&aj.checked&&!aj.disabled),motivo,usuario:(usuarioLogado()||{}).login||''}});
+    const err=erroResp(r);
+    if(err){notify(err,'error');return;}
+    registrarLog('lancamento_corrigido',`Lote ${l.lote}: ${Object.keys(campos).join(', ')} · ${motivo}`);
+    fecharCorrecao();await sincronizar(true);
+    notify(`Lançamento corrigido (${r.result.alteracoes} alteração(ões)).`);
+  }finally{btn.textContent='Salvar correção';}
+}
+// ═══ DESCONTINUAR MATÉRIA-PRIMA ═══════════════════════════════
+let DESC_MP=null;
+function lotesComSaldoMP(m){ return S.lotes.filter(l=>Number(l.saldoLote)>0&&lotePertenceMp(l,m.id)); }
+function abrirDescontinuarMP(id){
+  if(!isMaster()){notify('Apenas usuário master pode descontinuar matéria-prima.','warn');return;}
+  const m=S.materiais.find(x=>mesmoId(x.id,id))||(S.materiaisDesc||[]).find(x=>mesmoId(x.id,id));if(!m)return;
+  DESC_MP=m;
+  const lotes=lotesComSaldoMP(m);
+  const total=lotes.reduce((a,l)=>a+valorDescarte(l,l.saldoLote),0);
+  const ped=(S.pedidos||[]).filter(p=>mesmoId(p.mpId,m.id)&&!['recebido','cancelado','encerrado'].includes(String(p.status).toLowerCase())).length;
+  document.getElementById('dmp-titulo').textContent=m.descontinuada?'Descartar saldo de MP descontinuada':'Descontinuar matéria-prima';
+  document.getElementById('dmp-info').innerHTML=`<div class="ent-mp-card" style="margin-top:0"><div class="mp-nome">${escHtml(m.nome)}</div><div class="mp-linha">${escHtml(m.cat||'—')} · ${escHtml(m.un)}</div></div>
+    <p style="font-size:12.5px;color:var(--text2);margin:10px 0">Ela sai de Estoque, Contagem, Registrar Entrada, Reposição, Inteligência e Relatórios. O histórico (lotes, preços, contagens) continua na Rastreabilidade. Pode ser reativada depois.</p>
+    ${lotes.length?`<div style="font-size:12px;font-weight:700;color:var(--danger)">Ainda há ${lotes.length} lote(s) com saldo — serão descartados como perda:</div>
+    <table class="conf-tab">${lotes.map(l=>`<tr><td>Lote ${escHtml(l.lote||'—')}${l.validade?' · val. '+fmtBR(l.validade):''}</td><td>${Number(l.saldoLote).toLocaleString('pt-BR')} ${escHtml(m.un)}${l.valorUnit?' · '+fmtMoeda(valorDescarte(l,l.saldoLote)):''}</td></tr>`).join('')}
+    <tr><td>Total da perda</td><td><b>${fmtMoeda(total)}</b></td></tr></table>
+    <label style="display:flex;gap:8px;align-items:flex-start;font-size:13px;cursor:pointer"><input type="checkbox" id="dmp-chk" onchange="document.getElementById('btn-dmp-conf').disabled=!this.checked" style="width:18px;height:18px;accent-color:var(--danger)"> <span>Confirmo o descarte desse saldo como perda.</span></label>`
+    :'<div class="conf-msg aviso" style="margin-bottom:6px">Sem saldo em estoque — nada será descartado.</div>'}
+    ${ped?`<div class="conf-msg aviso">${ped} pedido(s) em aberto desta MP serão cancelados.</div>`:''}`;
+  document.getElementById('dmp-motivo').value=m.motivoDesc||'';
+  document.getElementById('dmp-motivo-box').style.display=m.descontinuada?'none':'';
+  document.getElementById('btn-dmp-conf').disabled=lotes.length>0;
+  document.getElementById('modal-desc-mp').style.display='flex';
+}
+function fecharDescontinuarMP(){document.getElementById('modal-desc-mp').style.display='none';DESC_MP=null;}
+async function confirmarDescontinuarMP(){
+  const m=DESC_MP;if(!m)return;
+  const motivo=m.descontinuada?(m.motivoDesc||'Descontinuada'):document.getElementById('dmp-motivo').value.trim();
+  if(!motivo){notify('Informe o motivo (ex.: produto que usava saiu de linha).','warn');return;}
+  const lotes=lotesComSaldoMP(m),valores={};
+  lotes.forEach(l=>valores[String(l.id)]=Math.round(valorDescarte(l,l.saldoLote)*100)/100);
+  const btn=document.getElementById('btn-dmp-conf');btn.disabled=true;btn.textContent='Salvando...';
+  try{
+    const r=await gsCall({action:'descontinuarMaterial',data:{id:m.id,motivo,descartarSaldo:lotes.length>0,valores,usuario:(usuarioLogado()||{}).login||''}});
+    const err=erroResp(r);
+    if(err){notify(err,'error');return;}
+    const res=r.result||{};
+    registrarLog('materia_prima_descontinuada',`${m.nome} · ${motivo} · ${res.lotesDescartados||0} lote(s) descartado(s)`);
+    fecharDescontinuarMP();await sincronizar(true);
+    notify(`${m.nome} descontinuada.${res.lotesDescartados?' '+res.lotesDescartados+' lote(s) descartado(s).':''}${res.pedidosCancelados?' '+res.pedidosCancelados+' pedido(s) cancelado(s).':''}`);
+  }finally{btn.textContent='Confirmar';}
+}
+async function reativarMP(id){
+  if(!isMaster())return;
+  const m=(S.materiaisDesc||[]).find(x=>mesmoId(x.id,id));if(!m)return;
+  if(!confirm(`Reativar ${m.nome}? Ela volta a aparecer em todas as telas.`))return;
+  const r=await gsCall({action:'reativarMaterial',data:{id}});
+  const err=erroResp(r);
+  if(err){notify(err,'error');return;}
+  registrarLog('materia_prima_reativada',m.nome);
+  await sincronizar(true);notify(`${m.nome} reativada.`);
+}
+function renderMPDescontinuadas(){
+  const el=document.getElementById('lista-mp-desc');if(!el)return;
+  const lista=(S.materiaisDesc||[]).slice().sort((a,b)=>(b.descontinuadoEm||'').localeCompare(a.descontinuadoEm||'')||a.nome.localeCompare(b.nome,'pt-BR'));
+  if(!lista.length){el.innerHTML='<div class="empty">Nenhuma matéria-prima descontinuada.</div>';return;}
+  el.innerHTML=`<div class="table-wrap"><table><thead><tr><th>Nome</th><th>Categoria</th><th>Descontinuada em</th><th>Motivo</th><th>Saldo pendente</th><th></th></tr></thead><tbody>${lista.map(m=>{
+    const lotes=lotesComSaldoMP(m),saldo=lotes.reduce((a,l)=>a+Number(l.saldoLote),0);
+    return `<tr><td style="font-weight:600">${escHtml(m.nome)}</td><td>${escHtml(m.cat||'—')}</td><td>${m.descontinuadoEm?fmtBR(m.descontinuadoEm):'—'}</td><td style="font-size:12px">${escHtml(m.motivoDesc||'—')}</td>
+      <td>${saldo>0?`<span style="color:var(--danger);font-weight:700">${saldo.toLocaleString('pt-BR')} ${escHtml(m.un)}</span>`:'0'}</td>
+      <td style="white-space:nowrap">${saldo>0&&isMaster()?`<button class="btn btn-sm btn-danger" onclick="abrirDescontinuarMP('${m.id}')">Descartar saldo</button> `:''}${isMaster()?`<button class="btn btn-sm" onclick="reativarMP('${m.id}')">↺ Reativar</button>`:''}</td></tr>`;
+  }).join('')}</tbody></table></div>`;
+}
+// ═══ HISTÓRICO DE DESCARTES (perdas) ══════════════════════════
+function renderDescartes(){
+  const el=document.getElementById('lista-descartes'),res=document.getElementById('resumo-descartes');if(!el)return;
+  const b=(document.getElementById('busca-lote')?.value||'').toLowerCase();
+  const nomeMp=d=>{const m=IDX.matById?.get(normId(d.mpId));return m?m.nome:(d.mpNome||'—');};
+  const lista=(S.descartes||[]).filter(d=>!b||`${nomeMp(d)} ${d.lote} ${d.motivo} ${d.obs}`.toLowerCase().includes(b)).sort((x,y)=>(y.dataHora||y.data).localeCompare(x.dataHora||x.data));
+  const h=hoje(),mes=h.slice(0,7),d90=addDiasIso(h,-90);
+  const soma=f=>(S.descartes||[]).filter(f).reduce((a,d)=>a+(Number(d.valorTotal)||0),0);
+  const porMotivo={};(S.descartes||[]).filter(d=>d.data>=d90).forEach(d=>porMotivo[d.motivo]=(porMotivo[d.motivo]||0)+(Number(d.valorTotal)||0));
+  const top=Object.entries(porMotivo).sort((a,b)=>b[1]-a[1])[0];
+  res.innerHTML=`<div class="stat-card danger"><div class="stat-label">Perdas no mês</div><div class="stat-value" style="font-size:20px">${fmtMoeda(soma(d=>d.data.startsWith(mes)))}</div><div class="stat-sub">${(S.descartes||[]).filter(d=>d.data.startsWith(mes)).length} descarte(s)</div></div>
+    <div class="stat-card warn"><div class="stat-label">Últimos 90 dias</div><div class="stat-value" style="font-size:20px">${fmtMoeda(soma(d=>d.data>=d90))}</div><div class="stat-sub">${top?'maior causa: '+escHtml(top[0]):'—'}</div></div>
+    <div class="stat-card"><div class="stat-label">Total registrado</div><div class="stat-value" style="font-size:20px">${fmtMoeda(soma(()=>true))}</div><div class="stat-sub">${(S.descartes||[]).length} descarte(s)</div></div>`;
+  el.innerHTML=lista.length?`<div class="table-wrap"><table><thead><tr><th>Data</th><th>Matéria-Prima</th><th>Lote</th><th>Qtd</th><th>Motivo</th><th>Valor</th><th>Usuário</th><th>Observação</th></tr></thead><tbody>${lista.map(d=>`<tr><td>${fmtBR(d.data)}</td><td style="font-weight:600">${escHtml(nomeMp(d))}</td><td><span class="badge b-lote">${escHtml(d.lote||'—')}</span></td><td>${Number(d.qtd).toLocaleString('pt-BR')}</td><td>${escHtml(d.motivo)}</td><td>${d.valorTotal?fmtMoeda(d.valorTotal):'—'}</td><td>${escHtml(d.usuario||'—')}</td><td style="font-size:11px;color:var(--text2)">${escHtml(d.obs||'—')}</td></tr>`).join('')}</tbody></table></div>`
+    :'<div class="empty">Nenhum descarte registrado.</div>';
 }
 function limparEnt(){['ent-mp','ent-mp-busca','ent-forn','ent-obs','ent-qty','ent-valor','ent-lote','ent-nf','ent-validade'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});document.getElementById('ent-data-entrega').value=hoje();atualizarReferenciaValorEntrada(null);renderCardMpEntrada(null);validarValidadeEntrada();}
 
 // ═══ CONTAGEM ═════════════════════════════════════════════════
 function popularFiltrosCnt(){
-  const lotesAtivos=S.lotes.filter(l=>l.ativo);
+  const lotesAtivos=S.lotes.filter(loteOperacional);
 
   // Categorias
-  const cats=[...new Set(S.lotes.filter(l=>l.ativo).map(l=>{
+  const cats=[...new Set(S.lotes.filter(loteOperacional).map(l=>{
     const mp=mpDoLote(l);
     return mp?mp.cat:'';
   }).filter(Boolean))].sort();
@@ -2082,13 +2772,13 @@ function popularFiltrosCnt(){
   selCat.innerHTML='<option value="">Todas as Categorias</option>'+cats.map(c=>`<option value="${c}"${c===vCat?' selected':''}>${c}</option>`).join('');
 
   // Fornecedores
-  const forns=[...new Set(S.lotes.filter(l=>l.ativo).map(l=>l.forn).filter(Boolean))].sort();
+  const forns=[...new Set(S.lotes.filter(loteOperacional).map(l=>l.forn).filter(Boolean))].sort();
   const selForn=document.getElementById('cnt-filtro-forn');
   const vForn=selForn.value;
   selForn.innerHTML='<option value="">Todos os Fornecedores</option>'+forns.map(f=>`<option value="${f}"${f===vForn?' selected':''}>${f}</option>`).join('');
 
   // Matérias-primas
-  const mps=[...new Map(S.lotes.filter(l=>l.ativo).map(l=>{
+  const mps=[...new Map(S.lotes.filter(loteOperacional).map(l=>{
     const mp=mpDoLote(l);
     return mp?[mp.id,mp.nome]:null;
   }).filter(Boolean)).entries()].sort((a,b)=>a[1].localeCompare(b[1]));
@@ -2137,7 +2827,7 @@ function renderContagem(){
 
   // Atualiza contador
   const infoEl=document.getElementById('cnt-filtro-info');
-  const total=S.lotes.filter(l=>l.ativo).length;
+  const total=S.lotes.filter(loteOperacional).length;
   if(infoEl) infoEl.textContent=lotesAtivos.length===total?`${total} lotes`:`${lotesAtivos.length} de ${total} lotes`;
 
 
@@ -2212,7 +2902,7 @@ async function salvarContagem(){
   const filtForn = document.getElementById('cnt-filtro-forn').value;
   const filtMp   = document.getElementById('cnt-filtro-mp').value;
   const lotesFiltrados=S.lotes.filter(l=>{
-    if(!l.ativo) return false;
+    if(!loteOperacional(l)) return false;
     const mp=mpDoLote(l);
     if(filtCat  && (!mp||mp.cat!==filtCat))   return false;
     if(filtForn && l.forn!==filtForn)          return false;
@@ -2224,7 +2914,14 @@ async function salvarContagem(){
   // com físico = teórico. Antes o total da MP na contagem ficava incompleto e virava "consumo" falso.
   const mpsNaTela=new Set(lotesFiltrados.map(l=>{const mp=mpDoLote(l);return mp?normId(mp.id):null;}).filter(Boolean));
   const visiveis=new Set(lotesFiltrados);
-  const lotesSalvar=S.lotes.filter(l=>l.ativo&&(visiveis.has(l)||(()=>{const mp=mpDoLote(l);return !!mp&&mpsNaTela.has(normId(mp.id));})()));
+  const lotesSalvar=S.lotes.filter(l=>loteOperacional(l)&&(visiveis.has(l)||(()=>{const mp=mpDoLote(l);return !!mp&&mpsNaTela.has(normId(mp.id));})()));
+  // Valor negativo ou inválido bloqueia a gravação (antes virava 0 em silêncio e zerava o lote)
+  const invalidos=lotesFiltrados.filter(l=>{const el=document.getElementById('cnt-'+l.id);if(!el)return false;const v=el.value.trim();return v!==''&&(v.startsWith('-')||!isFinite(Number(v))||Number(v)<0);});
+  if(invalidos.length){
+    invalidos.forEach(l=>{const el=document.getElementById('cnt-'+l.id);el.style.borderColor='var(--danger)';el.style.background='var(--danger-bg)';});
+    notify(`Contagem com valor negativo ou inválido em ${invalidos.length} lote(s) (em vermelho). Corrija antes de salvar.`,'error');
+    return;
+  }
   const items=lotesSalvar.map(l=>{
     const mpL=mpDoLote(l);
     const el=visiveis.has(l)?document.getElementById('cnt-'+l.id):null;
@@ -2798,7 +3495,7 @@ function simularReposicao(){
 }
 
 // ═══ RASTREABILIDADE ══════════════════════════════════════════
-function fmtMoeda(v){ return 'R$ '+(Number(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function fmtMoeda(v){ return 'R$\u00a0'+(Number(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 function escHtml(v){ return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function mpDoLote(l){
   return IDX.mpByLoteId.get(normId(l.id))||IDX.matById.get(normId(l.mpId))||IDX.matByName.get(normTxt(l.mpId))||IDX.matByName.get(normTxt(l.mpNome))||null;
@@ -2877,9 +3574,10 @@ function filtrarRastreabilidade(){
       <td>${valorTotalLote(l)?fmtMoeda(valorTotalLote(l)):'—'}</td>
       <td>${stL}</td>
       <td style="font-size:11px;color:var(--text2);max-width:200px">${l.obs||'—'}</td>
-      <td>${l.ativo?`<button class="btn btn-sm btn-danger" onclick="encerrarLote(${l.id})">Encerrar</button>`:'—'}</td>
+      <td style="white-space:nowrap">${l.ativo?`<button class="btn btn-sm btn-danger" onclick="encerrarLote('${l.id}')">${Number(l.saldoLote)>0?'Descartar':'Encerrar'}</button>`:''}${isMaster()?` <button class="btn btn-sm" onclick="abrirCorrecaoLote('${l.id}')" title="Corrigir dados deste lançamento (somente master)">Corrigir</button>`:''}${!l.ativo&&!isMaster()?'—':''}</td>
     </tr>`;
   }).join(''):'<tr><td colspan="14" style="text-align:center;padding:20px;color:var(--text3)">Nenhum lote encontrado.</td></tr>';
+  renderDescartes();
 }
 
 // ═══ CONFIG ═══════════════════════════════════════════════════
@@ -3063,8 +3761,9 @@ function renderConfig(){
 function renderMateriais(){
   populateSelects();
   document.getElementById('tbody-config').innerHTML=S.materiais.length
-    ?S.materiais.map(m=>`<tr><td style="font-weight:600">${m.nome}${m.obs?'<br><span style="font-size:10px;color:var(--warn-text);font-weight:400">⚠ '+m.obs+'</span>':''}</td><td>${m.cat}</td><td>${m.un}</td><td>${m.unSiCad||'<span style="color:var(--danger);font-weight:700" title="Kg por unidade não cadastrado">falta</span>'}</td><td>${htmlValMinMP(m)}</td><td>${saldoMP(m.id).toFixed(1)}</td><td>${m.min}</td><td>${m.seg}</td><td>${m.lead}d</td><td>${m.forn||'—'}</td><td><button class="btn btn-sm btn-danger" onclick="remMP(${m.id})">Remover</button></td></tr>`).join('')
+    ?S.materiais.map(m=>`<tr><td style="font-weight:600">${m.nome}${m.obs?'<br><span style="font-size:10px;color:var(--warn-text);font-weight:400">⚠ '+m.obs+'</span>':''}</td><td>${m.cat}</td><td>${m.un}</td><td>${m.unSiCad||'<span style="color:var(--danger);font-weight:700" title="Kg por unidade não cadastrado">falta</span>'}</td><td>${htmlValMinMP(m)}</td><td>${saldoMP(m.id).toFixed(1)}</td><td>${m.min}</td><td>${m.seg}</td><td>${m.lead}d</td><td>${m.forn||'—'}</td><td>${isMaster()?`<button class="btn btn-sm btn-danger" onclick="abrirDescontinuarMP('${m.id}')" title="Tirar de linha: some das telas de operação, histórico mantido">Descontinuar</button>`:''}</td></tr>`).join('')
     :'<tr><td colspan="11" style="text-align:center;padding:20px;color:var(--text3)">Nenhuma matéria-prima.</td></tr>';
+  renderMPDescontinuadas();
   aplicarDicasTabelas();
 }
 function htmlValMinMP(m){
@@ -3328,7 +4027,7 @@ function abrirModalImpressao(){
     <label style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:6px;cursor:pointer;border:1px solid var(--border);background:var(--surface2);font-size:13px">
       <input type="checkbox" value="${c}" checked style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
       <span style="flex:1">${c}</span>
-      <span style="font-size:11px;color:var(--text3)">${S.lotes.filter(l=>l.ativo&&S.materiais.find(m=>m.id===String(l.mpId)&&m.cat===c)).length} lotes</span>
+      <span style="font-size:11px;color:var(--text3)">${S.lotes.filter(l=>loteOperacional(l)&&mpDoLote(l)?.cat===c).length} lotes</span>
     </label>`).join('');
   document.getElementById('btn-todas-cats').textContent='Desmarcar Todas';
   document.getElementById('modal-impressao').style.display='flex';
@@ -3346,7 +4045,7 @@ function toggleTodasCats(){
 function gerarFichaImpressao(){
   const catsSel=[...document.querySelectorAll('#cats-impressao input[type=checkbox]:checked')].map(c=>c.value);
   if(!catsSel.length){notify('Selecione ao menos uma categoria.','warn');return;}
-  const lotesAtivos=S.lotes.filter(l=>l.ativo);
+  const lotesAtivos=S.lotes.filter(loteOperacional);
   const grupos={};
   catsSel.forEach(cat=>{
     const lotesCat=lotesAtivos.filter(l=>{
@@ -3504,6 +4203,65 @@ tr.cat-row td{background:#d4edda;color:#1a472a;font-weight:700;font-size:10.5px;
     </div>
     <div style="display:flex;justify-content:flex-end;margin-top:18px">
       <button class="btn btn-primary" onclick="fecharModalAjudaEntrada()">Entendi</button>
+    </div>
+  </div>
+</div>
+
+<!-- DESCARTE DE LOTE -->
+<div id="modal-descarte" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:10001;align-items:center;justify-content:center;padding:16px">
+  <div style="background:var(--surface);border-radius:12px;padding:22px;max-width:560px;width:96%;max-height:92vh;overflow:auto;box-shadow:0 10px 34px rgba(0,0,0,.25)">
+    <h3 style="margin:0 0 10px;font-size:17px">Descartar lote</h3>
+    <div id="desc-lote-info"></div>
+    <div class="form-grid" style="margin-top:12px">
+      <div class="form-group"><label>Quantidade a descartar *</label><input type="number" id="desc-qtd" step="0.01" min="0" oninput="atualizarPrevDescarte()"></div>
+      <div class="form-group"><label>Motivo *</label><select id="desc-motivo"></select></div>
+    </div>
+    <div class="form-group" style="margin-top:8px"><label>Observação</label><input type="text" id="desc-obs" placeholder="Ex.: embalagem rasgada, mofo, vencido em 10/10..."></div>
+    <div id="desc-prev" class="conf-msg aviso" style="margin-top:10px"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap">
+      <button class="btn" onclick="fecharDescarte()">Cancelar</button>
+      <button class="btn btn-danger" id="btn-desc-conf" onclick="confirmarDescarte()">Confirmar descarte</button>
+    </div>
+  </div>
+</div>
+
+<!-- DESCONTINUAR MATÉRIA-PRIMA -->
+<div id="modal-desc-mp" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:10001;align-items:center;justify-content:center;padding:16px">
+  <div style="background:var(--surface);border-radius:12px;padding:22px;max-width:600px;width:96%;max-height:92vh;overflow:auto;box-shadow:0 10px 34px rgba(0,0,0,.25)">
+    <h3 id="dmp-titulo" style="margin:0 0 10px;font-size:17px">Descontinuar matéria-prima</h3>
+    <div id="dmp-info"></div>
+    <div class="form-group" id="dmp-motivo-box" style="margin-top:10px"><label>Motivo *</label><input type="text" id="dmp-motivo" placeholder="Ex.: sabor rapadura saiu de linha"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap">
+      <button class="btn" onclick="fecharDescontinuarMP()">Cancelar</button>
+      <button class="btn btn-danger" id="btn-dmp-conf" onclick="confirmarDescontinuarMP()">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- CORRIGIR LANÇAMENTO (master) -->
+<div id="modal-corrigir" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:10001;align-items:center;justify-content:center;padding:16px">
+  <div style="background:var(--surface);border-radius:12px;padding:22px;max-width:720px;width:96%;max-height:92vh;overflow:auto;box-shadow:0 10px 34px rgba(0,0,0,.25)">
+    <h3 style="margin:0 0 4px;font-size:17px">Corrigir lançamento</h3>
+    <p style="font-size:12px;color:var(--text2);margin:0 0 12px">Somente master. Cada campo alterado fica registrado na aba Correcoes, com valor anterior, novo, motivo e usuário.</p>
+    <div id="corr-info"></div>
+    <div class="form-grid" style="margin-top:12px">
+      <div class="form-group" style="grid-column:1/-1"><label>Matéria-prima</label><select id="corr-mp"></select></div>
+      <div class="form-group"><label>Fornecedor</label><input type="text" id="corr-forn" list="forn-list"></div>
+      <div class="form-group"><label>Número do lote</label><input type="text" id="corr-lote" style="text-transform:uppercase"></div>
+      <div class="form-group"><label>Nº Nota Fiscal</label><input type="text" id="corr-nf"></div>
+      <div class="form-group"><label>Data de entrega</label><input type="date" id="corr-entrega"></div>
+      <div class="form-group"><label>Validade</label><input type="date" id="corr-validade"></div>
+      <div class="form-group"><label>Quantidade recebida</label><input type="number" id="corr-qty" min="0" step="0.01"></div>
+      <div class="form-group"><label>Valor ref. (R$)</label><input type="number" id="corr-valor" min="0" step="0.0001"></div>
+      <div class="form-group" style="grid-column:1/-1"><label>Observação</label><input type="text" id="corr-obs"></div>
+    </div>
+    <div id="corr-saldo-box" style="margin-top:10px"></div>
+    <div id="corr-dif" style="margin-top:10px"></div>
+    <div class="form-group" style="margin-top:10px"><label>Motivo da correção *</label><input type="text" id="corr-motivo" placeholder="Ex.: digitou 350, nota fiscal diz 300"></div>
+    <div id="corr-hist" style="margin-top:10px"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap">
+      <button class="btn" onclick="fecharCorrecao()">Cancelar</button>
+      <button class="btn btn-primary" id="btn-corr" onclick="confirmarCorrecao()" disabled>Salvar correção</button>
     </div>
   </div>
 </div>
