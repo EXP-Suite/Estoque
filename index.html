@@ -348,6 +348,16 @@ table.modo-cartao tbody tr:hover td{background:transparent}
 .man-sim-res{display:flex;flex-direction:column;gap:6px;margin-top:10px}
 .man-sim-res .man-formula b{color:var(--accent)}
 .man-ok{color:var(--accent);font-weight:700}
+
+/* ═══ BUSCA RÁPIDA (todas as telas) ═══ */
+.busca-rapida{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 4px}
+.busca-rapida .br-campo{position:relative;flex:1 1 320px;max-width:520px;min-width:0}
+.busca-rapida input{width:100%;padding:9px 12px 9px 34px;border:1px solid var(--border2);border-radius:20px;font-size:13.5px;background:var(--surface);color:var(--text);font-family:inherit}
+.busca-rapida input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-bg)}
+.busca-rapida svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:15px;height:15px;color:var(--text3);pointer-events:none}
+.busca-rapida .br-info{font-size:12px;color:var(--text3)}
+.busca-rapida .br-info.zero{color:var(--danger);font-weight:600}
+.busca-oculto{display:none!important}
 </style>
 </head>
 <body>
@@ -439,7 +449,7 @@ table.modo-cartao tbody tr:hover td{background:transparent}
 <!-- ═══ ESTOQUE POR LOTE ════════════════════════════════════════ -->
 <div class="page" id="page-estoque">
   <div class="toolbar">
-    <input type="text" id="busca-mp" placeholder="Buscar matéria-prima..." oninput="filtrarEstoque()" style="width:200px">
+    <input type="text" id="busca-mp" data-busca-rapida="1" placeholder="🔍 Digite para filtrar (nome, categoria, fornecedor)..." oninput="filtrarEstoque()" style="width:200px">
     <select id="filtro-cat" onchange="filtrarEstoque()">
       <option value="">Todas as categorias</option>
       <option value="Aroma Líquido">Aromas Líquidos</option><option value="Aroma Seco">Aromas Secos</option>
@@ -521,9 +531,10 @@ table.modo-cartao tbody tr:hover td{background:transparent}
     <div class="section-header">
       <h3>Nova Contagem Física — por Lote</h3>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-        <input type="date" id="cnt-data">
+        <input type="date" id="cnt-data" onchange="renderContagensSalvasDia()">
         <input type="text" id="cnt-obs" placeholder="Observação (opcional)" style="width:200px">
         <button class="btn btn-sm" onclick="abrirModalImpressao()" style="background:var(--surface2);border:1px solid var(--border)">🖨 Ficha de Contagem</button>
+        <button class="btn btn-sm" onclick="limparDigitadosContagem()" id="btn-cnt-limpar" style="display:none">Apagar digitados</button>
         <button class="btn btn-primary btn-sm" onclick="salvarContagem()" id="btn-cnt">Salvar Contagem</button>
       </div>
     </div>
@@ -543,7 +554,8 @@ table.modo-cartao tbody tr:hover td{background:transparent}
       <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text3);cursor:pointer;margin-left:4px"><input type="checkbox" id="cnt-mostrar-inativos" onchange="renderContagem()" style="accent-color:var(--accent)"> Mostrar inativos</label>
       <span id="cnt-filtro-info" style="font-size:12px;color:var(--text3);margin-left:4px"></span>
     </div>
-    <p class="form-note" style="margin-bottom:12px">Informe a quantidade física encontrada para cada lote ativo. O sistema atualiza o saldo automaticamente ao salvar.</p>
+    <p class="form-note" style="margin-bottom:8px"><b>Digite só os lotes que você contou.</b> Campo vazio = não contado: não é gravado e o saldo não muda. Zero só se digitar 0. Pode trocar de categoria — o que já digitou fica guardado até salvar.</p>
+    <div id="cnt-salvas"></div>
     <div class="table-wrap">
       <table>
         <thead><tr><th>Matéria-Prima</th><th>Lote</th><th>Data Entrada</th><th>Fornecedor</th><th>Validade</th><th>Saldo Teórico</th><th>Contagem Física</th><th>Divergência</th></tr></thead>
@@ -558,7 +570,7 @@ table.modo-cartao tbody tr:hover td{background:transparent}
   <div class="card">
     <div class="card-title">Análise de Consumo — Visão Consolidada por Matéria-Prima</div>
     <div class="toolbar" style="margin-bottom:8px;align-items:center;gap:10px">
-      <input type="search" id="consumo-busca" placeholder="Digite para filtrar a matéria-prima..." autocomplete="off" oninput="filtrarConsumoTabs()" onkeydown="if(event.key==='Enter'){const b=document.querySelector('#consumo-tabs .inner-tab:not([hidden])');if(b)b.click();}" style="width:min(380px,100%)">
+      <input type="search" id="consumo-busca" data-busca-rapida="1" placeholder="🔍 Digite para filtrar a matéria-prima..." autocomplete="off" oninput="filtrarConsumoTabs()" onkeydown="if(event.key==='Enter'){const b=document.querySelector('#consumo-tabs .inner-tab:not([hidden])');if(b)b.click();}" style="width:min(380px,100%)">
       <span id="consumo-busca-info" style="font-size:12px;color:var(--text3)"></span>
     </div>
     <div class="inner-tabs" id="consumo-tabs" style="max-height:190px;overflow-y:auto"></div>
@@ -585,7 +597,7 @@ table.modo-cartao tbody tr:hover td{background:transparent}
       <table class="tabela-pedidos tabela-reposicao">
         <thead><tr>
           <th>Matéria-Prima</th><th>Saldo</th><th>Lotes Ativos</th>
-          <th>Consumo/sem</th><th>Lead Time</th><th>Ponto de Pedido</th>
+          <th>Consumo/sem</th><th>Confiab.</th><th>Lead Time</th><th>Ponto de Pedido</th>
           <th>Data Ideal</th><th>Prev. Ruptura</th><th class="col-pedido">Pedido</th><th class="col-status">Status</th>
         </tr></thead>
         <tbody id="tbody-reposicao"></tbody>
@@ -605,7 +617,7 @@ table.modo-cartao tbody tr:hover td{background:transparent}
 <!-- ═══ RASTREABILIDADE ══════════════════════════════════════════ -->
 <div class="page" id="page-rastreabilidade">
   <div class="toolbar">
-    <input type="text" id="busca-lote" placeholder="Buscar por lote, NF, fornecedor ou MP..." oninput="filtrarRastreabilidade()" style="width:280px">
+    <input type="text" id="busca-lote" data-busca-rapida="1" placeholder="🔍 Digite para filtrar (lote, NF, fornecedor, MP)..." oninput="filtrarRastreabilidade()" style="width:280px">
     <select id="filtro-rastr" onchange="filtrarRastreabilidade()">
       <option value="">Todos os lotes</option>
       <option value="ativo">Lotes ativos</option>
@@ -879,7 +891,7 @@ table.modo-cartao tbody tr:hover td{background:transparent}
     <p class="muted">Os números de exemplo usam os parâmetros configurados agora no sistema. No fim da página, o <b>simulador</b> refaz todas as contas com uma matéria-prima real.</p>
     <div class="man-toc" style="margin-top:10px">
       <a href="#man-fluxo" onclick="return irManual(this)">Fluxo</a><a href="#man-saldo" onclick="return irManual(this)">Saldo</a><a href="#man-consumo" onclick="return irManual(this)">Consumo semanal</a>
-      <a href="#man-reposicao" onclick="return irManual(this)">Cobertura e ponto de pedido</a><a href="#man-grafico" onclick="return irManual(this)">Lead × segurança (gráfico)</a>
+      <a href="#man-reposicao" onclick="return irManual(this)">Cobertura e ponto de pedido</a><a href="#man-grafico" onclick="return irManual(this)">Lead × segurança (gráfico)</a><a href="#man-confiab" onclick="return irManual(this)">Confiabilidade</a>
       <a href="#man-status" onclick="return irManual(this)">Status e limites</a><a href="#man-valor" onclick="return irManual(this)">Valor em estoque</a><a href="#man-validade" onclick="return irManual(this)">Validade</a>
       <a href="#man-descarte" onclick="return irManual(this)">Descarte</a><a href="#man-saude" onclick="return irManual(this)">Índice de saúde</a><a href="#man-sim" onclick="return irManual(this)">Simulador</a>
     </div>
@@ -889,7 +901,7 @@ table.modo-cartao tbody tr:hover td{background:transparent}
     <h3>1. Fluxo dos dados</h3>
     <div class="man-fluxo">
       <div class="man-step"><b>1 · Entrada</b>Cada recebimento vira um <b>lote</b> com quantidade, validade, valor e NF.</div>
-      <div class="man-step"><b>2 · Contagem</b>A contagem física corrige o saldo de cada lote. É a "verdade" do estoque.</div>
+      <div class="man-step"><b>2 · Contagem</b>A contagem física corrige o saldo de cada lote. É a "verdade" do estoque. Só é gravado o lote em que se digitou a quantidade — campo vazio não muda nada. Dá para contar categorias em dias diferentes.</div>
       <div class="man-step"><b>3 · Consumo</b>A queda do saldo entre contagens vira consumo por semana.</div>
       <div class="man-step"><b>4 · Reposição</b>Consumo + lead + segurança dizem <b>quando</b> e <b>quanto</b> comprar.</div>
       <div class="man-step"><b>5 · Gestão</b>Status, valor em estoque, perdas e índice de saúde.</div>
@@ -946,6 +958,16 @@ table.modo-cartao tbody tr:hover td{background:transparent}
       <li>Se o fornecedor entregar no prazo, a mercadoria chega quando o saldo está em <b>mínimo + segurança</b>. A segurança e o mínimo só são "gastos" quando algo dá errado.</li>
     </ul>
     <div class="man-dica"><b>Aumentar o lead ou a segurança</b> sobe o ponto de pedido: o sistema manda comprar mais cedo (mais estoque parado, menos risco). <b>Diminuir</b> faz comprar mais tarde (menos capital parado, mais risco de faltar).</div>
+  </div>
+
+  <div class="card" id="man-confiab">
+    <h3>5b. Confiabilidade da previsão (Alta / Média / Baixa)</h3>
+    <p>A conta do consumo está certa, mas o consumo futuro pode ser diferente do passado. Para mostrar <b>quanto confiar</b> em cada matéria-prima, o sistema faz um <b>auto-teste</b>: volta a 5 datas passadas, calcula o consumo só com os dados que existiam em cada uma e compara com o que realmente foi gasto nas 4 semanas seguintes.</p>
+    <div class="man-formula">Erro típico = mediana dos erros dos testes · Alta: até 35% · Média: até 80% · Baixa: acima de 80% ou menos de 2 testes</div>
+    <div class="man-formula">Faixa provável = consumo semanal × (1 − erro) até consumo semanal × (1 + erro)</div>
+    <div class="man-ex">Exemplo: consumo de 10 sacos/sem com erro típico de 20% → confiabilidade <b>Alta</b>, faixa provável <b>8 a 12 sacos/sem</b>.<br>Com erro típico de 60% → <b>Média</b>, faixa <b>4 a 16 sacos/sem</b>: confira com o plano de produção antes de comprar.</div>
+    <div class="man-dica"><b>Como usar:</b> <b>Alta</b> → pode seguir a data e a quantidade sugeridas. <b>Média</b> → use como base e confira. <b>Baixa</b> → use a data como alerta para olhar o item e decida a quantidade pelo plano de produção; se quiser que o sistema avise mais cedo, aumente o tempo de segurança dessa matéria-prima.</div>
+    <p class="muted">Validado com os dados reais (previsão feita em 23/09 × consumo até 21/10): os itens Alta erraram ~26%, Média ~34% e Baixa ~53%. A confiabilidade muda sozinha à medida que entram novas contagens.</p>
   </div>
 
   <div class="card" id="man-status">
@@ -1099,7 +1121,7 @@ table.modo-cartao tbody tr:hover td{background:transparent}
 
 </div><!-- /main -->
 <div class="toast" id="toast"></div>
-<div id="app-version">Rev 16.10</div>
+<div id="app-version">Rev 16.13</div>
 
 <script>
 // ═══ CONFIG ═══════════════════════════════════════════════════
@@ -1207,6 +1229,7 @@ const TABLE_TIPS = {
   'minimo':'Quantidade mínima física que você quer manter em estoque.',
   'segurança (dias)':'Dias extras de segurança para cobrir atrasos ou imprevistos.',
   'lead':'Lead time em dias para esta matéria-prima.',
+  'confiab.':'Quanto dá para confiar no consumo previsto desta matéria-prima. Alta: nos testes com o próprio histórico errou até 35%. Média: até 80%. Baixa: mais que isso ou pouco histórico. Passe o mouse no selo para ver o erro e a faixa provável.',
   'val. mín. (dias)':'Menor validade aceita na entrada desta matéria-prima, em dias após a entrega. Em branco = 60. Abaixo aparece a menor validade que já chegou.'
 };
 function normTipKey(txt){
@@ -1681,7 +1704,9 @@ function loteDisponivel(l){ return l.ativo&&Number(l.saldoLote)>0&&!l.mpDesc; }
 function loteOperacional(l){ return l.ativo&&!l.mpDesc; }
 function rebuildIndices(){
   consumoSemCache = new Map();
-  const matById=new Map(), matByName=new Map(), lotesByMp=new Map(), mpByLoteId=new Map();
+  CONF_CACHE=new Map();CONF_ULT=null;
+  const matById=new Map(), matByName=new Map(), lotesByMp=new Map(), mpByLoteId=new Map(), lotesTodosByMp=new Map();
+  CNT_CONS_CACHE=new Map();
   S.materiais.forEach(m=>{
     matById.set(normId(m.id),m);
     matByName.set(normTxt(m.nome),m);
@@ -1696,12 +1721,13 @@ function rebuildIndices(){
     if(!mp)return;
     mpByLoteId.set(normId(l.id),mp);
     l.mpDesc=!!mp.descontinuada;
+    const kt=normId(mp.id);if(!lotesTodosByMp.has(kt))lotesTodosByMp.set(kt,[]);lotesTodosByMp.get(kt).push(l);
     if(!loteDisponivel(l))return;
     const key=normId(mp.id);
     if(!lotesByMp.has(key))lotesByMp.set(key,[]);
     lotesByMp.get(key).push(l);
   });
-  IDX={matById,matByName,lotesByMp,mpByLoteId};
+  IDX={matById,matByName,lotesByMp,mpByLoteId,lotesTodosByMp};
 }
 // AUDITORIA A01: usa o mesmo vínculo lote→MP do índice (id primeiro, depois nome exato).
 // Antes, qualquer lote cujo texto contivesse o nome da MP era somado a ela (ex.: lotes "Calesi" caíam em "Cal").
@@ -1731,8 +1757,15 @@ function totalFisicoContagem(c,mpId){
 const CONSUMO_CICLO_MIN_DIAS = 7;
 const CONSUMO_HISTORICO_DIAS = 180;
 const CONSUMO_PESO_CICLO_ATUAL = 0.70;
+let CONSUMO_CORTE=null; // quando definido, o cálculo enxerga só as contagens até essa data (auto-teste)
+let CNT_CONS_CACHE=new Map();
 function contagensConsolidadasMP(mpId){
   const mid=String(mpId);
+  let lista=CNT_CONS_CACHE.get(mid);
+  if(!lista){lista=contagensConsolidadasMPCalc(mid);CNT_CONS_CACHE.set(mid,lista);}
+  return CONSUMO_CORTE?lista.filter(c=>c.data<=CONSUMO_CORTE):lista;
+}
+function contagensConsolidadasMPCalc(mid){
   const cntsDia=new Map();
   S.contagens
     .filter(c=>c.data&&c.items.some(i=>String(i.mpId)===mid))
@@ -1770,8 +1803,7 @@ function eventosEntradaLote(l){
 }
 function entradasMPEntre(mpId,cA,cB){
   let tot=0;
-  S.lotes.forEach(l=>{
-    if(!lotePertenceMp(l,mpId))return;
+  (IDX.lotesTodosByMp?.get(normId(mpId))||S.lotes.filter(l=>lotePertenceMp(l,mpId))).forEach(l=>{
     eventosEntradaLote(l).forEach(e=>{
       const dentro=(e.ts&&cA.ts&&cB.ts)?(e.ts>cA.ts&&e.ts<=cB.ts):(e.data&&e.data>cA.data&&e.data<=cB.data);
       if(dentro)tot+=e.qtd;
@@ -1816,8 +1848,11 @@ function consumoSem(mpId){
   const cacheKey=normId(mpId);
   if(consumoSemCache.has(cacheKey))return consumoSemCache.get(cacheKey);
   const cacheRet=v=>(consumoSemCache.set(cacheKey,v),v);
+  return cacheRet(calcConsumoSem(mpId));
+}
+function calcConsumoSem(mpId){
   const ciclos=ciclosConsumoMP(mpId);
-  if(!ciclos.length)return cacheRet(contagensConsolidadasMP(mpId).length<2?null:0);
+  if(!ciclos.length)return contagensConsolidadasMP(mpId).length<2?null:0;
   const atual=ciclos.find(c=>c.atual)||ciclos[ciclos.length-1];
   const anteriores=ciclos.filter(c=>c!==atual);
   let semanal=atual.sem;
@@ -1826,7 +1861,54 @@ function consumoSem(mpId){
     const histSem=diasAnt>0?anteriores.reduce((a,c)=>a+c.sem*c.dias,0)/diasAnt:0;
     semanal=atual.sem*CONSUMO_PESO_CICLO_ATUAL+histSem*(1-CONSUMO_PESO_CICLO_ATUAL);
   }
-  return cacheRet(Math.round(semanal*10)/10);
+  return Math.round(semanal*10)/10;
+}
+// ═══ CONFIABILIDADE DA PREVISÃO ═══════════════════════════════
+// Auto-teste por matéria-prima: o sistema refaz a previsão em 5 datas passadas (só com os dados que
+// existiam em cada data) e compara com o consumo real das 4 semanas seguintes. O erro típico (mediana)
+// define o nível. Validado com os dados reais: Alta errou ~26% depois, Média ~34%, Baixa ~53%.
+const CONF_JANELA=28, CONF_RECUOS=[84,70,56,42,28], CONF_ALTA=0.35, CONF_MEDIA=0.80;
+let CONF_CACHE=new Map(), CONF_ULT=null;
+function previsaoEmData(mpId,T){ CONSUMO_CORTE=T; try{ return calcConsumoSem(mpId); } finally{ CONSUMO_CORTE=null; } }
+function consumoRealJanela(mpId,T,dias){
+  const c=contagensConsolidadasMP(mpId),fimAlvo=addDiasIso(T,dias);
+  const a=[...c].reverse().find(x=>x.data<=T),b=[...c].reverse().find(x=>x.data<=fimAlvo&&x.data>T);
+  if(!a||!b)return null;
+  const d=diasEntreDatas(a.data,b.data);if(d<dias*0.75)return null;
+  return (Number(a.totalMP)+entradasMPEntre(mpId,a,b)-Number(b.totalMP)-descartesMPEntre(mpId,a,b))/d*7;
+}
+function medianaSimples(v){ if(!v.length)return null; const x=[...v].sort((a,b)=>a-b),m=Math.floor(x.length/2); return x.length%2?x[m]:(x[m-1]+x[m])/2; }
+function confiabilidadeMP(mpId){
+  const key=normId(mpId);
+  if(CONF_CACHE.has(key))return CONF_CACHE.get(key);
+  if(CONF_ULT===null)CONF_ULT=(S.contagens||[]).reduce((a,c)=>c.data&&c.data>a?c.data:a,'');
+  const testes=[];
+  if(CONF_ULT)CONF_RECUOS.forEach(d=>{
+    const T=addDiasIso(CONF_ULT,-(d+CONF_JANELA));
+    const prev=previsaoEmData(mpId,T),real=consumoRealJanela(mpId,T,CONF_JANELA);
+    if(prev!=null&&real!=null&&real>0.05)testes.push({T,prev,real,erro:Math.abs(prev-real)/real});
+  });
+  const erro=medianaSimples(testes.map(t=>t.erro));
+  let nivel,motivo;
+  if(testes.length<2){nivel='Baixa';motivo='pouco histórico para testar';}
+  else if(erro<=CONF_ALTA){nivel='Alta';motivo=`errou ~${Math.round(erro*100)}% nos testes`;}
+  else if(erro<=CONF_MEDIA){nivel='Média';motivo=`errou ~${Math.round(erro*100)}% nos testes`;}
+  else{nivel='Baixa';motivo=`errou ~${Math.round(Math.min(erro,9.99)*100)}% nos testes`;}
+  const r={nivel,motivo,erro,testes};
+  CONF_CACHE.set(key,r);
+  return r;
+}
+function faixaConsumo(cs,conf){
+  if(cs==null||!conf||conf.erro==null)return null;
+  const e=Math.min(conf.erro,1);
+  return [Math.max(0,cs*(1-e)),cs*(1+e)];
+}
+function badgeConfiabilidade(mpId,cs){
+  if(cs==null)return '<span style="color:var(--text3)">—</span>';
+  const c=confiabilidadeMP(mpId),f=faixaConsumo(cs,c);
+  const cls=c.nivel==='Alta'?'b-ok':c.nivel==='Média'?'b-warn':'b-danger';
+  const tip=`Confiabilidade ${c.nivel}: ${c.motivo} (${c.testes.length} teste(s) com o histórico desta MP).`+(f?` Consumo provável entre ${f[0].toFixed(1)} e ${f[1].toFixed(1)} por semana.`:'')+` Use a segurança para cobrir essa variação.`;
+  return `<span class="badge ${cls}" title="${escHtml(tip)}">${c.nivel}</span>`;
 }
 // Só envia as MPs cujo consumo calculado é diferente do que já está na planilha
 function payloadConsumoSemMateriais(){
@@ -1983,6 +2065,8 @@ function renderManualSim(){
   }
   const regra=m.min>0&&a.s<=m.min?`saldo ${nfm(a.s,2)} ≤ mínimo ${m.min}`:a.dc<=P.crit?`cobertura ${a.dc} dias ≤ limite crítico ${P.crit}`:a.s<=a.pto?`saldo ${nfm(a.s,2)} ≤ ponto de pedido ${a.pto}`:a.dc<=P.warn?`cobertura ${a.dc} dias ≤ limite de atenção ${P.warn}`:`saldo acima do ponto de pedido e cobertura ${a.dc>=999?'sem limite (sem consumo)':a.dc+' dias'}`;
   const nome={ok:'OK',warn:'Atenção',danger:'Crítico'}[a.st],cor={ok:'var(--accent)',warn:'#c07000',danger:'var(--danger)'}[a.st];
+  if(a.cs!=null){const cf=confiabilidadeMP(m.id),fx=faixaConsumo(a.cs,cf);
+    h+=`<div class="man-formula">Confiabilidade = <b>${cf.nivel}</b> — ${cf.motivo}${cf.testes.length?` (${cf.testes.map(t=>`${fmtBR(t.T)}: previu ${nfm(t.prev)} × real ${nfm(t.real)}`).join(' · ')})`:''}${fx?` · faixa provável <b>${nfm(fx[0])}–${nfm(fx[1])} ${un}/sem</b>`:''}</div>`;}
   h+=`<div class="man-formula">Status = <b style="color:${cor}">${nome}</b> — ${regra}</div>
     <p class="muted">Esses são exatamente os números que aparecem na Reposição e no Estoque para ${escHtml(m.nome)}.</p>`;
   out.innerHTML=h;
@@ -2002,6 +2086,81 @@ document.addEventListener('input',e=>{
   }
 },true);
 
+
+// ═══ BUSCA RÁPIDA EM TODAS AS TELAS ═══════════════════════════
+// Filtra o que a tela está mostrando enquanto digita: linhas de tabela, alertas, cartões.
+// Funciona junto com os filtros de cada tela (aplica por cima do resultado deles) e é reaplicada
+// sozinha sempre que a tela redesenha. Telas novas ganham a busca automaticamente.
+function buscaTermos(q){ return normTxt(q||'').split(/\s+/).filter(Boolean); }
+function buscaCasa(texto,q){ const t=normTxt(texto||''),termos=buscaTermos(q); return termos.every(x=>t.includes(x)); }
+const BUSCA_PROPRIA={estoque:'busca-mp',rastreabilidade:'busca-lote',consumo:'consumo-busca'}; // telas que já tinham busca
+const BUSCA_DICA={dashboard:'alertas e validades',entradas:'histórico de lotes (MP, lote, NF, fornecedor...)',contagem:'lotes da contagem (MP, lote, fornecedor...)',
+  reposicao:'matéria-prima, status, pedido...',intel:'análises e tabelas',relatorios:'relatórios por matéria-prima',auditoria:'pontos da auditoria',
+  precos:'histórico de preços',materiais:'matérias-primas cadastradas',config:'usuários e registros',manual:'assuntos do manual'};
+// onde a caixa entra (padrão: topo da tela)
+const BUSCA_ANCORA={entradas:'tbody-entradas',materiais:'tbody-config'};
+const BUSCA_ITENS='tbody tr, .alert-item, .audit-item, .rel-mp, .ent-item, .man-wrap > .card';
+const BUSCA_Q={};
+const _buscaTxtCache=new WeakMap();
+function textoItemBusca(el){
+  let t=_buscaTxtCache.get(el);
+  if(t===undefined){
+    const c=el.cloneNode(true);c.querySelectorAll('select,script,style,.info-btn').forEach(x=>x.remove());
+    t=normTxt(c.textContent+' '+[...el.querySelectorAll('input')].map(i=>i.type==='text'?i.value:'').join(' '));
+    _buscaTxtCache.set(el,t);
+  }
+  return t;
+}
+function criarBuscasRapidas(){
+  document.querySelectorAll('.page').forEach(pg=>{
+    const id=pg.id.replace('page-','');
+    if(BUSCA_PROPRIA[id]||pg.querySelector('.busca-rapida'))return;
+    const bar=document.createElement('div');bar.className='busca-rapida';bar.dataset.pagina=id;
+    bar.innerHTML=`<div class="br-campo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+      <input type="search" data-busca-rapida="1" autocomplete="off" placeholder="Digite para filtrar ${BUSCA_DICA[id]||'esta tela'}..." aria-label="Filtrar esta tela"></div><span class="br-info"></span>`;
+    const inp=bar.querySelector('input');
+    inp.addEventListener('input',()=>{BUSCA_Q[id]=inp.value;aplicarBuscaRapida(id);});
+    inp.addEventListener('keydown',e=>{if(e.key==='Escape'){inp.value='';BUSCA_Q[id]='';aplicarBuscaRapida(id);}});
+    const ancora=BUSCA_ANCORA[id]&&document.getElementById(BUSCA_ANCORA[id]);
+    const tw=ancora&&ancora.closest('.table-wrap');
+    if(tw)tw.parentNode.insertBefore(bar,tw); else pg.insertBefore(bar,pg.firstChild);
+    // reaplica quando a tela redesenha (ignora mudanças na própria caixa de busca para não entrar em ciclo)
+    new MutationObserver(muts=>{ if(!pg.classList.contains('active')||!(BUSCA_Q[id]||'').trim())return; if(muts.every(m=>m.target.closest&&m.target.closest('.busca-rapida')))return; aplicarBuscaRapida(id); }).observe(pg,{childList:true,subtree:true});
+  });
+}
+function aplicarBuscaRapida(id){
+  const pg=document.getElementById('page-'+id);if(!pg||BUSCA_PROPRIA[id])return;
+  const termos=buscaTermos(BUSCA_Q[id]);
+  const todos=[...pg.querySelectorAll(BUSCA_ITENS)].filter(el=>!el.closest('.busca-rapida'));
+  // item dentro de outro item herda a visibilidade do de fora (ex.: tabela dentro do cartão do relatório)
+  const itens=todos.filter(el=>{const pai=el.parentElement&&el.parentElement.closest(BUSCA_ITENS);return !pai||!pg.contains(pai);});
+  const ehCab=el=>el.tagName==='TR'&&el.cells.length===1&&el.cells[0].colSpan>1;
+  let vis=0,total=0;
+  if(!termos.length){ itens.forEach(el=>el.classList.remove('busca-oculto')); }
+  else{
+    const casa=el=>termos.every(t=>textoItemBusca(el).includes(t));
+    itens.filter(el=>!ehCab(el)).forEach(el=>el.classList.toggle('busca-oculto',!casa(el)));
+    // linhas de grupo (ex.: categoria na contagem): aparecem se algum item do grupo aparece; se o próprio grupo casar, mostra o grupo inteiro
+    itens.filter(ehCab).forEach(cab=>{
+      const grupo=[];let n=cab.nextElementSibling;
+      while(n&&!ehCab(n)){grupo.push(n);n=n.nextElementSibling;}
+      if(grupo.length&&casa(cab))grupo.forEach(g=>g.classList.remove('busca-oculto'));
+      cab.classList.toggle('busca-oculto',!grupo.some(g=>!g.classList.contains('busca-oculto')));
+    });
+  }
+  itens.forEach(el=>{if(!ehCab(el)){total++;if(!el.classList.contains('busca-oculto'))vis++;}});
+  const info=pg.querySelector('.busca-rapida .br-info');
+  if(info){const txt=termos.length?(vis?`${vis} de ${total}`:'Nada encontrado — apague ou mude o texto'):'';if(info.textContent!==txt)info.textContent=txt;info.classList.toggle('zero',!!termos.length&&!vis);}
+  if(typeof agendarAjusteLayout==='function')agendarAjusteLayout();
+}
+// Atalho: "/" vai para a busca da tela; Esc limpa
+document.addEventListener('keydown',e=>{
+  if(e.key!=='/'||e.ctrlKey||e.metaKey||e.altKey)return;
+  const t=e.target;if(t&&(t.tagName==='INPUT'||t.tagName==='TEXTAREA'||t.tagName==='SELECT'||t.isContentEditable))return;
+  const pg=document.querySelector('.page.active');const inp=pg&&pg.querySelector('[data-busca-rapida]');
+  if(inp){e.preventDefault();inp.focus();inp.select();}
+});
+document.addEventListener('DOMContentLoaded',criarBuscasRapidas);
 // ═══ LAYOUT SEM ROLAGEM HORIZONTAL ════════════════════════════
 // Toda tabela visível é ajustada: normal → compacta → cartões (uma linha = um cartão com rótulos).
 // Vale para tabelas criadas em versões futuras sem precisar de código novo.
@@ -2082,6 +2241,7 @@ function showPage(p,btn){
   document.getElementById('page-'+p).classList.add('active');
   if(btn)btn.classList.add('active');
   renderPage(p);
+  if(typeof aplicarBuscaRapida==='function')aplicarBuscaRapida(p);
   agendarAjusteLayout();
   registrarLog('navegacao','Acessou menu '+p);
   if(p==='entradas'&&cliqueDireto)setTimeout(abrirModalAjudaEntrada,80);
@@ -2155,10 +2315,10 @@ function popularFiltroCatEstoque(){
 }
 function renderEstoque(){ populateSelects(); popularFiltroCatEstoque(); filtrarEstoque(); }
 function filtrarEstoque(){
-  const b=document.getElementById('busca-mp').value.toLowerCase();
+  const b=document.getElementById('busca-mp').value;
   const c=document.getElementById('filtro-cat').value;
   const s=document.getElementById('filtro-status').value;
-  const lista=S.materiais.filter(m=>(!b||m.nome.toLowerCase().includes(b))&&(!c||m.cat===c)&&(!s||stMP(m)===s));
+  const lista=S.materiais.filter(m=>(!b||buscaCasa(m.nome+' '+(m.cat||'')+' '+(m.forn||''),b))&&(!c||m.cat===c)&&(!s||stMP(m)===s));
   const tbody=document.getElementById('tbody-estoque');
   if(!lista.length){tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--text3)">Nenhum item encontrado.</td></tr>';return;}
   let rows='';
@@ -2781,9 +2941,9 @@ function renderMPDescontinuadas(){
 // ═══ HISTÓRICO DE DESCARTES (perdas) ══════════════════════════
 function renderDescartes(){
   const el=document.getElementById('lista-descartes'),res=document.getElementById('resumo-descartes');if(!el)return;
-  const b=(document.getElementById('busca-lote')?.value||'').toLowerCase();
+  const b=document.getElementById('busca-lote')?.value||'';
   const nomeMp=d=>{const m=IDX.matById?.get(normId(d.mpId));return m?m.nome:(d.mpNome||'—');};
-  const lista=(S.descartes||[]).filter(d=>!b||`${nomeMp(d)} ${d.lote} ${d.motivo} ${d.obs}`.toLowerCase().includes(b)).sort((x,y)=>(y.dataHora||y.data).localeCompare(x.dataHora||x.data));
+  const lista=(S.descartes||[]).filter(d=>!b||buscaCasa(`${nomeMp(d)} ${d.lote} ${d.motivo} ${d.obs} ${d.usuario}`,b)).sort((x,y)=>(y.dataHora||y.data).localeCompare(x.dataHora||x.data));
   const h=hoje(),mes=h.slice(0,7),d90=addDiasIso(h,-90);
   const soma=f=>(S.descartes||[]).filter(f).reduce((a,d)=>a+(Number(d.valorTotal)||0),0);
   const porMotivo={};(S.descartes||[]).filter(d=>d.data>=d90).forEach(d=>porMotivo[d.motivo]=(porMotivo[d.motivo]||0)+(Number(d.valorTotal)||0));
@@ -2898,121 +3058,109 @@ function renderContagem(){
         <td>${l.saldoLote.toFixed(1)}</td>
         <td>${inativo
           ? `<button onclick="reativarLote('${l.id}')" style="font-size:11px;padding:3px 8px;background:var(--accent);color:#fff;border:none;border-radius:4px;cursor:pointer">↺ Reativar</button>`
-          : `<input type="number" value="${l.saldoLote}" id="cnt-${l.id}" step="0.1" min="0" style="width:80px;padding:5px 8px;border:1px solid var(--border);border-radius:4px;font-size:13px;background:var(--surface);color:var(--text)" oninput="calcDivL('${l.id}',${l.saldoLote})">`
+          : `<input type="number" value="${CNT_DIGITADOS[l.id]!==undefined?escHtml(CNT_DIGITADOS[l.id]):''}" placeholder="contar" id="cnt-${l.id}" step="0.1" min="0" style="width:84px;padding:5px 8px;border:1px solid var(--border);border-radius:4px;font-size:13px;background:var(--surface);color:var(--text)" oninput="digitarContagem('${l.id}',${l.saldoLote},this)">`
         }</td>
-        <td id="div-${l.id}" style="font-weight:600">${inativo?'—':'0'}</td>
+        <td id="div-${l.id}" style="font-weight:600">${inativo?'—':htmlDivContagem(l.id,l.saldoLote)}</td>
       </tr>`;
     });
   } else {
     html='<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--text3)">Nenhum lote encontrado com os filtros selecionados.</td></tr>';
   }
   document.getElementById('tbody-contagem').innerHTML=html;
-
-
-  // Histórico de contagens — processamento mantido para outras funções
-  // (exibição desabilitada)
-  const hist=S.contagens.flatMap(c=>c.items.map(i=>{
-    const mp=S.materiais.find(m=>m.id===String(i.mpId));
-    const lt=S.lotes.find(l=>l.id===String(i.loteId));
-    return{data:c.data,mp:mp?mp.nome:'—',lote:lt?lt.lote:'—',teorico:i.teorico,fisico:i.fisico,div:i.div};
-  })).sort((a,b)=>b.data>a.data?1:-1);
+  renderContagensSalvasDia();
+  atualizarBotaoContagem();
 }
 async function reativarLote(loteId){
   const r=await gsCall({action:'reativarLote',data:{id:loteId}});
   if(r&&r.ok){await sincronizar(true);notify('Lote reativado!');renderContagem();}
   else notify('Erro ao reativar.','error');
 }
+// ═══ CONTAGEM: só grava o que foi digitado ═════════════════════
+// Campo vazio = lote NÃO contado: não é gravado (nem como zero, nem como saldo teórico).
+// O que foi digitado fica guardado ao trocar de categoria/filtro, até salvar.
+let CNT_DIGITADOS={};
+try{ const g=JSON.parse(localStorage.getItem('wms_cnt_digitados')||'{}'); if(g&&g.v)CNT_DIGITADOS=g.v; }catch(e){}
+function guardarDigitados(){ try{ localStorage.setItem('wms_cnt_digitados',JSON.stringify({v:CNT_DIGITADOS,em:Date.now()})); }catch(e){} }
+function digitarContagem(loteId,teorico,el){
+  const id=String(loteId),v=el.value.trim();
+  if(v==='')delete CNT_DIGITADOS[id]; else CNT_DIGITADOS[id]=v;
+  el.style.borderColor='';el.style.background='';
+  guardarDigitados();calcDivL(id,teorico);atualizarBotaoContagem();
+}
+function htmlDivContagem(loteId,teorico){
+  const v=CNT_DIGITADOS[String(loteId)];
+  if(v===undefined||v==='')return '<span style="color:var(--text3)">—</span>';
+  const div=Math.round((Number(v)-teorico)*10)/10;
+  return `<span style="color:${div<0?'var(--danger)':div>0?'var(--accent)':'inherit'}">${div>0?'+':''}${div}</span>`;
+}
 function calcDivL(loteId,teorico){
-  const id=String(loteId);
-  const v=parseFloat(document.getElementById('cnt-'+id).value)||0;
-  const div=Math.round((v-teorico)*10)/10;
-  const el=document.getElementById('div-'+id);
-  if(!el) return;
-  el.textContent=(div>0?'+':'')+div;
-  el.style.color=div<0?'var(--danger)':div>0?'var(--accent)':'inherit';
+  const el=document.getElementById('div-'+String(loteId));
+  if(el)el.innerHTML=htmlDivContagem(loteId,teorico);
+}
+function lotesDigitados(){ return S.lotes.filter(l=>loteOperacional(l)&&CNT_DIGITADOS[String(l.id)]!==undefined); }
+function atualizarBotaoContagem(){
+  const n=lotesDigitados().length,btn=document.getElementById('btn-cnt');
+  if(btn&&!btn.disabled)btn.textContent=n?`Salvar Contagem (${n} lote${n>1?'s':''})`:'Salvar Contagem';
+  const lim=document.getElementById('btn-cnt-limpar');if(lim)lim.style.display=n?'':'none';
+}
+function limparDigitadosContagem(){
+  const n=lotesDigitados().length;if(!n)return;
+  if(!confirm(`Apagar o que foi digitado em ${n} lote(s) (ainda não salvo)?`))return;
+  CNT_DIGITADOS={};guardarDigitados();renderContagem();
+}
+function renderContagensSalvasDia(){
+  const el=document.getElementById('cnt-salvas');if(!el)return;
+  const dia=document.getElementById('cnt-data')?.value||hoje();
+  const doDia=(S.contagens||[]).filter(c=>c.data===dia).sort((a,b)=>(a.ts||0)-(b.ts||0));
+  if(!doDia.length){el.innerHTML='';return;}
+  el.innerHTML=`<div class="conf-msg" style="background:var(--accent-bg);color:var(--accent);border:1px solid #bdd8c8;margin-bottom:10px"><b>✓ Já salvo em ${fmtBR(dia)}:</b> `+
+    doDia.map(c=>{const cats=[...new Set(c.items.map(i=>{const l=S.lotes.find(x=>mesmoId(x.id,i.loteId));const m=l&&mpDoLote(l);return m?m.cat:'';}).filter(Boolean))];
+      return `${c.ts?new Date(c.ts).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):''} — ${c.items.length} lote(s)${cats.length?' ('+escHtml(cats.slice(0,3).join(', '))+(cats.length>3?'…':'')+')':''}`;}).join(' · ')+'</div>';
 }
 async function salvarContagem(){
   const data=document.getElementById('cnt-data').value;
   if(!data){notify('Selecione a data.','warn');return;}
-
-  // Salva apenas lotes visíveis na tabela (respeitando filtros ativos)
-  const filtCat  = document.getElementById('cnt-filtro-cat').value;
-  const filtForn = document.getElementById('cnt-filtro-forn').value;
-  const filtMp   = document.getElementById('cnt-filtro-mp').value;
-  const lotesFiltrados=S.lotes.filter(l=>{
-    if(!loteOperacional(l)) return false;
-    const mp=mpDoLote(l);
-    if(filtCat  && (!mp||mp.cat!==filtCat))   return false;
-    if(filtForn && l.forn!==filtForn)          return false;
-    if(filtMp   && (!mp||String(mp.id)!==String(filtMp))) return false;
-    return true;
-  });
-
-  // AUDITORIA A03: inclui também os lotes ativos das MESMAS MPs escondidos pelo filtro (ex.: outro fornecedor),
-  // com físico = teórico. Antes o total da MP na contagem ficava incompleto e virava "consumo" falso.
-  const mpsNaTela=new Set(lotesFiltrados.map(l=>{const mp=mpDoLote(l);return mp?normId(mp.id):null;}).filter(Boolean));
-  const visiveis=new Set(lotesFiltrados);
-  const lotesSalvar=S.lotes.filter(l=>loteOperacional(l)&&(visiveis.has(l)||(()=>{const mp=mpDoLote(l);return !!mp&&mpsNaTela.has(normId(mp.id));})()));
-  // Valor negativo ou inválido bloqueia a gravação (antes virava 0 em silêncio e zerava o lote)
-  const invalidos=lotesFiltrados.filter(l=>{const el=document.getElementById('cnt-'+l.id);if(!el)return false;const v=el.value.trim();return v!==''&&(v.startsWith('-')||!isFinite(Number(v))||Number(v)<0);});
+  const contados=lotesDigitados();
+  if(!contados.length){notify('Nenhum lote foi contado. Digite a quantidade nos lotes que você contou — campos vazios não são gravados.','warn');return;}
+  // valor negativo ou inválido bloqueia
+  const invalidos=contados.filter(l=>{const v=String(CNT_DIGITADOS[String(l.id)]).trim();return v.startsWith('-')||!isFinite(Number(v))||Number(v)<0;});
   if(invalidos.length){
-    invalidos.forEach(l=>{const el=document.getElementById('cnt-'+l.id);el.style.borderColor='var(--danger)';el.style.background='var(--danger-bg)';});
+    invalidos.forEach(l=>{const el=document.getElementById('cnt-'+l.id);if(el){el.style.borderColor='var(--danger)';el.style.background='var(--danger-bg)';}});
     notify(`Contagem com valor negativo ou inválido em ${invalidos.length} lote(s) (em vermelho). Corrija antes de salvar.`,'error');
     return;
   }
-  const items=lotesSalvar.map(l=>{
-    const mpL=mpDoLote(l);
-    const el=visiveis.has(l)?document.getElementById('cnt-'+l.id):null;
-    const val=el?el.value.trim():'';
-    // Campo vazio = não contado = mantém saldo teórico (evita zerar acidentalmente)
-    const fisico=val!==''?Math.max(0,parseFloat(val)||0):l.saldoLote;
-    return{loteId:l.id,mpId:mpL?mpL.id:l.mpId,teorico:l.saldoLote,fisico,div:Math.round((fisico-l.saldoLote)*10)/10};
-  });
-
-  if(!items.length){notify('Nenhum lote para salvar.','warn');return;}
-
-  // Identifica lotes com contagem física = 0 que serão encerrados automaticamente
-  const lotesZerados=items.filter(i=>{
-    const el=document.getElementById('cnt-'+i.loteId);
-    // Só encerra se o campo foi preenchido explicitamente com 0 (não campo vazio)
-    return el && el.value.trim()!=='' && i.fisico===0;
-  });
-
-  if(lotesZerados.length>0){
-    const nomes=lotesZerados.map(i=>{
-      const l=S.lotes.find(l=>l.id===String(i.loteId));
-      const mp=S.materiais.find(m=>m.id===String(i.mpId));
-      return `• ${mp?mp.nome:'—'} — Lote ${l?l.lote:'—'} (era ${i.teorico} ${mp?mp.un:''})`;
-    }).join('\n');
-    const confirmado=confirm(
-      `⚠ Atenção: ${lotesZerados.length} lote(s) com contagem ZERO serão encerrados automaticamente:\n\n${nomes}\n\nDeseja confirmar e encerrar esses lotes?`
-    );
-    if(!confirmado){notify('Contagem cancelada.','warn');return;}
+  // Se contou só parte dos lotes de uma MP, os outros lotes dela entram com o saldo teórico (não contados),
+  // para o total da MP não ficar incompleto e virar consumo falso. O usuário é avisado.
+  const idsContados=new Set(contados.map(l=>String(l.id)));
+  const mpsContadas=new Map();
+  contados.forEach(l=>{const mp=mpDoLote(l);if(mp)mpsContadas.set(normId(mp.id),mp);});
+  const complemento=S.lotes.filter(l=>loteOperacional(l)&&!idsContados.has(String(l.id))&&(()=>{const mp=mpDoLote(l);return !!mp&&mpsContadas.has(normId(mp.id));})());
+  const mk=(l,fisico)=>{const mpL=mpDoLote(l);return {loteId:l.id,mpId:mpL?mpL.id:l.mpId,teorico:l.saldoLote,fisico,div:Math.round((fisico-l.saldoLote)*10)/10};};
+  const items=contados.map(l=>mk(l,Number(CNT_DIGITADOS[String(l.id)]))).concat(complemento.map(l=>mk(l,Number(l.saldoLote)||0)));
+  const lotesZerados=contados.filter(l=>Number(CNT_DIGITADOS[String(l.id)])===0);
+  const avisos=[];
+  if(complemento.length){
+    const porMp={};complemento.forEach(l=>{const m=mpDoLote(l);porMp[m.nome]=(porMp[m.nome]||0)+1;});
+    avisos.push(`${complemento.length} lote(s) destas matérias-primas não foram contados e serão mantidos com o saldo teórico:\n`+Object.entries(porMp).map(([n,q])=>`• ${n}: ${q} lote(s)`).join('\n'));
   }
+  if(lotesZerados.length)avisos.push(`${lotesZerados.length} lote(s) com contagem ZERO serão encerrados:\n`+lotesZerados.map(l=>`• ${(mpDoLote(l)||{}).nome||'—'} — Lote ${l.lote||'—'} (era ${l.saldoLote})`).join('\n'));
+  if(avisos.length&&!confirm(`Salvar a contagem de ${contados.length} lote(s)?\n\n`+avisos.join('\n\n'))){notify('Contagem não salva. O que você digitou continua guardado.','warn');return;}
 
   const btn=document.getElementById('btn-cnt');btn.disabled=true;btn.textContent='Salvando...';
-  try {
-    // 1. Salva a contagem normalmente
+  try{
     const r=await gsCall({action:'saveContagem',data:{data,obs:document.getElementById('cnt-obs').value,items}});
-    if(r&&r.ok){
-      // 2. Encerra automaticamente os lotes zerados
-      if(lotesZerados.length>0){
-        notify(`Encerrando ${lotesZerados.length} lote(s) zerado(s)...`,'warn');
-        for(const i of lotesZerados){
-          await gsCall({action:'encerrarLote',data:{id:i.loteId}});
-        }
-        await sincronizar(true);
-        notify(`Contagem salva! ${lotesZerados.length} lote(s) encerrado(s) por saldo zero.`);
-      } else {
-        await sincronizar(true);
-        notify(`Contagem salva! ${items.length} lotes atualizados.`);
-      }
-      registrarLog('contagem_salva',`Contagem ${data} · ${items.length} lotes`);
-      renderContagem();
-    }
-    else if(r) notify(r.error||'Erro ao salvar','error');
-    else notify('Sem resposta do servidor.','error');
-  } finally { btn.disabled=false;btn.textContent='Salvar Contagem'; }
+    const err=erroResp(r);
+    if(err){notify(err,'error');return;}
+    for(const l of lotesZerados){ await gsCall({action:'encerrarLote',data:{id:l.id}},{silencioso:true}); l.ativo=false; }
+    // Atualiza a tela sem baixar a planilha inteira de novo
+    items.forEach(i=>{const l=S.lotes.find(x=>mesmoId(x.id,i.loteId));if(l)l.saldoLote=Math.max(0,Number(i.fisico)||0);});
+    S.contagens.push(normCnt({id:(r.result&&r.result.inserted)||Date.now(),data,criadoEm:new Date().toISOString(),obs:document.getElementById('cnt-obs').value,items}));
+    contados.forEach(l=>delete CNT_DIGITADOS[String(l.id)]);guardarDigitados();
+    rebuildIndices();
+    registrarLog('contagem_salva',`Contagem ${data} · ${contados.length} lote(s) contado(s)${complemento.length?' + '+complemento.length+' mantido(s) com teórico':''}`);
+    notify(`Contagem salva: ${contados.length} lote(s).${lotesZerados.length?' '+lotesZerados.length+' encerrado(s) por saldo zero.':''}`);
+    renderContagem();
+  }finally{btn.disabled=false;atualizarBotaoContagem();}
 }
 
 // ═══ CONSUMO ══════════════════════════════════════════════════
@@ -3232,14 +3380,15 @@ function renderReposicao(){
       <td style="font-weight:600">${m.nome}</td>
       <td>${s.toFixed(1)} ${m.un}</td>
       <td><span class="badge b-info">${la} lote${la!==1?'s':''}</span></td>
-      <td>${cs?cs.toFixed(1)+' '+m.un:'—'}</td>
+      <td>${cs?cs.toFixed(1)+' '+m.un:'—'}${(()=>{const f=cs?faixaConsumo(cs,confiabilidadeMP(m.id)):null;return f?`<div style="font-size:10.5px;color:var(--text3)">faixa ${f[0].toFixed(1)}–${f[1].toFixed(1)}</div>`:'';})()}</td>
+      <td>${badgeConfiabilidade(m.id,cs)}</td>
       <td>${m.lead}d</td><td>${pto} ${m.un}</td>
       <td style="font-weight:600;color:${dPed<=0?'var(--danger)':dPed<=3?'#c07000':'inherit'}">${dPed>=999?'—':dPed<=0?'AGORA':dPedDt.toLocaleDateString('pt-BR')}</td>
       <td style="color:${dRup<=P.crit?'var(--danger)':dRup<=P.warn?'#c07000':'inherit'}">${dRup>=999?'—':dRupDt.toLocaleDateString('pt-BR')}</td>
       <td class="col-pedido">${htmlPedidoResumo(a)}</td>
       <td class="col-status"><span class="badge ${st==='ok'?'b-ok':st==='warn'?'b-warn':'b-danger'}">${st==='ok'?'Normal':st==='warn'?'Atenção':'Crítico'}</span></td>
     </tr>`;
-  }).join('')||'<tr><td colspan="10" style="text-align:center;padding:20px;color:var(--text3)">Nenhuma matéria-prima encontrada com os filtros selecionados.</td></tr>';
+  }).join('')||'<tr><td colspan="11" style="text-align:center;padding:20px;color:var(--text3)">Nenhuma matéria-prima encontrada com os filtros selecionados.</td></tr>';
   aplicarDicasTabelas();
 }
 
@@ -3602,11 +3751,11 @@ function abrirRastreabilidadeInsumo(mpId){
   filtrarRastreabilidade();
 }
 function obterLotesRastreabilidadeFiltrados(){
-  const b=document.getElementById('busca-lote').value.toLowerCase();
+  const b=document.getElementById('busca-lote').value;
   const f=document.getElementById('filtro-rastr').value;
   return S.lotes.filter(l=>{
     const mp=mpDoLote(l);
-    if(b&&!`${l.lote} ${l.nf||''} ${l.forn} ${mp?mp.nome:''}`.toLowerCase().includes(b))return false;
+    if(b&&!buscaCasa(`${l.lote} ${l.nf||''} ${l.forn} ${mp?mp.nome+' '+(mp.cat||''):''} ${l.obs||''}`,b))return false;
     if(f==='ativo')return l.ativo;
     if(f==='encerrado')return !l.ativo;
     if(f==='vencido')return vencido(l.validade);
